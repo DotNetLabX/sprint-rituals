@@ -1,0 +1,37 @@
+# .NET build output
+[Bb]in/
+[Oo]bj/
+[Pp]ublish/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# SQLite local databases
+*.db
+*.db-shm
+*.db-wal
+
+# Node / Vite (client)
+node_modules/
+client/dist/
+client/dist-ssr/
+*.local
+
+# Vite build output served by Host
+src/Host/wwwroot/
+
+# Logs
+*.log
+logs/
+
+# OMC tooling state
+.omc/
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# OS
+.DS_Store
+Thumbs.db
