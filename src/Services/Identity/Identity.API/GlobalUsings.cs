@@ -1,0 +1,9 @@
+global using Blocks.Exceptions;
+global using FastEndpoints;
+global using FluentValidation;
+global using Identity.Domain.Persons;
+global using Identity.Domain.Users;
+global using Identity.Persistence.Repositories;
+global using Microsoft.AspNetCore.Authorization;
+global using Microsoft.AspNetCore.Http;
+global using Microsoft.Extensions.Logging;

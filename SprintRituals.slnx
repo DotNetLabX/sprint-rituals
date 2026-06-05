@@ -1,0 +1,31 @@
+<Solution>
+  <Folder Name="/BuildingBlocks/">
+    <Project Path="src/BuildingBlocks/Blocks.Core/Blocks.Core.csproj" />
+    <Project Path="src/BuildingBlocks/Blocks.Domain/Blocks.Domain.csproj" />
+    <Project Path="src/BuildingBlocks/Blocks.Exceptions/Blocks.Exceptions.csproj" />
+    <Project Path="src/BuildingBlocks/Blocks.EntityFrameworkCore/Blocks.EntityFrameworkCore.csproj" />
+    <Project Path="src/BuildingBlocks/Blocks.AspNetCore/Blocks.AspNetCore.csproj" />
+    <Project Path="src/BuildingBlocks/Blocks.FastEndpoints/Blocks.FastEndpoints.csproj" />
+  </Folder>
+  <Folder Name="/Host/">
+    <Project Path="src/Host/Host.csproj" />
+  </Folder>
+  <Folder Name="/Modules/">
+    <Project Path="src/Modules/Jira/Jira.Contracts/Jira.Contracts.csproj" />
+    <Project Path="src/Modules/Jira/Jira.RestApi/Jira.RestApi.csproj" />
+    <Project Path="src/Modules/Xray/Xray.Contracts/Xray.Contracts.csproj" />
+    <Project Path="src/Modules/Xray/Xray.GraphQL/Xray.GraphQL.csproj" />
+  </Folder>
+  <Folder Name="/Services/">
+    <Folder Name="/Services/Fokus/">
+      <Project Path="src/Services/Fokus/Fokus.API/Fokus.API.csproj" />
+      <Project Path="src/Services/Fokus/Fokus.Domain/Fokus.Domain.csproj" />
+      <Project Path="src/Services/Fokus/Fokus.Persistence/Fokus.Persistence.csproj" />
+    </Folder>
+    <Folder Name="/Services/Identity/">
+      <Project Path="src/Services/Identity/Identity.API/Identity.API.csproj" />
+      <Project Path="src/Services/Identity/Identity.Domain/Identity.Domain.csproj" />
+      <Project Path="src/Services/Identity/Identity.Persistence/Identity.Persistence.csproj" />
+    </Folder>
+  </Folder>
+</Solution>
