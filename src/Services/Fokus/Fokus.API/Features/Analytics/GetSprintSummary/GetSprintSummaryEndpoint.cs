@@ -20,7 +20,7 @@ public class GetSprintSummaryEndpoint(
         // 2. No sprints — return empty response
         if (sprints.Count == 0)
         {
-            await SendOkAsync(new SprintSummaryResponse(null, null, null, [], [], new FlagsResult([], null, [], false)), ct);
+            await Send.OkAsync(new SprintSummaryResponse(null, null, null, [], [], new FlagsResult([], null, [], false)), ct);
             return;
         }
 
@@ -32,7 +32,7 @@ public class GetSprintSummaryEndpoint(
             if (match is null)
             {
                 AddError(r => r.SprintId, "Sprint not found.");
-                await SendErrorsAsync(400, ct);
+                await Send.ErrorsAsync(400, ct);
                 return;
             }
             selectedSprintInfo = match;
@@ -133,6 +133,6 @@ public class GetSprintSummaryEndpoint(
         // 12. Compute summary (exclusion applied internally via excludedIds)
         var result = sprintSummaryService.ComputeSummary(selectedSprint, windowSprints, filteredActiveDevelopers, settings, subTeam, allEpicTickets, capacityLookup, allDevelopers, statusTransitions, excludedIds, qualitySubScore, qualityBreakdown, hasQaData, testingCrunch);
 
-        await SendOkAsync(result, ct);
+        await Send.OkAsync(result, ct);
     }
 }

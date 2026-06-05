@@ -21,7 +21,7 @@ public class GetDeveloperProgressEndpoint(
         // 3. No active sprint — return early with empty response
         if (activeSprint is null)
         {
-            await SendOkAsync(new DeveloperProgressResponse(false, null, 0, 0, false, [], []), ct);
+            await Send.OkAsync(new DeveloperProgressResponse(false, null, 0, 0, false, [], []), ct);
             return;
         }
 
@@ -29,7 +29,7 @@ public class GetDeveloperProgressEndpoint(
         var sprintWithMemberships = await sprintRepository.GetSprintWithMembershipsAsync(activeSprint.Id, ct);
         if (sprintWithMemberships is null)
         {
-            await SendOkAsync(new DeveloperProgressResponse(false, null, 0, 0, false, [], []), ct);
+            await Send.OkAsync(new DeveloperProgressResponse(false, null, 0, 0, false, [], []), ct);
             return;
         }
 
@@ -58,6 +58,6 @@ public class GetDeveloperProgressEndpoint(
             statusTransitions,
             excludedDeveloperIds);
 
-        await SendOkAsync(result, ct);
+        await Send.OkAsync(result, ct);
     }
 }

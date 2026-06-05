@@ -94,7 +94,7 @@ public class SaveHealthConfigEndpoint(AppSettingsRepository repository)
         existing.QualityHealthWeight = req.QualityHealthWeight;
         existing.QualitySubScoreWeights = req.QualitySubScoreWeights;
         await repository.SaveAsync(existing, ct);
-        await SendOkAsync(new SaveHealthConfigResponse { Success = true }, ct);
+        await Send.OkAsync(new SaveHealthConfigResponse { Success = true }, ct);
     }
 }
 

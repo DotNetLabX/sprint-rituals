@@ -11,7 +11,7 @@ public class UpdateSprintEndpoint(IJiraClient jiraClient, SprintRepository sprin
         var sprint = await sprintRepository.GetByIdAsync(req.SprintId, ct);
         if (sprint is null)
         {
-            await SendNotFoundAsync(ct);
+            await Send.NotFoundAsync(ct);
             return;
         }
 
@@ -24,7 +24,7 @@ public class UpdateSprintEndpoint(IJiraClient jiraClient, SprintRepository sprin
 
         await sprintRepository.SaveChangesAsync(ct);
 
-        await SendOkAsync(new UpdateSprintResponse
+        await Send.OkAsync(new UpdateSprintResponse
         {
             Id = sprint.Id,
             Name = sprint.Name,

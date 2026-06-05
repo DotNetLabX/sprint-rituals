@@ -10,6 +10,6 @@ public class LogoutEndpoint : EndpointWithoutRequest
     public override async Task HandleAsync(CancellationToken ct)
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        await SendNoContentAsync(ct);
+        await Send.NoContentAsync(ct);
     }
 }

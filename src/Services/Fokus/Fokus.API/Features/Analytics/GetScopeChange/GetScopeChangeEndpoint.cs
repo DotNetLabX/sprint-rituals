@@ -19,7 +19,7 @@ public class GetScopeChangeEndpoint(
         // 2. No closed sprints — return empty multi response
         if (ascending.Count == 0)
         {
-            await SendOkAsync(new ScopeChangeResponse("multi", null, null), ct);
+            await Send.OkAsync(new ScopeChangeResponse("multi", null, null), ct);
             return;
         }
 
@@ -40,7 +40,7 @@ public class GetScopeChangeEndpoint(
             if (match is null)
             {
                 AddError(r => r.SprintId, "Sprint not found.");
-                await SendErrorsAsync(400, ct);
+                await Send.ErrorsAsync(400, ct);
                 return;
             }
 
@@ -72,7 +72,7 @@ public class GetScopeChangeEndpoint(
             var singleResult = scopeChangeService.ComputeSingleSprint(
                 targetSprint, priorSprint, statusTransitions, settings, subTeam, excludedIds);
 
-            await SendOkAsync(new ScopeChangeResponse("single", null, singleResult), ct);
+            await Send.OkAsync(new ScopeChangeResponse("single", null, singleResult), ct);
         }
         else
         {
@@ -102,7 +102,7 @@ public class GetScopeChangeEndpoint(
             // 10a. Compute multi-sprint response
             var multiResult = scopeChangeService.ComputeMultiSprint(loadedSprints, statusTransitions, settings, subTeam, excludedInAll);
 
-            await SendOkAsync(new ScopeChangeResponse("multi", multiResult, null), ct);
+            await Send.OkAsync(new ScopeChangeResponse("multi", multiResult, null), ct);
         }
     }
 }

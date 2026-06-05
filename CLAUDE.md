@@ -11,6 +11,7 @@ src/
   Host/                        # Single Web SDK deployable — composes all modules
   BuildingBlocks/              # Shared libraries
     (app-agnostic)             #   Reusable primitives (no project knowledge)
+    Blocks.Contracts/          #   App-specific cross-module contracts: gRPC interfaces + integration event DTOs
   Services/                    # Modules — one folder per domain
     Identity/                  #   Person + User, Google OAuth, cookie auth
       Identity.API/            #   FastEndpoints feature slices, auth config, DI
@@ -45,8 +46,8 @@ SprintRituals.slnx             # Solution file
 - Mapster — object mapping
 - EF Core — SQLite (file-backed, two databases: `identity.db` + `fokus.db`)
 - **Identity:** plain DDD — `Person : AggregateRoot<int>` + `User : Entity<int>`. **No ASP.NET Core Identity / IdentityUser / IdentityDbContext / UserManager.** Google-only OAuth, cookie auth, Role = string claim.
-- MassTransit + RabbitMQ — integration events (next increment, not yet wired)
-- gRPC code-first — service-to-service sync communication (next increment, not yet wired)
+- MassTransit — in-memory transport wired in Host (`AddMassTransit` + `UsingInMemory`); `IPublishEndpoint` injected into sync services; `SprintSynced` integration event published after each sprint sync. RabbitMQ transport is a future increment.
+- gRPC code-first (protobuf-net.Grpc) — `ISprintAnalyticsService` + `ISprintCatalogService` contracts in `Blocks.Contracts`; server impls in `Fokus.API/Grpc/`; h2c endpoint on port 5001 (Kestrel `Endpoints:Grpc`); `AddCodeFirstGrpc` wired in Host. gRPC client registration comes with the Reflekt port.
 - SignalR — real-time server → browser push
 - Google OAuth via ASP.NET Core `AddGoogle` — authentication (cookie auth; email + profile scope only)
 - OpenAPI via `Microsoft.AspNetCore.OpenApi` (built into .NET 10) + **Scalar** (`Scalar.AspNetCore`) for the interactive UI. Do not use Swashbuckle. Scalar UI gated to `IsDevelopment`.

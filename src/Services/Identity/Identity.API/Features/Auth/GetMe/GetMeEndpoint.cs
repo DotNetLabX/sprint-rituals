@@ -13,7 +13,7 @@ public class GetMeEndpoint : EndpointWithoutRequest<MeResponse>
         var idStr = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
         var id = int.TryParse(idStr, out var parsed) ? parsed : 0;
 
-        return SendOkAsync(new MeResponse
+        return Send.OkAsync(new MeResponse
         {
             Id = id,
             Email = user.FindFirstValue(ClaimTypes.Email) ?? string.Empty,

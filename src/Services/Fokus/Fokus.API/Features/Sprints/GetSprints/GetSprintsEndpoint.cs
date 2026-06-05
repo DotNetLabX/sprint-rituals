@@ -19,6 +19,6 @@ public class GetSprintsEndpoint(SprintRepository sprintRepository)
             Goal = s.Goal
         }).ToList();
 
-        await SendOkAsync(response, ct);
+        await Send.OkAsync(response, ct);
     }
 }

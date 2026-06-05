@@ -19,7 +19,7 @@ public class GetDeveloperQualityEndpoint(
         // 2. If Xray disabled, return empty response
         if (!settings.XrayEnabled)
         {
-            await SendOkAsync(new DeveloperQualityResponse { HasQaData = false, Sprints = [], Developers = [] }, ct);
+            await Send.OkAsync(new DeveloperQualityResponse { HasQaData = false, Sprints = [], Developers = [] }, ct);
             return;
         }
 
@@ -29,7 +29,7 @@ public class GetDeveloperQualityEndpoint(
 
         if (ascending.Count == 0)
         {
-            await SendOkAsync(new DeveloperQualityResponse { HasQaData = false, Sprints = [], Developers = [] }, ct);
+            await Send.OkAsync(new DeveloperQualityResponse { HasQaData = false, Sprints = [], Developers = [] }, ct);
             return;
         }
 
@@ -44,7 +44,7 @@ public class GetDeveloperQualityEndpoint(
             if (match is null)
             {
                 AddError(r => r.SprintId, "Sprint not found.");
-                await SendErrorsAsync(400, ct);
+                await Send.ErrorsAsync(400, ct);
                 return;
             }
             targetSprintIds = [match.Id];
@@ -66,7 +66,7 @@ public class GetDeveloperQualityEndpoint(
 
         if (targetSprintIds.Count == 0)
         {
-            await SendOkAsync(new DeveloperQualityResponse { HasQaData = false, Sprints = [], Developers = [] }, ct);
+            await Send.OkAsync(new DeveloperQualityResponse { HasQaData = false, Sprints = [], Developers = [] }, ct);
             return;
         }
 
@@ -197,7 +197,7 @@ public class GetDeveloperQualityEndpoint(
             streakTEsBySprintId);
 
         // 12. Map result to response
-        await SendOkAsync(MapResponse(result), ct);
+        await Send.OkAsync(MapResponse(result), ct);
     }
 
     private static DeveloperQualityResponse MapResponse(DeveloperQualityResult result) => new()

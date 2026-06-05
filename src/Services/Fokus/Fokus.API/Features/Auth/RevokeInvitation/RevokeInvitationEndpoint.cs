@@ -11,13 +11,13 @@ public class RevokeInvitationEndpoint(InvitationRepository invitationRepository)
         var invitation = await invitationRepository.GetByIdAsync(req.Id, ct);
         if (invitation is null)
         {
-            await SendNotFoundAsync(ct);
+            await Send.NotFoundAsync(ct);
             return;
         }
 
         invitation.Revoke();
         await invitationRepository.SaveChangesAsync(ct);
 
-        await SendNoContentAsync(ct);
+        await Send.NoContentAsync(ct);
     }
 }

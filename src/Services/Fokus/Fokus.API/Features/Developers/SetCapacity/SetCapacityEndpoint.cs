@@ -11,14 +11,14 @@ public class SetCapacityEndpoint(DeveloperRepository developerRepository)
         var developer = await developerRepository.GetByIdAsync(req.AccountId, ct);
         if (developer is null)
         {
-            await SendNotFoundAsync(ct);
+            await Send.NotFoundAsync(ct);
             return;
         }
 
         await developerRepository.UpsertCapacityAsync(req.AccountId, req.SprintId, req.CapacityPercent, ct);
         await developerRepository.SaveChangesAsync(ct);
 
-        await SendOkAsync(new SetCapacityResponse
+        await Send.OkAsync(new SetCapacityResponse
         {
             DeveloperAccountId = req.AccountId,
             SprintId = req.SprintId,

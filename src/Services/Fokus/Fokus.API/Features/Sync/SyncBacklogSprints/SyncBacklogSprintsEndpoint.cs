@@ -37,7 +37,7 @@ public class SyncBacklogSprintsEndpoint(
             };
         }
 
-        await SendOkAsync(new SyncBacklogSprintsResponse
+        await Send.OkAsync(new SyncBacklogSprintsResponse
         {
             BacklogSprintsSynced = sprintResult.SprintsSynced,
             EpicTicketsDiscovered = epicResult.TicketsDiscovered,

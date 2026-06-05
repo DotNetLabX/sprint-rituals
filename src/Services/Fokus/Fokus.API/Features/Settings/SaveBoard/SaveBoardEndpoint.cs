@@ -27,7 +27,7 @@ public class SaveBoardEndpoint(AppSettingsRepository repository)
         var existing = await repository.GetAsync(ct);
         existing.BoardId = req.BoardId;
         await repository.SaveAsync(existing, ct);
-        await SendOkAsync(new SaveBoardResponse { Success = true }, ct);
+        await Send.OkAsync(new SaveBoardResponse { Success = true }, ct);
     }
 }
 

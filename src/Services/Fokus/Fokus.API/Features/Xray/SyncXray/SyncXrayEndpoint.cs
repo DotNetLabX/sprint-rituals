@@ -76,7 +76,7 @@ public class SyncXrayEndpoint(
         // Jira-driven TestSet discovery — TestSets are only discoverable from Jira issue links
         var testSetsSynced = await xraySyncService.SyncTestSetsFromIssuesAsync(allJiraIssues, ct);
 
-        await SendOkAsync(new SyncXrayResponse
+        await Send.OkAsync(new SyncXrayResponse
         {
             TestExecutionsSynced = teResult.TestExecutionsSynced,
             TestRunsSynced = teResult.TestRunsSynced,

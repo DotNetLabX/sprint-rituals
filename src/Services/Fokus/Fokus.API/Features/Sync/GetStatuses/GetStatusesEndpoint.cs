@@ -11,7 +11,7 @@ public class GetStatusesEndpoint(IJiraClient jiraClient)
     {
         var statuses = await jiraClient.GetStatusesAsync(ct);
 
-        await SendOkAsync(new GetStatusesResponse
+        await Send.OkAsync(new GetStatusesResponse
         {
             Statuses = statuses.Select(s => new StatusDto
             {

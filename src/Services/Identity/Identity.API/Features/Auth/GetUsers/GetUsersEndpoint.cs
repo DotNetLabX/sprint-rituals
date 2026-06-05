@@ -23,6 +23,6 @@ public class GetUsersEndpoint(UserRepository userRepository)
             IsActive = p.User.IsActive
         }).ToList();
 
-        await SendOkAsync(result, ct);
+        await Send.OkAsync(result, ct);
     }
 }

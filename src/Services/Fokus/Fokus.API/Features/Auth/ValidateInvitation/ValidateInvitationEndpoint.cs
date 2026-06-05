@@ -12,28 +12,28 @@ public class ValidateInvitationEndpoint(InvitationRepository invitationRepositor
 
         if (invitation is null)
         {
-            await SendOkAsync(new ValidateInvitationResponse { Valid = false, Error = "not-found" }, ct);
+            await Send.OkAsync(new ValidateInvitationResponse { Valid = false, Error = "not-found" }, ct);
             return;
         }
 
         if (invitation.Status == "Accepted")
         {
-            await SendOkAsync(new ValidateInvitationResponse { Valid = false, Error = "used" }, ct);
+            await Send.OkAsync(new ValidateInvitationResponse { Valid = false, Error = "used" }, ct);
             return;
         }
 
         if (invitation.Status == "Revoked")
         {
-            await SendOkAsync(new ValidateInvitationResponse { Valid = false, Error = "revoked" }, ct);
+            await Send.OkAsync(new ValidateInvitationResponse { Valid = false, Error = "revoked" }, ct);
             return;
         }
 
         if (invitation.IsExpired)
         {
-            await SendOkAsync(new ValidateInvitationResponse { Valid = false, Error = "expired" }, ct);
+            await Send.OkAsync(new ValidateInvitationResponse { Valid = false, Error = "expired" }, ct);
             return;
         }
 
-        await SendOkAsync(new ValidateInvitationResponse { Valid = true, Email = invitation.Email }, ct);
+        await Send.OkAsync(new ValidateInvitationResponse { Valid = true, Email = invitation.Email }, ct);
     }
 }

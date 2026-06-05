@@ -65,7 +65,7 @@ public class SyncSprintsEndpoint(
             };
         }
 
-        await SendOkAsync(new SyncSprintsResponse
+        await Send.OkAsync(new SyncSprintsResponse
         {
             SprintsAttempted = sprintsInRange.Count,
             SprintsSynced = result.SprintsSynced,

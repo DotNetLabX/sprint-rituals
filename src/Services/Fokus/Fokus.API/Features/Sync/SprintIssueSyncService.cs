@@ -1,5 +1,7 @@
+using Blocks.Contracts.IntegrationEvents;
 using Fokus.API.Features.Xray;
 using Jira.Contracts;
+using MassTransit;
 
 namespace Fokus.API.Features.Sync;
 
@@ -26,6 +28,7 @@ public class SprintIssueSyncService(
     DeveloperRepository developerRepository,
     AppSettingsRepository appSettingsRepository,
     XrayIssueSyncService xrayIssueSyncService,
+    IPublishEndpoint publishEndpoint,
     ILogger<SprintIssueSyncService> logger)
 {
     public async Task<SprintBatchSyncResult> SyncSprintsFromJiraAsync(
@@ -69,6 +72,14 @@ public class SprintIssueSyncService(
                     xraySetSynced += result.XrayResult.TestSetsSynced;
                     xrayWarnings.AddRange(result.XrayResult.Warnings);
                 }
+
+                // Publish integration event — one per successfully-synced sprint
+                await publishEndpoint.Publish(new SprintSynced(
+                    sprint.Id,
+                    sprint.Name,
+                    sprint.BoardId,
+                    sprint.SyncedAt,
+                    sprint.State.ToString()), ct);
             }
             catch (Exception ex)
             {

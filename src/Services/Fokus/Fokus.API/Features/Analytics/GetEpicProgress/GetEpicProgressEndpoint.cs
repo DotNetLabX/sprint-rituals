@@ -24,7 +24,7 @@ public class GetEpicProgressEndpoint(
         // 4. If no epic tickets, return empty response
         if (epicTickets.Count == 0)
         {
-            await SendOkAsync(new EpicProgressResponse(
+            await Send.OkAsync(new EpicProgressResponse(
                 new EpicProgressSummaryMetrics(0, 0, 0m),
                 [],
                 new EpicProgressUnlinkedWork(0, 0m),
@@ -62,6 +62,6 @@ public class GetEpicProgressEndpoint(
         var result = epicProgressService.ComputeEpicProgress(
             epicTickets, analyticsMemberships, unlinkedTickets, settings, statusTransitions, analyticsSprints, subTeam, qaData);
 
-        await SendOkAsync(result, ct);
+        await Send.OkAsync(result, ct);
     }
 }

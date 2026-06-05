@@ -11,7 +11,7 @@ public class GetBoardsEndpoint(IJiraClient jiraClient)
     {
         var boards = await jiraClient.GetBoardsAsync(ct);
 
-        await SendOkAsync(new GetBoardsResponse
+        await Send.OkAsync(new GetBoardsResponse
         {
             Boards = boards.Select(b => new BoardDto
             {

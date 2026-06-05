@@ -67,13 +67,13 @@ public class UpdateTeamConfigEndpoint(DeveloperRepository developerRepository)
 
         if (developer is null)
         {
-            await SendNotFoundAsync(ct);
+            await Send.NotFoundAsync(ct);
             return;
         }
 
         await developerRepository.SaveChangesAsync(ct);
 
-        await SendOkAsync(new UpdateTeamConfigResponse
+        await Send.OkAsync(new UpdateTeamConfigResponse
         {
             AccountId = developer.Id,
             DisplayName = developer.DisplayName,

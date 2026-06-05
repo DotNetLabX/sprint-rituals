@@ -18,14 +18,14 @@ public class GetFailingTicketsEndpoint(
         var sprintInfo = sprints.FirstOrDefault(s => s.Id == req.SprintId);
         if (sprintInfo is null)
         {
-            await SendNotFoundAsync(ct);
+            await Send.NotFoundAsync(ct);
             return;
         }
 
         // 3. If Xray disabled, return empty list
         if (!settings.XrayEnabled)
         {
-            await SendOkAsync(new FailingTicketsResponse(), ct);
+            await Send.OkAsync(new FailingTicketsResponse(), ct);
             return;
         }
 
@@ -33,7 +33,7 @@ public class GetFailingTicketsEndpoint(
         var sprint = await sprintRepository.GetSprintWithMembershipsAsync(req.SprintId, ct);
         if (sprint is null)
         {
-            await SendNotFoundAsync(ct);
+            await Send.NotFoundAsync(ct);
             return;
         }
 
@@ -70,7 +70,7 @@ public class GetFailingTicketsEndpoint(
             })
             .ToList();
 
-        await SendOkAsync(new FailingTicketsResponse { Tickets = failing }, ct);
+        await Send.OkAsync(new FailingTicketsResponse { Tickets = failing }, ct);
     }
 
     private static bool IsInSubTeam(TicketCoverageInfo ticket, Sprint sprint, string subTeam)

@@ -38,7 +38,7 @@ public class CreateInvitationEndpoint(
 
         var inviteLink = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}/invite/{invitation.Token}";
 
-        await SendAsync(new CreateInvitationResponse
+        await Send.ResponseAsync(new CreateInvitationResponse
         {
             Id = invitation.Id,
             Email = invitation.Email,

@@ -9,7 +9,7 @@ public class GetSettingsEndpoint(AppSettingsRepository repository)
     {
         var settings = await repository.GetAsync(ct);
 
-        await SendOkAsync(new GetSettingsResponse
+        await Send.OkAsync(new GetSettingsResponse
         {
             BoardId = settings.BoardId,
             DoneStatuses = settings.DoneStatuses,

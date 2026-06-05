@@ -19,7 +19,7 @@ public class GetCycleTimeEndpoint(
         // 2. No closed sprints — return empty multi response
         if (ascending.Count == 0)
         {
-            await SendOkAsync(new CycleTimeResponse("multi", null, null), ct);
+            await Send.OkAsync(new CycleTimeResponse("multi", null, null), ct);
             return;
         }
 
@@ -40,7 +40,7 @@ public class GetCycleTimeEndpoint(
             if (match is null)
             {
                 AddError(r => r.SprintId, "Sprint not found.");
-                await SendErrorsAsync(400, ct);
+                await Send.ErrorsAsync(400, ct);
                 return;
             }
 
@@ -71,7 +71,7 @@ public class GetCycleTimeEndpoint(
             var singleResult = cycleTimeService.ComputeSingleSprint(
                 targetSprint, priorSprint, statusTransitions, settings, subTeam, excludedIds);
 
-            await SendOkAsync(new CycleTimeResponse("single", singleResult, null), ct);
+            await Send.OkAsync(new CycleTimeResponse("single", singleResult, null), ct);
         }
         else
         {
@@ -98,7 +98,7 @@ public class GetCycleTimeEndpoint(
             var multiResult = cycleTimeService.ComputeMultiSprint(
                 loadedSprints, statusTransitions, settings, subTeam, excludedInAll);
 
-            await SendOkAsync(new CycleTimeResponse("multi", null, multiResult), ct);
+            await Send.OkAsync(new CycleTimeResponse("multi", null, multiResult), ct);
         }
     }
 }

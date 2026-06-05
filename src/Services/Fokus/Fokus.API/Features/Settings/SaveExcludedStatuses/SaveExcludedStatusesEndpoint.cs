@@ -26,6 +26,6 @@ public class SaveExcludedStatusesEndpoint(AppSettingsRepository repository)
         var settings = await repository.GetAsync(ct);
         settings.ExcludedFromScopeStatuses = req.Statuses;
         await repository.SaveAsync(settings, ct);
-        await SendOkAsync(settings.ExcludedFromScopeStatuses, ct);
+        await Send.OkAsync(settings.ExcludedFromScopeStatuses, ct);
     }
 }

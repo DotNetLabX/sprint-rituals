@@ -10,7 +10,7 @@ public class GetCapacityEndpoint(DeveloperRepository developerRepository)
         var developer = await developerRepository.GetByIdAsync(req.AccountId, ct);
         if (developer is null)
         {
-            await SendNotFoundAsync(ct);
+            await Send.NotFoundAsync(ct);
             return;
         }
 
@@ -20,6 +20,6 @@ public class GetCapacityEndpoint(DeveloperRepository developerRepository)
             .Select(c => new CapacityEntry { SprintId = c.SprintId, CapacityPercent = c.CapacityPercent })
             .ToList();
 
-        await SendOkAsync(entries, ct);
+        await Send.OkAsync(entries, ct);
     }
 }

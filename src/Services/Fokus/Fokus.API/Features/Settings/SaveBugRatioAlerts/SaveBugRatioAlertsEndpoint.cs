@@ -38,7 +38,7 @@ public class SaveBugRatioAlertsEndpoint(AppSettingsRepository repository)
         existing.BugRatioConsecutiveSprintCount = req.ConsecutiveSprintCount;
         existing.DefaultSpPerBug = req.DefaultSpPerBug;
         await repository.SaveAsync(existing, ct);
-        await SendOkAsync(new SaveBugRatioAlertsResponse { Success = true }, ct);
+        await Send.OkAsync(new SaveBugRatioAlertsResponse { Success = true }, ct);
     }
 }
 

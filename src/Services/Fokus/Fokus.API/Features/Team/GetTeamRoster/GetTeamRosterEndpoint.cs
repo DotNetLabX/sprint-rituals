@@ -38,7 +38,7 @@ public class GetTeamRosterEndpoint(DeveloperRepository developerRepository)
             IsActive = d.IsActive
         }).ToList();
 
-        await SendOkAsync(new TeamRosterResponse
+        await Send.OkAsync(new TeamRosterResponse
         {
             Developers = dtos,
             SubTeams = subTeams

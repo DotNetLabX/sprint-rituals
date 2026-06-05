@@ -8,6 +8,6 @@ public class GetSubTeamsEndpoint(DeveloperRepository developerRepository)
     public override async Task HandleAsync(CancellationToken ct)
     {
         var subTeams = await developerRepository.GetDistinctSubTeamsAsync(ct);
-        await SendOkAsync(subTeams, ct);
+        await Send.OkAsync(subTeams, ct);
     }
 }

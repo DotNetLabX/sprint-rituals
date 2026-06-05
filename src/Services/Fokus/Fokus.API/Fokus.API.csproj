@@ -11,7 +11,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FastEndpoints" Version="6.0.0" />
+    <PackageReference Include="FastEndpoints" />
+    <PackageReference Include="MassTransit" />
+    <PackageReference Include="protobuf-net.Grpc.AspNetCore" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,6 +24,7 @@
     <ProjectReference Include="..\..\..\Modules\Jira\Jira.RestApi\Jira.RestApi.csproj" />
     <ProjectReference Include="..\..\..\Modules\Xray\Xray.Contracts\Xray.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Modules\Xray\Xray.GraphQL\Xray.GraphQL.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Blocks.Contracts\Blocks.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

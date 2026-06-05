@@ -22,14 +22,14 @@ public class GetQaMetricsEndpoint(
         var sprintInfo = sprints.FirstOrDefault(s => s.Id == req.SprintId);
         if (sprintInfo is null)
         {
-            await SendNotFoundAsync(ct);
+            await Send.NotFoundAsync(ct);
             return;
         }
 
         // 4. If Xray disabled, return hasQaData=false with empty metrics
         if (!settings.XrayEnabled)
         {
-            await SendOkAsync(BuildEmptyResponse(), ct);
+            await Send.OkAsync(BuildEmptyResponse(), ct);
             return;
         }
 
@@ -119,7 +119,7 @@ public class GetQaMetricsEndpoint(
             settings,
             subTeam);
 
-        await SendOkAsync(MapResponse(result), ct);
+        await Send.OkAsync(MapResponse(result), ct);
     }
 
     private static QaMetricsResponse BuildEmptyResponse() => new()

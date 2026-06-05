@@ -25,6 +25,6 @@ public class GetDevelopersEndpoint(DeveloperRepository developerRepository)
             SubTeam = d.SubTeam,
             IsActive = d.IsActive
         }).ToList();
-        await SendOkAsync(result, ct);
+        await Send.OkAsync(result, ct);
     }
 }

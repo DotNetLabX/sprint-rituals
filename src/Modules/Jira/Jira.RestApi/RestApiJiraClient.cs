@@ -162,7 +162,7 @@ public class RestApiJiraClient(IJiraApi api) : IJiraClient
                 continue;
             }
 
-            var message = ParseError(response.Error?.Content) ?? $"Jira API returned {(int)response.StatusCode}";
+            var message = ParseError((response.Error as ApiException)?.Content) ?? $"Jira API returned {(int)response.StatusCode}";
 
             if (response.StatusCode == HttpStatusCode.Unauthorized)
                 throw new UnauthorizedException(message);

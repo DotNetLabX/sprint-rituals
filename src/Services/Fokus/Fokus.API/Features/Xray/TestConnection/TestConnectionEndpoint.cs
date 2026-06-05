@@ -27,7 +27,7 @@ public class TestConnectionEndpoint(AppSettingsRepository settingsRepository, IX
         // ProbeAsync sends a minimal GraphQL query (limit 1, no JQL) to verify data-access permissions
         await xrayClient.ProbeAsync(token, ct);
 
-        await SendOkAsync(new TestConnectionResponse
+        await Send.OkAsync(new TestConnectionResponse
         {
             Success = true,
             Message = "Connected — Xray access verified."

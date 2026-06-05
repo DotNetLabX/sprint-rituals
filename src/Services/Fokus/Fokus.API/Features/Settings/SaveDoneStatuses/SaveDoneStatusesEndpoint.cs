@@ -30,6 +30,6 @@ public class SaveDoneStatusesEndpoint(AppSettingsRepository repository)
         var existing = await repository.GetAsync(ct);
         existing.DoneStatuses = req.Statuses;
         await repository.SaveAsync(existing, ct);
-        await SendOkAsync(existing.DoneStatuses, ct);
+        await Send.OkAsync(existing.DoneStatuses, ct);
     }
 }

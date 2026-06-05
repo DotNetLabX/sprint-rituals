@@ -37,7 +37,7 @@ public class SaveXraySettingsEndpoint(AppSettingsRepository repository)
 
         await repository.SaveAsync(existing, ct);
 
-        await SendOkAsync(new SaveXraySettingsResponse { Success = true }, ct);
+        await Send.OkAsync(new SaveXraySettingsResponse { Success = true }, ct);
     }
 }
 

@@ -26,6 +26,6 @@ public class SaveWorkflowStagesEndpoint(AppSettingsRepository repository)
         var existing = await repository.GetAsync(ct);
         existing.WorkflowStages = req.Stages;
         await repository.SaveAsync(existing, ct);
-        await SendOkAsync(existing.WorkflowStages, ct);
+        await Send.OkAsync(existing.WorkflowStages, ct);
     }
 }

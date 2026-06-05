@@ -13,7 +13,7 @@ public class UpdateStatusEndpoint(UserRepository userRepository, PersonRepositor
         var user = await userRepository.GetByIdAsync(req.Id, ct);
         if (user is null)
         {
-            await SendNotFoundAsync(ct);
+            await Send.NotFoundAsync(ct);
             return;
         }
 
@@ -34,7 +34,7 @@ public class UpdateStatusEndpoint(UserRepository userRepository, PersonRepositor
 
         var person = await personRepository.GetByIdAsync(user.PersonId, ct);
 
-        await SendOkAsync(new UserResponse
+        await Send.OkAsync(new UserResponse
         {
             Id = user.Id,
             Email = person?.Email ?? string.Empty,

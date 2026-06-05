@@ -22,6 +22,6 @@ public class GetJiraSprintsEndpoint(IJiraClient jiraClient)
             })
             .ToList();
 
-        await SendOkAsync(new GetJiraSprintsResponse { Sprints = ordered }, ct);
+        await Send.OkAsync(new GetJiraSprintsResponse { Sprints = ordered }, ct);
     }
 }

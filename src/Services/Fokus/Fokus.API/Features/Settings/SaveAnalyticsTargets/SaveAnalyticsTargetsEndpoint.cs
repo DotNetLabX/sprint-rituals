@@ -26,7 +26,7 @@ public class SaveAnalyticsTargetsEndpoint(AppSettingsRepository repository)
         var existing = await repository.GetAsync(ct);
         existing.BugRatioTarget = req.BugRatioTarget;
         await repository.SaveAsync(existing, ct);
-        await SendOkAsync(new SaveAnalyticsTargetsResponse { Success = true }, ct);
+        await Send.OkAsync(new SaveAnalyticsTargetsResponse { Success = true }, ct);
     }
 }
 

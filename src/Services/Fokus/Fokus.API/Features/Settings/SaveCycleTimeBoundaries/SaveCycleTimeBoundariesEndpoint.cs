@@ -43,21 +43,21 @@ public class SaveCycleTimeBoundariesEndpoint(AppSettingsRepository repository)
         if (startIndex < 0)
         {
             AddError(r => r.StartStage, "StartStage does not match any configured workflow stage or done status.");
-            await SendErrorsAsync(400, ct);
+            await Send.ErrorsAsync(400, ct);
             return;
         }
 
         if (endIndex < 0)
         {
             AddError(r => r.EndStage, "EndStage does not match any configured workflow stage or done status.");
-            await SendErrorsAsync(400, ct);
+            await Send.ErrorsAsync(400, ct);
             return;
         }
 
         if (startIndex >= endIndex)
         {
             AddError(r => r.StartStage, "StartStage must precede EndStage in the configured order.");
-            await SendErrorsAsync(400, ct);
+            await Send.ErrorsAsync(400, ct);
             return;
         }
 
@@ -65,6 +65,6 @@ public class SaveCycleTimeBoundariesEndpoint(AppSettingsRepository repository)
         settings.CycleTimeEndStage = req.EndStage;
         await repository.SaveAsync(settings, ct);
 
-        await SendOkAsync(new SaveCycleTimeBoundariesResponse(settings.CycleTimeStartStage, settings.CycleTimeEndStage), ct);
+        await Send.OkAsync(new SaveCycleTimeBoundariesResponse(settings.CycleTimeStartStage, settings.CycleTimeEndStage), ct);
     }
 }

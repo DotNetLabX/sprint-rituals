@@ -25,6 +25,11 @@ Team mode: Standard (architect → developer → reviewer). Branch: `main`. Star
 
 ## Protocol deviations observed (cont.)
 7. Commit protocol assumes a clean tree / feature branch. Pipeline ran on `main` with pre-existing uncommitted scaffolding intermingled with Pass 0 code → the mandated `feat(...)` code commit can't be cleanly scoped (intra-file overlap + interactive staging unavailable). Pre-flight "stay on current branch" + "dirty tree: inform and continue" let the pipeline start on a dirty main without isolating the work (no worktree/branch).
+8. **Reviewer mis-issued APPROVE with a HIGH finding present** — violates `reviewer.md:110-111` ("Any CRITICAL or HIGH issue present → REQUEST CHANGES"). HIGH-1 mandated REQUEST CHANGES → auto developer fix cycle. TL also missed the contradiction: treated APPROVE as valid and added a discretionary fix instead of flagging the invalid verdict.
+9. **Architect done-check returned PASS while absorbing a conformance gap** — found a missed bare `SendAsync(...,201,ct)` (Step-2 problem-class miss) but PASSED with it "caught and migrated" instead of FAIL→developer (`architect.md` done-check). Either routing bypassed or architect edited code (not allowed). Upstream cause: single-spawn collapse (#5) surfaced the miss late, at the done-check.
+
+## Checkpoint audit (post-run)
+Collapsing the two-phase `Analyze→Write`/`Implement` into single spawns (#5) destroyed four question checkpoints: architect questions, architect review-mode offer (would recommend critic in team mode), developer questions, and early surfacing of the Step-2 miss (#9). Correctly-handled non-asks: pre-flight defaults, MEDIUM-1 dismiss, LOW-1 defer, 2 architect flags routed, commit decision flagged to user. No PO checkpoint (ad-hoc, no spec — PO/critic has nothing to diff against).
 
 ## Coordination notes
 - **Impl commit deferred:** working tree has pre-existing unrelated changes (CLAUDE.md, proposals, .claude/ scaffolding) intermingled with developer changes — auto-committing "implementation done" would sweep them in. Deferring to the review-approved checkpoint with scoped staging. (Reasoned deviation from commit protocol.)

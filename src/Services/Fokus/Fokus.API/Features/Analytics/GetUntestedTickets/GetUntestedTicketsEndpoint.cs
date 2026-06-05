@@ -18,14 +18,14 @@ public class GetUntestedTicketsEndpoint(
         var sprintInfo = sprints.FirstOrDefault(s => s.Id == req.SprintId);
         if (sprintInfo is null)
         {
-            await SendNotFoundAsync(ct);
+            await Send.NotFoundAsync(ct);
             return;
         }
 
         // 3. If Xray disabled, return empty list
         if (!settings.XrayEnabled)
         {
-            await SendOkAsync(new UntestedTicketsResponse(), ct);
+            await Send.OkAsync(new UntestedTicketsResponse(), ct);
             return;
         }
 
@@ -33,7 +33,7 @@ public class GetUntestedTicketsEndpoint(
         var sprint = await sprintRepository.GetSprintWithMembershipsAsync(req.SprintId, ct);
         if (sprint is null)
         {
-            await SendNotFoundAsync(ct);
+            await Send.NotFoundAsync(ct);
             return;
         }
 
@@ -68,7 +68,7 @@ public class GetUntestedTicketsEndpoint(
             })
             .ToList();
 
-        await SendOkAsync(new UntestedTicketsResponse { Tickets = untested }, ct);
+        await Send.OkAsync(new UntestedTicketsResponse { Tickets = untested }, ct);
     }
 
     private static bool IsInSubTeam(TicketCoverageInfo ticket, Sprint sprint, string subTeam)

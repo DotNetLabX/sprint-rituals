@@ -15,7 +15,7 @@ public class DetectWorkflowStagesEndpoint(
 
         var result = detectionService.Detect(edgeData, settings.DoneStatuses);
 
-        await SendOkAsync(new DetectWorkflowStagesResponse
+        await Send.OkAsync(new DetectWorkflowStagesResponse
         {
             Stages = result.Stages,
             Sidelined = result.Sidelined,

@@ -19,7 +19,7 @@ public class GetDeveloperThroughputEndpoint(
         // 2. No closed sprints — return empty response
         if (ascending.Count == 0)
         {
-            await SendOkAsync(new DeveloperThroughputResponse([], []), ct);
+            await Send.OkAsync(new DeveloperThroughputResponse([], []), ct);
             return;
         }
 
@@ -33,7 +33,7 @@ public class GetDeveloperThroughputEndpoint(
             if (match is null)
             {
                 AddError(r => r.SprintId, "Sprint not found.");
-                await SendErrorsAsync(400, ct);
+                await Send.ErrorsAsync(400, ct);
                 return;
             }
             targetSprintIds = new List<int> { match.Id };
@@ -106,6 +106,6 @@ public class GetDeveloperThroughputEndpoint(
             allDevelopers,
             statusTransitions);
 
-        await SendOkAsync(result, ct);
+        await Send.OkAsync(result, ct);
     }
 }

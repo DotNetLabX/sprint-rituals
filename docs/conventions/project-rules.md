@@ -31,20 +31,20 @@ These are NOT source files (agents may read/write them freely):
 
 ```
 src/
+  Host/                        # Single Web SDK deployable — composes all modules
   BuildingBlocks/              # Shared libraries
     (app-agnostic)             #   Reusable primitives (no project knowledge)
-    (app-specific)             #   gRPC contracts, integration event contracts
-  Services/                    # Microservices — one folder per service
+    Blocks.Contracts/          #   App-specific cross-module contracts: gRPC interfaces + integration event DTOs
+  Services/                    # Domain modules — one folder per domain
     {Svc}/
-      {Svc}.API/               #   FastEndpoints feature slices, SignalR hubs, DI, migration startup host
+      {Svc}.API/               #   FastEndpoints feature slices, SignalR hubs, DI (class library)
       {Svc}.Domain/            #   Aggregates, value objects, domain events
       {Svc}.Persistence/       #   EF Core DbContext, configs, migrations, repositories
-  Modules/                     # Modular monolith (Contracts + Implementation per module)
-  ApiGateway/                  # YARP reverse proxy
-docker-compose                 # Local dev environment
+  Modules/                     # External-system integration modules (Contracts + Implementation)
+client/                        # Vue 3 SPA — built into src/Host/wwwroot/
 ```
 
-Default to **module**; only use a microservice when deployment/scaling/ownership demands it.
+This is a **modular monolith**: `src/Host` is the only Web SDK / deployable project. All `*.API` projects are class libraries composed into a single process. No API gateway. No docker-compose in this architecture.
 
 ## Project Reference Graph
 

@@ -32,7 +32,7 @@ public class SaveSyncConfigEndpoint(AppSettingsRepository repository)
         existing.SyncBackSprintCount = req.SyncBackSprintCount;
         existing.PlanningWindowDays = req.PlanningWindowDays;
         await repository.SaveAsync(existing, ct);
-        await SendOkAsync(new SaveSyncConfigResponse { Success = true }, ct);
+        await Send.OkAsync(new SaveSyncConfigResponse { Success = true }, ct);
     }
 }
 

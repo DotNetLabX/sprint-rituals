@@ -8,13 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0-preview.4.25258.110" />
-    <PackageReference Include="Scalar.AspNetCore" Version="2.4.18" />
-    <PackageReference Include="FastEndpoints" Version="6.0.0" />
-    <PackageReference Include="FastEndpoints.Swagger" Version="6.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.7" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.0-preview.4.25258.110" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0-preview.4.25258.110">
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Scalar.AspNetCore" />
+    <PackageReference Include="FastEndpoints" />
+    <PackageReference Include="FastEndpoints.Swagger" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -22,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BuildingBlocks\Blocks.AspNetCore\Blocks.AspNetCore.csproj" />
+    <ProjectReference Include="..\BuildingBlocks\Blocks.EntityFrameworkCore\Blocks.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\Services\Identity\Identity.API\Identity.API.csproj" />
     <ProjectReference Include="..\Services\Fokus\Fokus.API\Fokus.API.csproj" />
   </ItemGroup>

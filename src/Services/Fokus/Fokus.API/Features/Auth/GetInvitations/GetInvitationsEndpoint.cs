@@ -20,6 +20,6 @@ public class GetInvitationsEndpoint(InvitationRepository invitationRepository)
             ExpiresAt = i.ExpiresAt
         }).ToList();
 
-        await SendOkAsync(result, ct);
+        await Send.OkAsync(result, ct);
     }
 }

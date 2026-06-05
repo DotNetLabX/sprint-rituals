@@ -26,6 +26,6 @@ public class GetCycleTimeBoundariesEndpoint(AppSettingsRepository repository)
         var endStage = settings.CycleTimeEndStage
             ?? (settings.DoneStatuses.Count > 0 ? settings.DoneStatuses[0] : string.Empty);
 
-        await SendOkAsync(new GetCycleTimeBoundariesResponse(startStage, endStage, availableStages, settings.WorkflowStages.Count), ct);
+        await Send.OkAsync(new GetCycleTimeBoundariesResponse(startStage, endStage, availableStages, settings.WorkflowStages.Count), ct);
     }
 }

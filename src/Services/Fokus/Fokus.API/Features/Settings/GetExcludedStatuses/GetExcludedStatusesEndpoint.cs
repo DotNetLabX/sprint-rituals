@@ -8,6 +8,6 @@ public class GetExcludedStatusesEndpoint(AppSettingsRepository repository)
     public override async Task HandleAsync(CancellationToken ct)
     {
         var settings = await repository.GetAsync(ct);
-        await SendOkAsync(settings.ExcludedFromScopeStatuses, ct);
+        await Send.OkAsync(settings.ExcludedFromScopeStatuses, ct);
     }
 }

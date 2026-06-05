@@ -18,7 +18,7 @@ public class GetQaTrendsEndpoint(
         var settings = await appSettingsRepository.GetAsync(ct);
         if (!settings.XrayEnabled)
         {
-            await SendOkAsync(new QaTrendsResponse(
+            await Send.OkAsync(new QaTrendsResponse(
                 HasQaData: false,
                 Sprints: [],
                 QualityTrends: [],
@@ -33,7 +33,7 @@ public class GetQaTrendsEndpoint(
 
         if (ascending.Count < 2)
         {
-            await SendOkAsync(new QaTrendsResponse(
+            await Send.OkAsync(new QaTrendsResponse(
                 HasQaData: false,
                 Sprints: [],
                 QualityTrends: [],
@@ -51,7 +51,7 @@ public class GetQaTrendsEndpoint(
 
         if (qaSyncedAscending.Count < 2)
         {
-            await SendOkAsync(new QaTrendsResponse(
+            await Send.OkAsync(new QaTrendsResponse(
                 HasQaData: false,
                 Sprints: [],
                 QualityTrends: [],
@@ -150,6 +150,6 @@ public class GetQaTrendsEndpoint(
             subTeam);
 
         // 12. Return result
-        await SendOkAsync(result, ct);
+        await Send.OkAsync(result, ct);
     }
 }

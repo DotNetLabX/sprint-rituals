@@ -19,7 +19,7 @@ public class GetBugRatioEndpoint(
         // 2. No closed sprints — return empty multi response
         if (ascending.Count == 0)
         {
-            await SendOkAsync(new BugRatioResponse("multi", null, null), ct);
+            await Send.OkAsync(new BugRatioResponse("multi", null, null), ct);
             return;
         }
 
@@ -52,7 +52,7 @@ public class GetBugRatioEndpoint(
             if (target is null)
             {
                 AddError(r => r.SprintId, "Sprint not found.");
-                await SendErrorsAsync(400, ct);
+                await Send.ErrorsAsync(400, ct);
                 return;
             }
 
@@ -69,7 +69,7 @@ public class GetBugRatioEndpoint(
             var singleResult = bugRatioService.ComputeSingleSprint(
                 target, priorSprint, allSprints, filteredActive, settings, statusTransitions, subTeam, excludedIds);
 
-            await SendOkAsync(new BugRatioResponse("single", null, singleResult), ct);
+            await Send.OkAsync(new BugRatioResponse("single", null, singleResult), ct);
         }
         else
         {
@@ -89,7 +89,7 @@ public class GetBugRatioEndpoint(
             var multiResult = bugRatioService.ComputeMultiSprint(
                 selectedSprints, allSprints, filteredActive, settings, statusTransitions, subTeam, excludedInAll);
 
-            await SendOkAsync(new BugRatioResponse("multi", multiResult, null), ct);
+            await Send.OkAsync(new BugRatioResponse("multi", multiResult, null), ct);
         }
     }
 }

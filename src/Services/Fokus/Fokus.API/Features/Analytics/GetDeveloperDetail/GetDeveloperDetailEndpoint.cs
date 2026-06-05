@@ -21,7 +21,7 @@ public class GetDeveloperDetailEndpoint(
         var developer = allDevelopers.FirstOrDefault(d => d.Id == req.AccountId);
         if (developer is null || !developer.IsActive)
         {
-            await SendNotFoundAsync(ct);
+            await Send.NotFoundAsync(ct);
             return;
         }
 
@@ -78,7 +78,7 @@ public class GetDeveloperDetailEndpoint(
 
         if (!hasAnyActivity)
         {
-            await SendNotFoundAsync(ct);
+            await Send.NotFoundAsync(ct);
             return;
         }
 
@@ -117,6 +117,6 @@ public class GetDeveloperDetailEndpoint(
             settings.BugRatioTarget,
             jiraOptions.Value.InstanceUrl);
 
-        await SendOkAsync(result, ct);
+        await Send.OkAsync(result, ct);
     }
 }
