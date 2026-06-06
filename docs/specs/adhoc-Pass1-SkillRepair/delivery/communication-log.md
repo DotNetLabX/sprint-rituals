@@ -24,6 +24,27 @@ Audit trail for the `adhoc-Pass1-SkillRepair` pipeline run. Hub-and-spoke: all m
 | 18 | team-lead → architect | architect:plan (touch-up) | Fix Codex HIGH (de-conflate domain-service vs Application-service; full-stack = contrast/see-also) + MED (improve-skills plugin-repo adaptation note). | Targeted, localized to Step 3 + disposition. Re-verify with Codex after. |
 | 19 | architect → team-lead | plan touched-up | v3 delivered. FIX 1: Step 3 pt1 scopes domain-service to single Domain-layer pure pattern; ArticleAccessChecker = contrast/see-also (NOT variant), cross-ref cqrs-patterns; pt6 DI + ADR-005 row + Accept updated; pt3 purity intact. FIX 2: improve-skills format/location adaptation note added. | TL read the diff — both fixes correct & localized. Dispatching Codex to close its own 2 findings; skipping full critic re-run (localized, critic already GO). |
 | 20 | team-lead → Codex | re-verify (FIX 1,2) | Confirm HIGH (de-conflation) + MED (improve-skills note) resolved in v3. | Final gate. If GO → approve + commit plan + start developer. |
+| 21 | Codex → team-lead | re-verify (FIX 1,2) | **GO** — FIX 1 RESOLVED, FIX 2 RESOLVED, no new issues (`codex-rereview.md` "Touch-up confirmation"). | Both reviewers now GO on v3. Verdict validated (no open CRITICAL/HIGH). **Plan APPROVED.** |
+| 22 | team-lead | plan approved | Committed `feat(adhoc-Pass1-SkillRepair): add implementation plan` (a515e60, 6 delivery files; markers excluded). | Auto-commit per Commit Protocol. On `main` (consistent w/ Pass 0). |
+| 23 | team-lead → developer | developer:analyze | `Analyze adhoc-Pass1-SkillRepair.` | Phase 1 spawn (foreground). Gate set `developer:analyze`. Developer edits land in PLUGIN repo `<plugin-repo>`. |
+| 24 | developer → team-lead | implemented | `implementation.md` ready. **COLLAPSED two-phase** — analyzed (0 questions) AND implemented in one run. Created 3 skills (domain-service, central-package-management, framework-currency), repaired 2 (analytics-computation-service full reframe, domain-patterns additive), 2 CHANGELOGs, skill-backlog.md. Self-audit (Step 7) all pass; "Deviations: None". | **LESSON:** `developer:analyze` gate watches sprint-rituals tree, NOT the plugin repo → cross-repo blind spot let the collapse through. No question-checkpoint actually skipped (0 questions). **Provenance check:** `docs/architecture/README.md` (ADR-10 spawn-mode) mtime 12:52 ≪ dev run 13:37+ → NOT developer's work (pre-existing/earlier overreach); excluded from Pass 1 commit, surfaced to user. `.claude/`/`.omc/`/`docs/audit/` = runtime pollution, exclude. |
+| 25 | team-lead → architect | done-check | `Step 1 done check.` — verify implementation.md vs plan (7 steps); spot-check grep accepts; scope to Pass 1 skill files only. | Independent verification (architect authored plan, developer wrote code → author≠reviewer holds). Record collapse + cross-repo-gate lesson. |
+| 26 | architect → team-lead | done-check | **PASS** (`done-check.md`). All 7 steps covered; every grep-accept re-run against real files & holds; cross-refs resolve; pre-commitment predictions all "did not occur". Scope exclusions (README ADR-10 + pollution) noted, not failed. | Verdict validated (PASS, no step Missing). → Step 2 code review. |
+| 27 | team-lead → reviewer + Codex | Step 2 review | Review the 5 Pass 1 SKILL.md bodies in the PLUGIN repo diff — quality, example correctness (compile vs `Blocks.Domain`), Pass 2/3 usability. Scope to Pass 1 skills; ignore README/pollution. | reviewer → `review.md` (Step 2 section); Codex → `codex-review-impl.md`. Parallel. Max 3 fix cycles. |
+| 29 | codex-review → team-lead | Step 2 review | **NO-GO** (`codex-review-impl.md`) — 7 HIGH + 4 MED + 1 LOW, code-grounded against live src. Root cause: skills present target-state code as live "SprintRituals worked examples"; + factual errors vs real BuildingBlocks (`IDomainEvent`, identity model, interceptor/publisher variants, `SingleValueObject` equality); + Mapster assumed but absent from the stack. See Ledger §E. | Confirms reviewer RV-1 (IDomainEvent). Adds the live-vs-target labeling issue + Mapster stack gap (⚠️ user decision). Batching ALL Step 2 findings (RV-1..7 + CX-1..16,X1,X2) → developer fix Cycle 1/3. |
+| 30 | team-lead ↔ user | decision | TL verified Mapster absent (not in CPM/csproj, zero `.Adapt<>` usage; endpoints map manually). User decision: **ADOPT Mapster (keep ADR-010)** — skills prescribe `.Adapt<>()` labelled target-state; Pass 2/3 adds Mapster to CPM + converts manual maps. | ADR-010/CLAUDE.md stand. **Flag:** "add Mapster to CPM" = Pass 2/3 prerequisite. |
+| 31 | team-lead → developer | fix Cycle 1/3 | Consolidated fix: RV-1..7 + CX-1..16/X1/X2, grouped by 10 themes + Mapster decision. Verify every "live" example against real src; box other-stack variants reference-only (D-A); use real config VOs; relabel target-state. | Single cycle. Re-review (reviewer + Codex) after. Deliverables in plugin repo. |
+| 32 | developer → team-lead | fixes done | Cycle 1 fixes applied; `implementation.md` updated. (TL did NOT read it — lean protocol; reviewers verify.) | TL now lean: trust checkpoint, grep verdicts only. |
+| 33 | team-lead → reviewer + Codex | re-review C1 | Re-verify your own Step-2 findings (RV-1..7 / CX-1..16/X1/X2) against the updated 5 skill files — RESOLVED/PARTIAL/NOT + regressions. Pointers only, findings live in `review.md` §STEP2 + `codex-review-impl.md`. | Lean dispatch (no inlined findings). reviewer → APPROVE/RC; Codex → GO/NO-GO. |
+| 34 | reviewer → team-lead | re-review C1 | **APPROVED** (`review.md` §"STEP 2 — RE-REVIEW (Cycle 1/3)") — RV-1..7 all RESOLVED, no regressions. | Verdict valid (no open HIGH). Holding close for Codex re-verify (its NO-GO was the gate). |
+| 35 | codex → team-lead | re-verify C1 | **NO-GO** — 17/18 RESOLVED; **CX-13 PARTIAL** (`codex-review-impl.md` §Re-verification): `domain-patterns:86-94,116-124` — `DomainEvent<TAction>` variant boxed reference-only ✓, but main behavior example still uses nonexistent `IAction`/`AssigneeChanged` as if live. | Reviewer APPROVED; Codex blocks on CX-13 only. One residual → developer Cycle 2/3 (targeted). |
+| 36 | team-lead → developer | fix Cycle 2/3 | Fix CX-13 only (domain-patterns main behavior example uses nonexistent `IAction`/`AssigneeChanged`). Pointer to `codex-review-impl.md`. | Lean dispatch. Codex re-verify CX-13 after (reviewer already APPROVED). |
+| 37 | developer → team-lead | fix done C2 | CX-13 fix applied; `implementation.md` updated. (TL didn't read — lean.) | → Codex re-verify CX-13 only. |
+| 38 | team-lead → Codex | re-verify C2 | Confirm CX-13 resolved in `domain-patterns`. | If GO → close Step 2 → shutdown (summary + commits). |
+| 39 | codex → team-lead | re-verify C2 | **GO** (`codex-review-impl.md` §"Re-verification (Cycle 2)") — CX-13 **RESOLVED**: `domain-patterns:88` labels `Assignee`/`IAction`/`AssigneeChanged` as illustrative pseudocode; line 100 redirects to real `UserCreated`/`PersonCreated` records. 18/18. | **Step 2 closed** — reviewer APPROVED + Codex GO, both valid. → shutdown. |
+| 40 | team-lead (close) | shutdown | Wrote `summary.md`; backlog Pass 1 → **Done**, Pass 2 → Ready (+ Mapster-to-CPM prereq). | Two-repo commit next. |
+| 41 | team-lead (close) | commit | Plugin repo: 5 skills + 2 CHANGELOG + skill-backlog.md (excl. README ADR-10 WIP + `.claude/`/`.omc/`/`docs/audit/`). Sprint-rituals: delivery artifacts + backlog (excl. `.claude/` runtime state). | Pipeline complete. |
+| 28 | reviewer → team-lead | Step 2 review | **REQUEST CHANGES** (Cycle 1/3) — 1 HIGH + 3 MED + 3 LOW. HIGH: `domain-patterns:107` `IDomainEvent : INotification, IEvent` is wrong — real `Blocks.Domain/Events/IDomainEvent.cs` = `IDomainEvent : IEvent` (no MediatR/INotification) → copy = non-compiling. MED: `domain-service:82` `_history` primary-ctor param style; `analytics:76` `SparklinePoint` undefined anchor; `domain-patterns:12-16` audit-field types omitted (`CreatedById string?` not `int?`). LOW×3: dup naming caveat; CPM grep `src/**` shell-portability; framework-currency 2-arg SendAsync footnote. Strong positives: de-conflation clean, SMELL gone, D-A/D-B correct. | Verdict valid (HIGH present). Batching with Codex impl findings → single developer fix Cycle 1/3. |
 
 ---
 
@@ -42,3 +63,82 @@ Audit trail for the `adhoc-Pass1-SkillRepair` pipeline run. Hub-and-spoke: all m
 **Q4 — Acceptance bar:** Each skill cites its governing ADR(s); passes anti-pattern/over-specification checks; any embedded code example compiles against this solution's BuildingBlocks; "accepted not proven until Passes 2/3 consume it" note. **Plus** a dry-run of `create-implementation-plan`'s skill-inventory scan against the new project-local/plugin skills.
 
 **Review mode:** Critic.
+
+---
+
+## Problems Ledger (every issue raised this run, with status)
+
+Complete audit of all problems found across the Pass 1 pipeline. Status: ✅ resolved · 🔧 open (in fix cycle) · ⏳ pending review · ⚠️ flagged to user.
+
+### A. Plan review round 1 — Codex (code-grounded) NO-GO: 6 HIGH + 3 MED
+| ID | Sev | Problem | Status |
+|----|-----|---------|--------|
+| PC-1 | HIGH | Step 3 output rule internally inconsistent — "no DTO twins" invites returning domain types from endpoints, weakens API boundary | ✅ resolved by D-B (endpoint always owns DTO) |
+| PC-2 | HIGH | Step 3 input rule too strict — "domain types/VOs only" wrongly bans intrinsic primitives (`windowSize`, `anchorIndex`) | ✅ resolved (Step 3 pt5 primitives carve-out) |
+| PC-3 | HIGH | Repo escape-hatch under-specified — leaks `IRepository`/`IQueryable`/persistence into Domain | ✅ resolved (narrow domain-owned read port; forbids concrete repos/IQueryable) |
+| PC-4 | HIGH | Step 1 analytics scrub incomplete — old API/Service framing left in description/when-to-use/table | ✅ resolved (whole-skill reframe + grep accept) |
+| PC-5 | MED | No domain result-type replacement named for in-service response trees | ✅ resolved (`BugRatioResult` domain record) |
+| PC-6 | HIGH | Step 2 domain-patterns leaves ADR-004-incompatible MediatR/Application content | ✅ resolved (annotate full/light variant, not scrub) |
+| PC-7 | MED | CPM verification grep misses child `<Version>` / `VersionOverride=` | ✅ resolved (three-form grep) |
+| PC-8 | HIGH | `SendAsync` detection not operational — raw grep hits only HttpClient/SignalR here | ✅ resolved (two-stage detection) |
+| PC-9 | MED | Step 3 ↔ Step 7 cross-ref mismatch | ✅ resolved (refs added to Step 3) |
+
+### B. Plan review round 1 — Critic: 3 MED + 4 LOW
+| ID | Sev | Problem | Status |
+|----|-----|---------|--------|
+| CR-C1 | MED | FastEndpoints version drift — solution on 8.1.0, plan anchored 7.x | ✅ resolved (8.1.0 verify-against-installed) |
+| CR-C2 | MED | `improve-skills` housekeeping (backlog/CHANGELOG/README) unrouted across two repos | ✅ resolved (routed to plugin repo) |
+| CR-C3 | MED | Step 6 `--plugin-dir` may not load `nexus` core dependency | ✅ resolved (verify-invocation; two-dir command) |
+| CR-L4 | LOW | no-`Service`-suffix rule unscoped vs `extract-feature-service` | ✅ folded (scoped to domain services) |
+| CR-L5 | LOW | `scripts/` enumeration omits `skill-classification.md` | ✅ folded |
+| CR-L6 | LOW | Step 1 line-number drift | ✅ folded (grep accepts authoritative) |
+| CR-L7 | LOW | `improve-skills` blind `.claude/skills/` glob | ✅ folded (gap pre-verified note) |
+
+### C. Plan re-review round 2 — Codex: 2 NEW (introduced by the revision)
+| ID | Sev | Problem | Status |
+|----|-----|---------|--------|
+| TU-1 | HIGH | Step 3 conflates `domain-service` with Application-service (`ArticleAccessChecker` uses DbContext) — contradicts pt3 purity | ✅ resolved (de-conflated; contrast/see-also, not a variant) |
+| TU-2 | MED | `improve-skills` scoped to native `.claude/skills/`, no plugin-repo adaptation note | ✅ resolved (format/location adaptation note) |
+
+### D. Implementation review (Step 2) — Reviewer REQUEST CHANGES: 1 HIGH + 3 MED + 3 LOW
+| ID | Sev | File | Problem | Status |
+|----|-----|------|---------|--------|
+| RV-1 | **HIGH** | `domain-patterns:107` | `IDomainEvent : INotification, IEvent` is wrong — real `Blocks.Domain/Events/IDomainEvent.cs` = `IDomainEvent : IEvent` (no MediatR); copy → non-compiling | 🔧 open (fix cycle 1) |
+| RV-2 | MED | `domain-service:82` | `_history` as primary-ctor param — misleading (param ≠ field) | 🔧 open |
+| RV-3 | MED | `analytics:76` | `SparklinePoint` used with no definition anchor (which layer?) | 🔧 open |
+| RV-4 | MED | `domain-patterns:12-16` | audit-field types omitted — `CreatedById` is `string?` not `int?` | 🔧 open |
+| RV-5 | LOW | `domain-service:40-49` | "scoped to domain services" caveat repeated | 🔧 open |
+| RV-6 | LOW | `central-package-management:83-103` | grep `src/**/*.csproj` shell-portability (globstar) | 🔧 open |
+| RV-7 | LOW | `framework-currency:47` | 2-arg `SendAsync(body, ct)` overload not mapped | 🔧 open |
+
+### E. Implementation review (Step 2) — Codex (code-grounded) NO-GO: 7 HIGH + 4 MED + 1 LOW
+Root cause behind most HIGHs: skills present **target-state** code (what Pass 2/3 will build) as **live "SprintRituals worked examples"**, + factual errors vs real BuildingBlocks. Full report: `codex-review-impl.md`.
+| ID | Sev | File:line | Problem | Status |
+|----|-----|-----------|---------|--------|
+| CX-1 | HIGH | domain-service:36 | Worked example `Fokus.Domain/Analytics/SprintSummaryCalculator.cs` does NOT exist (live = `Fokus.API/Features/Analytics/SprintSummaryService.cs`) | 🔧 open |
+| CX-2 | HIGH | domain-service:125-135 | Endpoint example hard-codes Mapster `.Adapt<>()` — **Mapster not in `Directory.Packages.props`**, live endpoints map manually → won't build | 🔧 open (⚠️ user decision) |
+| CX-3 | MED | domain-service:74 | Read-port returns `IReadOnlyList<SprintSummary>` — no live domain `SprintSummary` type | 🔧 open |
+| CX-4 | MED | domain-service:129 | Example uses `GetBugRatioQuery`/`GetBugRatioResponse`; live = `GetBugRatioRequest`/`BugRatioResponse` | 🔧 open |
+| CX-5 | HIGH | analytics:34 | Same nonexistent `SprintSummaryCalculator.cs` worked-example as CX-1 | 🔧 open |
+| CX-6 | HIGH | analytics:91-96 | Mapster again — won't build (see CX-2) | 🔧 open |
+| CX-7 | MED | analytics:42-47 | Naming table STILL lists Service-suffix names (`CycleTimeService`, `BugRatioService`, `WorkloadService`, `SprintSummaryDomainService`) — SMELL not fully removed | 🔧 open |
+| CX-8 | MED | central-package-management:72-74 | Migration recipe step doesn't cover child `<Version>` / `VersionOverride=` (only the checks at 78-105 do) | 🔧 open |
+| CX-9 | LOW | framework-currency:65-68 | Stage 1 "unqualified" wording inaccurate (pattern hits qualified FPs; stage 2 filters) — reword "candidate"; fix receiver names | 🔧 open |
+| CX-10 | HIGH | domain-patterns:19 | Identity variant wrong — live `User` is `Entity<int>`, NOT `IdentityUser<int>`, no `IAggregateRoot` (CLAUDE.md locks "no ASP.NET Identity") | 🔧 open |
+| CX-11 | HIGH | domain-patterns:57-77 | Worked example invents `BugRatioConfig`/`XrayConfig`/`CycleTimeConfig` (don't exist); `AppSettings` is plain class. **Live VOs already exist**: `HealthThresholdConfig`, `HealthWeightConfig`, `QaHealthThresholdConfig`, `QualitySubScoreWeightConfig` (+`OwnsOne`) | 🔧 open |
+| CX-12 | HIGH | domain-patterns:107 | `IDomainEvent : INotification, IEvent` wrong — real = `IDomainEvent : IEvent` (**= reviewer RV-1, both agree**) | 🔧 open |
+| CX-13 | HIGH | domain-patterns:111-116 | `DomainEvent<TAction>`/`IAction` variant not grounded — no such types exist anywhere in src | 🔧 open |
+| CX-14 | HIGH | domain-patterns:126-131 | `TransactionalDispatchDomainEventsInterceptor` doesn't exist; live = `DispatchDomainEventsInterceptor` | 🔧 open |
+| CX-15 | HIGH | domain-patterns:145-147 | MediatR publisher variant (`Blocks.MediatR`, `IMediator.Publish`) not in src; only `Blocks.FastEndpoints/DomainEventPublisher` exists | 🔧 open (D-A: box as reference-only variant) |
+| CX-16 | MED | domain-patterns:36 | `SingleValueObject<T>` equality semantics described wrong vs source | 🔧 open |
+| CX-X1 | HIGH | cross-skill | Target-state/nonexistent artifacts labeled as live "SprintRituals worked examples" — blurs live vs ADR end-state | 🔧 open (relabel target-state vs live) |
+| CX-X2 | HIGH | cross-skill | Mapster assumed in 2 skills but absent from the stack | 🔧 open (= CX-2; ⚠️ user decision) |
+
+### F. Process problems (flow/coordination, not artifact defects)
+| ID | Problem | Status |
+|----|---------|--------|
+| PR-1 | In-context critic — architect ran `nexus:critic` in its OWN context (subagent spawn unavailable from within) → author≠reviewer violation in spirit | ✅ mitigated (TL spawned fresh-context critic for the real gate) |
+| PR-2 | Two-phase spawn COLLAPSE — developer analyzed AND implemented in one run; `developer:analyze` gate watches sprint-rituals tree but skills land in the plugin repo → CROSS-REPO GATE BLIND SPOT | ⚠️ lesson (no checkpoint skipped — 0 questions; gate fix proposed for the architect's lessons) |
+| PR-3 | Codex relay truncation — wrapper returns "Done."/"Acknowledged."/"Ready." instead of the report | ✅ mitigated (Codex writes reports to delivery files; TL reads from disk) |
+| PR-4 | Non-Pass-1 changes in the plugin repo: `docs/architecture/README.md` (ADR-10 spawn-mode, pre-existing — mtime 12:52 ≪ dev 13:37) + `.claude/`/`.omc/`/`docs/audit/` runtime pollution | ⚠️ excluded from Pass 1 commit; flagged to user |
+

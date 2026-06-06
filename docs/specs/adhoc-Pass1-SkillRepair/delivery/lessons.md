@@ -42,6 +42,20 @@
 
 - **Targeted touch-ups need a contradiction sweep, not just the edit.** After both fixes I grepped the whole plan for any residual "domain-service ↔ Application/DbContext" coupling to confirm the new contrast framing didn't leave a stale "variant" sentence behind. Lesson: for a fix that removes a conflation, the acceptance check is a repo-wide search for the conflated terms, not just re-reading the edited paragraph — the same wrong frame often appears in 3–4 places (map row, step body, DI, accept).
 
+### Done-check lessons (Step 1)
+
+- **The `developer:analyze` two-phase gate has a CROSS-REPO BLIND SPOT.** The two-phase spawn collapsed — the developer analyzed AND implemented in one run. Root cause: the `developer:analyze` enforcement hook (pipeline-gate) watches the **sprint-rituals working tree** for plan/source writes, but this pass's deliverables land in the **separate plugin repo** (`<plugin-repo>`). The gate sees no writes in the repo it watches, so it cannot enforce the analyze→implement boundary for two-repo passes. No question-checkpoint was actually skipped (Phase 1 raised 0 questions, so collapsing the phases caused no harm *this time*), but the gate is structurally unable to enforce the boundary whenever the work product is in a foreign repo. This will silently recur for every future plugin-editing pass.
+
+  ### Improvement Proposal
+  **Target:** `.claude/hooks/pipeline-gate.js` (plugin repo) + the developer agent's two-phase spawn protocol.
+  **Change:** Make the analyze/implement gate two-repo-aware. Two options, in order of robustness: (1) the gate also watches the configured foreign deliverable path (the plan's "Two-Repo Model" target, e.g. `<plugin-repo>`) when the active plan declares one — i.e. the plan surfaces its deliverable repo(s) in a machine-readable field the gate reads; OR (2) when a plan declares a foreign deliverable repo, the developer **self-declares phase** (writes a phase marker the gate honors) since the working-tree heuristic is known-blind. Option 1 is preferred (enforcement, not trust); option 2 is the fallback when the foreign path can't be watched.
+  **Evidence:** adhoc-Pass1-SkillRepair — all 5 skill files written to `<plugin-repo>`; `git status` in sprint-rituals showed none of them; the gate raised no analyze-phase block.
+  **Priority:** medium (no harm this run because Phase 1 had 0 questions, but the gate is silently non-functional for any two-repo pass — and Passes touching the plugin repo will recur).
+
+- **Spot-check greps against the real files caught nothing wrong — but the `\badapt\b` check needs receiver awareness.** My own anti-pattern grep `\badapt\b` flagged `result.Adapt<GetBugRatioResponse>()` — the Mapster `.Adapt<T>()` method, which is the *intended* D-B endpoint-owns-DTO pattern, not the "adapt" weasel-word. Lesson: the "no 'adapt'" accept check produces a false positive on the legitimate Mapster `.Adapt<T>()` API. A future automated version of this check should exclude `.Adapt<` / `.Adapt(` (method call) and match only prose "adapt/adapted." Worth noting so the reviewer (and any future done-check) doesn't waste a cycle on it.
+
+- **Independent done-check value held even with 0 findings.** All three pre-commitment predictions came back negative and every spot-check passed — but I re-ran every grep against the real plugin-repo files rather than trusting implementation.md's self-reported "grep accept passed." That is the point of author≠reviewer: the developer's self-report matched reality on independent verification, which is the evidence that makes the PASS valid (not a rubber-stamp). For two-repo passes especially, the done-check MUST read the foreign repo directly — `git status` in the pipeline repo is blind to the actual deliverables.
+
 ## Skill Gaps (carried for the eventual plan)
 
 - `domain-service` — MISSING; largest gap; shape reserved for user review (Q2).

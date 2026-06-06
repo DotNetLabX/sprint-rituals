@@ -172,3 +172,229 @@ ADR-006 (the input side of the domain boundary) — which the prior in-context c
 ---
 
 Reviewed: docs/specs/adhoc-Pass1-SkillRepair/delivery/plan.md
+
+---
+
+# STEP 2 — CODE REVIEW (Cycle 1/3)
+
+## Reviewed By
+Reviewer agent — read all 5 SKILL.md bodies directly, verified C# examples against BuildingBlocks source, verified FastEndpoints Send.* against live codebase, verified CPM XML syntax.
+
+## Verdict: REQUEST CHANGES
+
+One HIGH finding: a factual error in `domain-patterns` that would cause a developer to write an incorrect `IDomainEvent` interface declaration. All other findings are MEDIUM or LOW.
+
+## Pre-commitment Predictions
+
+- Expected the analytics reframe to be clean (SMELL "response records at the top" and repo "Exception" clause removed). **Confirmed** — both gone, replaced correctly.
+- Expected framework-currency false-positive list and 8.1.0 anchor to be present. **Confirmed** — both `GraphQLXrayClient.cs:296` and `SyncSprintsEndpoint.cs:46` cited with correct live file:line.
+- Expected a risk of stale BuildingBlocks type descriptions in domain-patterns. **Found one** — `IDomainEvent` interface claim is wrong.
+- Expected possible constructor-syntax issue in domain-service escape-hatch example. **Did not occur** — primary constructor syntax is valid .NET 10.
+
+## Findings
+
+### [HIGH] IDomainEvent described with wrong base interface
+
+**File:** `plugins/nexus-dotnet/skills/domain-patterns/SKILL.md:107`
+
+**Issue:** The Domain Events section opens with:
+
+> `Interface: IDomainEvent : INotification, IEvent (dual MediatR + FastEndpoints)`
+
+The actual source `Blocks.Domain/Events/IDomainEvent.cs` declares:
+
+```csharp
+public interface IDomainEvent : IEvent;
+```
+
+There is no `INotification` — that is a MediatR interface and it does not appear anywhere in BuildingBlocks. `INotification` is not referenced in any BuildingBlocks `.cs` file. A developer reading this skill who creates a new domain event or a new module would write `IDomainEvent : INotification, IEvent`, which would fail to compile unless they also add a MediatR package dependency. The claim is factually wrong against this solution.
+
+**Fix:** Change line 107 to:
+
+> `Interface: IDomainEvent : IEvent` (FastEndpoints in-process dispatch — implements `IEventHandler<T>`)
+
+Add a variant note if a full-stack MediatR project also needs `INotification`, but make clear that in this solution `IDomainEvent` only extends `IEvent`.
+
+**Confidence:** HIGH — verified directly against `Blocks.Domain/Events/IDomainEvent.cs`.
+
+---
+
+### [MEDIUM] domain-service escape-hatch: `_history` field name in primary constructor
+
+**File:** `plugins/nexus-dotnet/skills/domain-service/SKILL.md:82`
+
+**Issue:** The primary constructor example writes:
+
+```csharp
+public class VelocityProjector(IClosedSprintHistory _history)
+```
+
+In C# 12 primary constructors, the parameter name becomes the field — using an underscore-prefixed name as a primary constructor parameter is unconventional. The C# compiler will treat `_history` as a parameter name (not a backing field with an underscore prefix), and `this._history` is not accessible; you reference it as `_history` directly. This compiles and works, but it is unusual style: primary constructor parameters normally don't have the `_` prefix because they are not fields. A developer may copy this and expect `_history` to behave like a field declaration, which it does not (it is captured by value in the closure, not a class field). The more idiomatic form is either a named parameter (`history`) or a classic constructor + field.
+
+**Fix:** Use either the idiomatic primary constructor form:
+
+```csharp
+public class VelocityProjector(IClosedSprintHistory history)
+{
+    public async Task<VelocityProjection> ProjectAsync(int boardId, int count, CancellationToken ct)
+    {
+        var result = await history.LoadForBoard(boardId, count, ct);
+        // pure derivation
+    }
+}
+```
+
+or a classic constructor with an underscore-prefixed private field if the style guide prefers that. Either is unambiguous. The current form compiles but could mislead.
+
+**Confidence:** MEDIUM — compiles correctly in .NET 10; the concern is style clarity for a developer reading the example.
+
+---
+
+### [MEDIUM] analytics-computation-service: SparklinePoint used without definition anchor
+
+**File:** `plugins/nexus-dotnet/skills/analytics-computation-service/SKILL.md:76`
+
+**Issue:** `BugRatioResult` is declared with `SparklinePoint[] Sparkline` and the Sparkline Builder section references `SparklinePoint` records, but there is no anchor explaining where `SparklinePoint` is defined or what its shape is. A developer implementing a new analytics feature will need to create this type; as written, they must guess whether it is a BuildingBlocks type, a domain-layer record, or an API-layer DTO.
+
+**Fix:** Add one sentence anchoring `SparklinePoint` — e.g., "Define `SparklinePoint` as a domain-layer `sealed record` in `{Module}.Domain/Analytics/` alongside the result records — it is a project-specific type, not from BuildingBlocks." This removes the ambiguity without over-specifying the shape.
+
+**Confidence:** HIGH — `SparklinePoint` does not exist in BuildingBlocks (confirmed via Glob); the type origin is undefined in the skill.
+
+---
+
+### [MEDIUM] domain-patterns: AggregateRoot described as having audit fields but source uses `string?` not `int?` for CreatedById
+
+**File:** `plugins/nexus-dotnet/skills/domain-patterns/SKILL.md:12-16`
+
+**Issue:** The skill lists the audit fields correctly (`CreatedById`, `CreatedOn`, `LastModifiedById`, `LastModifiedOn`) and says `CreatedById` — the source confirms these names. However the skill omits their types entirely. A developer who needs to set `CreatedById` from a `Person.Id` (which is `int`) will face a type mismatch: the source declares `public string? CreatedById { get; set; }`. This is a potential confusion point for identity-related code.
+
+**Fix:** Add the types inline: `CreatedById (string?)`, `LastModifiedById (string?)`, `CreatedOn (DateTime?)`, `LastModifiedOn (DateTime?)`. This is a brief addition that prevents the `int` vs `string?` confusion.
+
+**Confidence:** MEDIUM — the type mismatch is real and verified against source; whether it causes an actual bug depends on usage.
+
+---
+
+### [LOW] domain-service: "scoped to domain services" naming caveat repeated twice
+
+**File:** `plugins/nexus-dotnet/skills/domain-service/SKILL.md:40-49`
+
+**Issue:** The naming section states "This naming rule is scoped to domain-layer services" at line 49 after the table, and the same point is also clear from the header "Naming Rule (scoped to domain services)". The repetition is minor but slightly clutters the section.
+
+**Fix:** Remove the repeated trailing sentence at line 49; the header already scopes it.
+
+**Confidence:** LOW — cosmetic only.
+
+---
+
+### [LOW] central-package-management: grep commands use shell glob `src/**/*.csproj` which may not work in all shells
+
+**File:** `plugins/nexus-dotnet/skills/central-package-management/SKILL.md:83-103`
+
+**Issue:** The three verification greps use `src/**/*.csproj` as the path argument. In bash with `globstar` disabled (the default in many CI environments and on Windows shells), `**` does not recurse — the grep would silently find nothing even if violations exist. On PowerShell, `**` glob expansion in grep (rg/grep) behaves differently. The skill presents these as authoritative verification commands without noting the shell dependency.
+
+**Fix:** Use `rg` (ripgrep) with `--glob` instead, or note that `**` requires `globstar` enabled (`shopt -s globstar`) in bash. Alternatively use `-r src/ --include="*.csproj"` form which works portably:
+
+```
+grep -rn 'Version="' --include="*.csproj" src/
+```
+
+**Confidence:** MEDIUM on the shell-portability concern; rated LOW because the target environment (Windows + PowerShell or bash-via-tool) is not explicitly stated, and the reader may understand the intent.
+
+---
+
+### [LOW] framework-currency: migration table lists SendAsync→ResponseAsync but does not call out the status-code parameter difference
+
+**File:** `plugins/nexus-dotnet/skills/framework-currency/SKILL.md:47`
+
+**Issue:** The table maps `await SendAsync(body, statusCode, ct)` → `await Send.ResponseAsync(body, statusCode, ct)`. This is correct for three-argument overloads, but the legacy `SendAsync` also had a two-argument form (`SendAsync(body, ct)`) that maps differently. A developer who finds a two-arg legacy call and tries to apply the table mechanically may pick the wrong modern method. This edge case is not documented.
+
+**Fix:** Add a footnote: "Two-argument `SendAsync(body, ct)` (no status code) maps to `Send.OkAsync(body, ct)` — the three-argument form above is the generic status-code variant."
+
+**Confidence:** LOW — the three-arg form covers the stated scenario; the two-arg form is a minor gap.
+
+## Positive Observations
+
+- The de-conflation of `domain-service` (Domain-layer only) vs `ArticleAccessChecker` (Application-layer contrast) is clean throughout. The hard guarantee at `domain-service/SKILL.md:182` ("No sentence in this skill implies a domain service can live in or depend on an Application layer...") is an excellent safeguard against misreading.
+- The analytics-computation-service SMELL is genuinely gone. "Response records at the top of the file — all records the service returns" (old line 31) and the repository "Exception" clause (old line 73) are both removed and replaced with the correct domain-layer pattern. The reframe is complete, not partial.
+- The `domain-service` escape-hatch section is clear and well-bounded: the forbidden list (`IRepository<T>`, `IQueryable<T>`, `DbContext`) is explicit, and the justification-comment requirement at the call site is a good guardrail.
+- The `framework-currency` two-stage detection (Stage 1 unqualified grep → Stage 2 manual receiver inspection) is correct and the false-positive table with live `file:line` citations is exactly what a developer needs to avoid over-migrating.
+- The D-A mandate (SprintRituals types appear only as labelled worked examples) is correctly applied in all five skills — every SprintRituals-specific reference is explicitly labelled.
+- The D-B rule (endpoint always owns the response DTO + Mapster map, even 1:1) is consistently applied across `domain-service`, `analytics-computation-service`, and `domain-patterns`. No remnant of the old "reuse domain type when shapes match" guidance survives.
+- The `domain-patterns` variant-annotation of `IDomainEventPublisher` and State Machine sections is additive and non-destructive — full-stack content retained, light-stack guidance added cleanly.
+
+## Gaps
+
+- `SparklinePoint` shape/location — addressed in MEDIUM finding above.
+- No test examples are included in any skill. This is expected for SKILL.md files (they are guidance, not test harnesses), but future passes may want to add an "Example test" snippet to `domain-service` to reinforce the "pure, unit-testable" claim.
+
+## Open Questions
+
+- None — all CRITICAL/HIGH findings are confirmed with direct source evidence.
+
+## Evidence
+
+| Check | Result | File / Command | Notes |
+|-------|--------|----------------|-------|
+| `IDomainEvent` interface | `IDomainEvent : IEvent` only | `Blocks.Domain/Events/IDomainEvent.cs:9` | No `INotification`; MediatR not in BuildingBlocks |
+| `INotification` in BuildingBlocks | 0 matches | `Grep INotification src/BuildingBlocks` | Confirms `INotification` is absent |
+| `AggregateRoot` audit fields | `CreatedById string?`, `CreatedOn DateTime?` etc. | `Blocks.Domain/Entities/AggregateRoot.cs:11-14` | Field names correct; types `string?` not `int?` |
+| `StringValueObject` Value setter | `protected set` | `Blocks.Domain/ValueObjects/StringValueObject.cs:5` | EmailAddress example constructor `Value = value` compiles |
+| `Guard.ThrowIfNullOrWhiteSpace` | Exists | `Blocks.Core/Guard.cs` | EmailAddress factory example compiles |
+| `ValueObject.GetEqualityComponents` | Abstract method | `Blocks.Domain/ValueObjects/ValueObject.cs:5` | Pattern correct |
+| FastEndpoints Send API | `Send.OkAsync`, `Send.NoContentAsync`, `Send.ResponseAsync` | Live grep on `src/` | All three forms present in codebase; migration table accurate |
+| analytics SMELL removal | 0 hits for "response record", "Service.cs" in analytics skill | Done-check greps confirmed | SMELL fully removed |
+| `SparklinePoint` in BuildingBlocks | Not found | `Glob **/*.cs Blocks.Domain` | Project-specific type; no anchor in skill |
+| CPM XML structure | Valid MSBuild | `central-package-management/SKILL.md:28-39` | `ManagePackageVersionsCentrally`, `CentralPackageTransitivePinningEnabled` are correct property names |
+| Build | Not applicable | Skill files are Markdown | No build step for SKILL.md artifacts |
+
+---
+
+## STEP 2 — RE-REVIEW (Cycle 1/3)
+
+**Reviewed by:** Reviewer agent — re-read all 5 SKILL.md bodies, verified every RV finding against the updated text, checked adjacent areas around each fix for regressions.
+
+## Verdict: APPROVED
+
+All seven RV findings are resolved. No regressions introduced by the fixes. No new CRITICAL or HIGH issues found.
+
+## Per-finding resolution table
+
+| # | Original severity | Finding | Status | Evidence |
+|---|-------------------|---------|--------|----------|
+| RV-1 | HIGH | `IDomainEvent : INotification, IEvent` — wrong interface | **RESOLVED** | `domain-patterns/SKILL.md:102` now shows `public interface IDomainEvent : IEvent;` verbatim. Line 105 adds an explicit "no `INotification`" guard. Full-stack variant correctly boxed in a `> NOT in this solution` callout (lines 116–124). |
+| RV-2 | MEDIUM | Primary constructor `_history` underscore-prefixed parameter | **RESOLVED** | `domain-service/SKILL.md:87` now uses `VelocityProjector(IClosedSprintHistory history)` — un-prefixed, idiomatic C# 12. Comment on line 86 explains the convention. |
+| RV-3 | MEDIUM | `SparklinePoint` used without definition anchor | **RESOLVED** | `analytics-computation-service/SKILL.md:74-77` now defines `SparklinePoint` inline as a `sealed record` with an explicit comment: "define as a domain-layer sealed record in `{Module}.Domain/Analytics/` … project-specific type, not from BuildingBlocks." |
+| RV-4 | MEDIUM | Audit field types omitted (`CreatedById` is `string?` not `int?`) | **RESOLVED** | `domain-patterns/SKILL.md:16` now lists `CreatedById (string?)`, `CreatedOn (DateTime?)`, `LastModifiedById (string?)`, `LastModifiedOn (DateTime?)` inline with types. |
+| RV-5 | LOW | Naming-rule scope caveat repeated twice | **RESOLVED** | `domain-service/SKILL.md:40-51`: header is now plain "Naming Rule" (no parenthetical), trailing repetition gone. One clean sentence at line 51 scopes the rule to domain-layer services and contrasts with `extract-feature-service`. |
+| RV-6 | LOW | CPM grep used `src/**/*.csproj` shell glob (portability) | **RESOLVED** | `central-package-management/SKILL.md:84-111` now uses `grep -rn --include="*.csproj"` for all three forms. Adds a note that `**` with bare `grep` is off by default, and provides an `rg --glob` alternative on line 109–111. |
+| RV-7 | LOW | Two-arg `SendAsync(body, ct)` overload undocumented | **RESOLVED** | `framework-currency/SKILL.md:55-57` now has a "Bare overloads to include in migration" block covering both the three-arg and two-arg forms. Two-arg explicitly maps to `Send.OkAsync(body, ct)`. Also appears in Stage 1 candidate list (line 81) and Stage 2 receiver table (line 93). |
+
+## Adjacent-area regression check
+
+- **`domain-patterns` Domain Events section:** The full-stack `DomainEvent<TAction>` variant block correctly states that MediatR projects add `INotification` to `IDomainEvent` in *their own* definition — it does not claim BuildingBlocks's `IDomainEvent` has it. The fix to RV-1 introduced no self-contradiction. The `IDomainEventPublisher` section (lines 143–168) is consistent: light-stack (`Blocks.FastEndpoints`) is the primary path; MediatR variant is clearly boxed as "NOT in this solution."
+- **`domain-service` endpoint example (lines 134–146):** The `_sprintRepo`, `_scorer`, `_settings` field references are legitimately injected fields not shown in the snippet — the comment "Live type names from Fokus.API/Features/Analytics/GetBugRatio/" makes this explicit and the snippet is labelled "Target-state … won't build until Pass 2/3." No issue.
+- **`domain-patterns` VO-vs-scalar example:** Revised from the hypothetical `BugRatioConfig`/`XrayConfig` before/after table to a live table of actual `HealthThresholdConfig`, `HealthWeightConfig`, etc. VOs already in `Fokus.Domain/Settings/ValueObjects/`. The change is an improvement in D-A compliance (live examples over invented ones) and introduces no new errors.
+- **`domain-service` naming section:** The "(scoped to domain services)" parenthetical is removed from the heading; one scoping sentence at the bottom of the section contrasts cleanly with `extract-feature-service`. No information lost.
+- **`framework-currency` Stage 1 grep:** Adding the two-arg bare overload to the candidate list and Stage 2 table is consistent with the overall two-stage approach. The false-positive section is unchanged and correct.
+- **`central-package-management` SprintRituals note (line 116):** Still contains `src/**/*.csproj` in a descriptive note ("As of Pass 0, all three forms return zero hits across `src/**/*.csproj`"). This is a prose description of the repo state, not a command the reader runs — the actual grep commands above it all use `--include="*.csproj"`. Not an issue.
+
+## Positive observations
+
+- The `domain-patterns` Domain Events rewrite is substantially better than the original: the before/fix showed the correct interface; the re-review shows it now anchors directly on the source file and provides a clear negative statement ("no `INotification` in this solution's BuildingBlocks"). The full-stack variant is well-boxed.
+- The `SparklinePoint` anchor in `analytics-computation-service` is exactly the right shape: one-line `sealed record` example with a comment explaining it is project-specific and where to put it. No over-specification.
+- The VO-vs-scalar worked example in `domain-patterns` is now grounded in live types that already exist in the repo rather than hypothetical ones. This is a meaningful improvement in D-A compliance.
+- The `framework-currency` two-arg overload fix is thorough: it appears in three places (bare-overload callout, Stage 1 candidate list, Stage 2 table) so a developer cannot miss it.
+
+## Evidence
+
+| Check | Result | Source |
+|-------|--------|--------|
+| `IDomainEvent` declaration | `IDomainEvent : IEvent` only — confirmed | `domain-patterns/SKILL.md:102` |
+| `INotification` in full-stack callout | Correctly boxed as "NOT in this solution" | `domain-patterns/SKILL.md:116-124` |
+| Primary constructor parameter name | `history` (un-prefixed) | `domain-service/SKILL.md:87` |
+| `SparklinePoint` anchor | `sealed record SparklinePoint(int PeriodId, decimal Value)` with placement comment | `analytics-computation-service/SKILL.md:74-77` |
+| Audit field types | `CreatedById (string?)`, `CreatedOn (DateTime?)` etc. inline | `domain-patterns/SKILL.md:16` |
+| Naming section — no repeated caveat | Single scoping sentence at line 51; heading is clean | `domain-service/SKILL.md:40-51` |
+| CPM grep commands | All use `--include="*.csproj"` or `--glob '*.csproj'` | `central-package-management/SKILL.md:88-111` |
+| Two-arg bare overload | Documented in migration map, Stage 1, and Stage 2 table | `framework-currency/SKILL.md:55-57, 81, 93` |
+| Build | Not applicable — Markdown skill files | N/A |
