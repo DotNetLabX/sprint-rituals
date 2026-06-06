@@ -1,5 +1,4 @@
 global using Blocks.Exceptions;
-global using Jira.Contracts;
 global using FastEndpoints;
 global using FluentValidation;
 global using Fokus.Domain;

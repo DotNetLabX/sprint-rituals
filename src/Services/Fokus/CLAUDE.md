@@ -32,7 +32,7 @@ N/A — FastEndpoints native, no MediatR.
 
 ## Key patterns
 
-- **Sync-from-external:** All data originates from Jira API. `JiraMapper` maps Jira DTOs → domain entities.
+- **Sync-from-external:** All data originates from Jira API. Jira and Xray DTOs are mapped to domain types by boundary mappers at the API layer (`Features/Sync/JiraDomainMapper.cs` for Group-1 Jira→domain maps, `Features/Xray/XrayDomainMapper.cs` for Group-2 primitive construction). No DTO enters the Domain layer (ADR-006).
 - **Natural keys:** Ticket.Id = Jira issue key (e.g. "FOK-123"), Developer.Id = Jira accountId. Sprint.Id = Jira sprint ID. These are never auto-generated (`ValueGeneratedNever`).
 - **Computed metrics:** Health scores are computed on-the-fly in endpoints — never stored in the DB.
 - **Thin domain (v1):** Entities are data containers. No behavior methods in v1. Behaviors folder will be added when domain logic is needed.

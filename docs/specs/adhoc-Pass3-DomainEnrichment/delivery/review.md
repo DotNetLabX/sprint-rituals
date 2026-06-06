@@ -103,3 +103,45 @@ None. Q1 (3a-only scope), Q4 (boundary mappers in Features/Sync+Xray, Mapster IR
 
 ---
 Reviewed: docs/specs/adhoc-Pass3-DomainEnrichment/delivery/plan.md
+
+---
+
+# Step 2 — Code Review
+
+## Reviewed By
+Reviewer (Step 2 — code vs plan). Build confirmed green (0 errors). Files reviewed: `JiraDomainMapper.cs`, `XrayDomainMapper.cs`, `SprintState.cs` (new); `SprintIssueSyncService.cs`, `XrayIssueSyncService.cs`, `SprintMembership.cs` (Behaviors), `Sprint.cs` (Behaviors), `Fokus.Domain.csproj`, `Fokus.Domain/GlobalUsings.cs`, `Fokus.Persistence/GlobalUsings.cs`, `Fokus.API/GlobalUsings.cs`, `Fokus/CLAUDE.md`.
+
+## Verdict: APPROVED
+
+No blocking findings. Two optional follow-ups (LOW severity only) below — both pre-existing or intentional; neither introduced by this pass.
+
+## Follow-up Items (LOW — non-blocking)
+
+### F1 [LOW] `MapStatusTransitions` returns `List<T>` rather than `IReadOnlyList<T>`
+**File:** `JiraDomainMapper.cs:83`
+This is a pre-existing gap in `TicketRepository.ReplaceTransitionsAsync` which requires `List<StatusTransition>` as its parameter. The mapper correctly matches the consumer. Fixing this properly requires a paired change to the repository signature — out of scope for a pure relocation pass. Follow-up: change `ReplaceTransitionsAsync` parameter to `IReadOnlyList<StatusTransition>` and update the mapper return type in a future pass.
+
+### F2 [LOW] Two `SprintState` enums with identical values now exist in separate namespaces
+**File:** `Fokus.Domain/Sprint/SprintState.cs` (new), `Jira.Contracts/SprintState.cs` (existing)
+The split is intentional and correct (domain state concept vs Jira API filter enum). Risk: a future contributor might "de-duplicate" them by re-adding a cross-reference, silently re-introducing the ADR-006 violation. Consider an ADR-006 addendum note explaining why they must remain separate.
+
+## Plan Conformance
+
+| Step | Code Status | Notes |
+|------|-------------|-------|
+| 1 — `JiraDomainMapper` (5 Group-1 maps) | Conforming | `IRegister` for Sprint/Ticket/Developer; plain static methods for StatusTransitions + SprintMembership (plan-sanctioned). All logic verified verbatim against original factory bodies. |
+| 2 — `XrayDomainMapper` (3 Group-2 maps) | Conforming | `static` class, no `IRegister`, 3 `Create*` methods, pure field assignments. |
+| 3 — Repoint callers + delete factories | Conforming | All 13 call sites repointed; 6 files deleted; 2 trimmed (keepers verified present). |
+| 4 — Drop `Jira.Contracts` reference | Conforming | `csproj` + 2 stale global usings removed. Deviations (SprintState move, global using removal from Fokus.API) valid and documented. |
+| 5 — Correct `Fokus/CLAUDE.md` | Conforming | Sync-from-external line now names real boundary mappers + ADR-006. |
+| 6 — Verification sweep + build | Conforming | All grepper checks pass; build green. |
+
+## Correctness Trace (logic-bearing maps)
+
+- `MapSprintMembership` — `WasCommitted` = `!forcedNotCommitted && effectiveAddedAt <= planningCutoff`; added-at/removed-at changelog derivation; `effectiveAddedAt = addedAt ?? sprint.StartDate` — all identical to original.
+- `MapDeveloper` — null-guard on `Assignee`; `AvatarUrls.TryGetValue("48x48", ...)`; `IsActive = true` — identical.
+- `MapStatusTransitions` — `histories.OrderBy(h => h.Created)`; filter `i.Field == "status"`; `FromString ?? string.Empty`; `ToStringValue ?? string.Empty` — identical.
+- `MapTicket` — Epic-vs-parent conditional; `EpicKey`/`EpicName`/`ParentTicketKey` null-coalescing — identical.
+- `MapSprint` — lowercase state switch with `_ => Active` default; date null-coalescing; `SyncedAt = DateTime.UtcNow` — identical.
+
+No logic was altered during relocation.

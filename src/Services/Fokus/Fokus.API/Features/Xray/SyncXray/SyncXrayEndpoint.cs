@@ -1,3 +1,4 @@
+using Jira.Contracts;
 using Jira.RestApi;
 using Microsoft.Extensions.Options;
 

@@ -1,4 +1,5 @@
 using Fokus.API.Hubs;
+using Jira.Contracts;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Fokus.API.Features.Sync.SyncSprints;
@@ -22,7 +23,7 @@ public class SyncSprintsEndpoint(
 
         var boardId = settings.BoardId.Value;
 
-        var allSprints = await jiraClient.GetSprintsAsync(boardId, ct, SprintState.Active, SprintState.Closed);
+        var allSprints = await jiraClient.GetSprintsAsync(boardId, ct, Jira.Contracts.SprintState.Active, Jira.Contracts.SprintState.Closed);
         var ordered = allSprints.OrderBy(s => s.StartDate).ToList();
 
         var fromSprint = ordered.FirstOrDefault(s => s.Id == command.FromSprintId)

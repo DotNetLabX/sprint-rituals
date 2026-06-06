@@ -55,7 +55,7 @@ public class SprintIssueSyncService(
                 logger.LogWarning("Sprint {SprintId} ({SprintName}): {IssueCount} issues returned by {ClientType}",
                     jiraSprint.Id, jiraSprint.Name, issues.Count, jiraClient.GetType().Name);
 
-                var sprint = Sprint.FromJira(jiraSprint, boardName);
+                var sprint = JiraDomainMapper.MapSprint(jiraSprint, boardName);
                 await sprintRepository.UpsertAsync(sprint, ct);
                 await sprintRepository.SaveChangesAsync(ct);
 
@@ -117,10 +117,10 @@ public class SprintIssueSyncService(
 
                 foreach (var issue in newIssues)
                 {
-                    var ticket = Ticket.FromJira(issue);
+                    var ticket = JiraDomainMapper.MapTicket(issue);
                     await ticketRepository.UpsertAsync(ticket, ct);
 
-                    var developer = Developer.FromJira(issue);
+                    var developer = JiraDomainMapper.MapDeveloper(issue);
                     if (developer is not null)
                         await developerRepository.UpsertAsync(developer, ct);
                 }
@@ -151,20 +151,20 @@ public class SprintIssueSyncService(
 
         foreach (var issue in issues)
         {
-            var ticket = Ticket.FromJira(issue);
+            var ticket = JiraDomainMapper.MapTicket(issue);
             await ticketRepository.UpsertAsync(ticket, ct);
 
-            var developer = Developer.FromJira(issue);
+            var developer = JiraDomainMapper.MapDeveloper(issue);
             if (developer is not null)
             {
                 await developerRepository.UpsertAsync(developer, ct);
                 uniqueDeveloperIds.Add(developer.Id);
             }
 
-            var transitions = StatusTransition.ListFromJira(issue);
+            var transitions = JiraDomainMapper.MapStatusTransitions(issue);
             await ticketRepository.ReplaceTransitionsAsync(issue.Key, transitions, ct);
 
-            var membership = SprintMembership.FromJira(issue, sprint, forcedNotCommitted, planningWindowDays);
+            var membership = JiraDomainMapper.MapSprintMembership(issue, sprint, forcedNotCommitted, planningWindowDays);
             memberships.Add(membership);
         }
 

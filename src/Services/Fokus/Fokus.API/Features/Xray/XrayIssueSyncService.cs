@@ -1,3 +1,4 @@
+using Jira.Contracts;
 using Microsoft.Extensions.Logging;
 using Xray.Contracts;
 
@@ -226,7 +227,7 @@ public class XrayIssueSyncService(
         if (!string.IsNullOrEmpty(assigneeId))
             await UpsertDeveloperFromIdAsync(assigneeId, ct);
 
-        var te = TestExecution.FromXray(
+        var te = XrayDomainMapper.CreateTestExecution(
             issueId: issueId,
             issueKey: teKey,
             summary: xrayTe?.Summary ?? teKey,
@@ -256,7 +257,7 @@ public class XrayIssueSyncService(
                 if (!string.IsNullOrEmpty(runDto.ExecutedById))
                     await UpsertDeveloperFromIdAsync(runDto.ExecutedById, ct);
 
-                runs.Add(TestRun.FromXray(
+                runs.Add(XrayDomainMapper.CreateTestRun(
                     id: runDto.Id,
                     testExecutionIssueId: issueId,
                     status: ParseTestRunStatus(runDto.StatusName),
@@ -287,7 +288,7 @@ public class XrayIssueSyncService(
                 if (!string.IsNullOrEmpty(ts.AssigneeId))
                     await UpsertDeveloperFromIdAsync(ts.AssigneeId, ct);
 
-                var testSet = TestSet.FromJiraIssueLink(
+                var testSet = XrayDomainMapper.CreateTestSet(
                     issueId: ts.Id,
                     issueKey: ts.Key,
                     summary: ts.Summary,

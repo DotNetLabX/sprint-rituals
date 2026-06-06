@@ -1,3 +1,5 @@
+using Jira.Contracts;
+
 namespace Fokus.API.Features.Sync.SyncBacklogSprints;
 
 [HttpPost("/api/sync/backlog")]
@@ -18,7 +20,7 @@ public class SyncBacklogSprintsEndpoint(
         var boardId = settings.BoardId.Value;
         var boardName = $"Board {boardId}";
 
-        var futureSprints = await jiraClient.GetSprintsAsync(boardId, ct, SprintState.Future);
+        var futureSprints = await jiraClient.GetSprintsAsync(boardId, ct, Jira.Contracts.SprintState.Future);
 
         var sprintResult = await syncService.SyncSprintsFromJiraAsync(
             futureSprints, boardName, forcedNotCommitted: true, ct);

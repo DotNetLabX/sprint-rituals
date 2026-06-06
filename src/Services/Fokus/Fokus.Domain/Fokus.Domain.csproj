@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\BuildingBlocks\Blocks.Domain\Blocks.Domain.csproj" />
-    <ProjectReference Include="..\..\..\Modules\Jira\Jira.Contracts\Jira.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

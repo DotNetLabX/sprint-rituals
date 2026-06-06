@@ -9,7 +9,7 @@ public class GetJiraSprintsEndpoint(IJiraClient jiraClient)
 {
     public override async Task HandleAsync(GetJiraSprintsQuery query, CancellationToken ct)
     {
-        var sprints = await jiraClient.GetSprintsAsync(query.BoardId, ct, SprintState.Active, SprintState.Closed);
+        var sprints = await jiraClient.GetSprintsAsync(query.BoardId, ct, Jira.Contracts.SprintState.Active, Jira.Contracts.SprintState.Closed);
 
         var ordered = sprints
             .OrderBy(s => s.StartDate)

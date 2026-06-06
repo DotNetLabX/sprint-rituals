@@ -1,3 +1,5 @@
+using Jira.Contracts;
+
 namespace Fokus.API.Features.Sprints.UpdateSprint;
 
 [HttpPut("/api/sprints/{sprintId}")]
