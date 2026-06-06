@@ -39,10 +39,10 @@ export function saveHealthConfig(
   })
 }
 
-export function saveBugRatioAlerts(alertThreshold: number, consecutiveSprintCount: number, defaultSpPerBug: number): Promise<{ success: boolean }> {
+export function saveBugRatioAlerts(bugRatioAlertThreshold: number, bugRatioConsecutiveSprintCount: number, defaultSpPerBug: number): Promise<{ success: boolean }> {
   return apiFetch<{ success: boolean }>('/settings/bug-ratio-alerts', {
     method: 'PUT',
-    body: JSON.stringify({ alertThreshold, consecutiveSprintCount, defaultSpPerBug })
+    body: JSON.stringify({ bugRatioAlertThreshold, bugRatioConsecutiveSprintCount, defaultSpPerBug })
   })
 }
 
@@ -87,10 +87,10 @@ export function getCycleTimeBoundaries(): Promise<CycleTimeBoundariesResponse> {
   return apiFetch<CycleTimeBoundariesResponse>('/settings/cycle-time-boundaries')
 }
 
-export function saveCycleTimeBoundaries(startStage: string, endStage: string): Promise<SaveCycleTimeBoundariesResponse> {
+export function saveCycleTimeBoundaries(cycleTimeStartStage: string, cycleTimeEndStage: string): Promise<SaveCycleTimeBoundariesResponse> {
   return apiFetch<SaveCycleTimeBoundariesResponse>('/settings/cycle-time-boundaries', {
     method: 'PUT',
-    body: JSON.stringify({ startStage, endStage })
+    body: JSON.stringify({ cycleTimeStartStage, cycleTimeEndStage })
   })
 }
 

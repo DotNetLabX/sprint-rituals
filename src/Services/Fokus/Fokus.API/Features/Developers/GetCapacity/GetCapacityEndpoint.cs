@@ -3,9 +3,9 @@ namespace Fokus.API.Features.Developers.GetCapacity;
 [HttpGet("/api/developers/{accountId}/capacity")]
 [Tags("Developers")]
 public class GetCapacityEndpoint(DeveloperRepository developerRepository)
-    : Endpoint<GetCapacityRequest, List<CapacityEntry>>
+    : Endpoint<GetCapacityQuery, List<CapacityEntry>>
 {
-    public override async Task HandleAsync(GetCapacityRequest req, CancellationToken ct)
+    public override async Task HandleAsync(GetCapacityQuery req, CancellationToken ct)
     {
         var developer = await developerRepository.GetByIdAsync(req.AccountId, ct);
         if (developer is null)

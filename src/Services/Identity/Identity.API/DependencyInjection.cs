@@ -1,6 +1,7 @@
 using Identity.API.Auth;
 using Identity.API.Features.Auth.Login;
 using Identity.Persistence;
+using Mapster;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddIdentityModule(this IServiceCollection services, IConfiguration configuration)
     {
+        TypeAdapterConfig.GlobalSettings.Scan(typeof(DependencyInjection).Assembly);
         services.AddIdentityAuth(configuration);
         services.AddIdentityPersistence(configuration);
         return services;

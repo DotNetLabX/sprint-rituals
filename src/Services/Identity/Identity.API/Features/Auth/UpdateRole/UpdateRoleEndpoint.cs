@@ -6,9 +6,9 @@ namespace Identity.API.Features.Auth.UpdateRole;
 [Tags("Users")]
 [Authorize(Roles = "Admin")]
 public class UpdateRoleEndpoint(UserRepository userRepository, PersonRepository personRepository)
-    : Endpoint<UpdateRoleRequest, UserResponse>
+    : Endpoint<UpdateRoleCommand, UserResponse>
 {
-    public override async Task HandleAsync(UpdateRoleRequest req, CancellationToken ct)
+    public override async Task HandleAsync(UpdateRoleCommand req, CancellationToken ct)
     {
         var user = await userRepository.GetByIdAsync(req.Id, ct);
         if (user is null)

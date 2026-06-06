@@ -8,9 +8,9 @@ public class GetCarryOverEndpoint(
     DeveloperRepository developerRepository,
     TicketRepository ticketRepository,
     CarryOverService carryOverService)
-    : Endpoint<GetCarryOverRequest, CarryOverResponse>
+    : Endpoint<GetCarryOverQuery, CarryOverResponse>
 {
-    public override async Task HandleAsync(GetCarryOverRequest req, CancellationToken ct)
+    public override async Task HandleAsync(GetCarryOverQuery req, CancellationToken ct)
     {
         // 1. Load analytics sprints — zombie counting baseline uses closed sprints only; multi-sprint is closed-only
         var analyticsSprints = await sprintRepository.GetAnalyticsSprintsAsync(ct);

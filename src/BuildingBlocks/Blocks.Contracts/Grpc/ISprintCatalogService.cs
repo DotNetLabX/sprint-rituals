@@ -7,5 +7,5 @@ namespace Blocks.Contracts.Grpc;
 public interface ISprintCatalogService
 {
     [OperationContract]
-    Task<SprintCatalogResponse> GetAvailableSprintsAsync(TeamRequest request, CancellationToken ct = default);
+    Task<SprintCatalogResponse> GetAvailableSprintsAsync(TeamQuery request, CancellationToken ct = default);
 }

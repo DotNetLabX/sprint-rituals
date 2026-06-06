@@ -2,7 +2,7 @@ using System.Security.Claims;
 
 namespace Fokus.API.Features.Auth.CreateInvitation;
 
-public class CreateInvitationRequest
+public class CreateInvitationCommand
 {
     public string Email { get; set; } = string.Empty;
     public string? Role { get; set; }
@@ -17,9 +17,9 @@ public class CreateInvitationResponse
     public DateTime ExpiresAt { get; set; }
 }
 
-public class CreateInvitationRequestValidator : Validator<CreateInvitationRequest>
+public class CreateInvitationCommandValidator : Validator<CreateInvitationCommand>
 {
-    public CreateInvitationRequestValidator()
+    public CreateInvitationCommandValidator()
     {
         RuleFor(x => x.Email)
             .NotEmpty()

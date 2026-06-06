@@ -10,9 +10,9 @@ public class GetSprintSummaryEndpoint(
     SprintSummaryService sprintSummaryService,
     TestExecutionRepository testExecutionRepository,
     QaMetricsService qaMetricsService)
-    : Endpoint<GetSprintSummaryRequest, SprintSummaryResponse>
+    : Endpoint<GetSprintSummaryQuery, SprintSummaryResponse>
 {
-    public override async Task HandleAsync(GetSprintSummaryRequest req, CancellationToken ct)
+    public override async Task HandleAsync(GetSprintSummaryQuery req, CancellationToken ct)
     {
         // 1. Load all analytics sprints (lightweight, no memberships)
         var sprints = await sprintRepository.GetAnalyticsSprintsAsync(ct);

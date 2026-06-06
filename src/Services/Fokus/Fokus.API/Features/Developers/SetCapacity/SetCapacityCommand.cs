@@ -1,6 +1,6 @@
 namespace Fokus.API.Features.Developers.SetCapacity;
 
-public class SetCapacityRequest
+public class SetCapacityCommand
 {
     public string AccountId { get; set; } = string.Empty;
     public int SprintId { get; set; }
@@ -14,9 +14,9 @@ public class SetCapacityResponse
     public int CapacityPercent { get; set; }
 }
 
-public class SetCapacityRequestValidator : Validator<SetCapacityRequest>
+public class SetCapacityCommandValidator : Validator<SetCapacityCommand>
 {
-    public SetCapacityRequestValidator()
+    public SetCapacityCommandValidator()
     {
         RuleFor(x => x.SprintId)
             .GreaterThan(0)

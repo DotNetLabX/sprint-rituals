@@ -8,9 +8,9 @@ public class GetDeveloperProgressEndpoint(
     AppSettingsRepository appSettingsRepository,
     TicketRepository ticketRepository,
     DeveloperProgressService developerProgressService)
-    : Endpoint<GetDeveloperProgressRequest, DeveloperProgressResponse>
+    : Endpoint<GetDeveloperProgressQuery, DeveloperProgressResponse>
 {
-    public override async Task HandleAsync(GetDeveloperProgressRequest req, CancellationToken ct)
+    public override async Task HandleAsync(GetDeveloperProgressQuery req, CancellationToken ct)
     {
         // 1. Load analytics sprints (active + closed)
         var allSprints = await sprintRepository.GetAnalyticsSprintsAsync(ct);

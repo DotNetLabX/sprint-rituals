@@ -868,8 +868,8 @@ export interface CycleTimeBoundariesResponse {
 }
 
 export interface SaveCycleTimeBoundariesResponse {
-  startStage: string
-  endStage: string
+  cycleTimeStartStage: string
+  cycleTimeEndStage: string
 }
 
 // Team types

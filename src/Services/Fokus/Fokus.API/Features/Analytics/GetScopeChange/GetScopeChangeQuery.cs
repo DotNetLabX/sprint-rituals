@@ -1,15 +1,15 @@
 namespace Fokus.API.Features.Analytics.GetScopeChange;
 
-public class GetScopeChangeRequest
+public class GetScopeChangeQuery
 {
     public int? SprintId { get; set; }
     public int? Last { get; set; }
     public string? SubTeam { get; set; }
 }
 
-public class GetScopeChangeRequestValidator : Validator<GetScopeChangeRequest>
+public class GetScopeChangeQueryValidator : Validator<GetScopeChangeQuery>
 {
-    public GetScopeChangeRequestValidator()
+    public GetScopeChangeQueryValidator()
     {
         RuleFor(x => x.SprintId)
             .GreaterThan(0)

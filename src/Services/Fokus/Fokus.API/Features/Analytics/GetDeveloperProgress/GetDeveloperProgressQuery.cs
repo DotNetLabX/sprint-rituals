@@ -1,6 +1,6 @@
 namespace Fokus.API.Features.Analytics.GetDeveloperProgress;
 
-public class GetDeveloperProgressRequest
+public class GetDeveloperProgressQuery
 {
     public string? SubTeam { get; set; }
 }

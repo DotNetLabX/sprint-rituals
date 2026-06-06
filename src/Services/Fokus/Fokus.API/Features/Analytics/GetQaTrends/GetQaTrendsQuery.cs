@@ -1,14 +1,14 @@
 namespace Fokus.API.Features.Analytics.GetQaTrends;
 
-public class GetQaTrendsRequest
+public class GetQaTrendsQuery
 {
     public int? Last { get; set; }
     public string? SubTeam { get; set; }
 }
 
-public class GetQaTrendsRequestValidator : Validator<GetQaTrendsRequest>
+public class GetQaTrendsQueryValidator : Validator<GetQaTrendsQuery>
 {
-    public GetQaTrendsRequestValidator()
+    public GetQaTrendsQueryValidator()
     {
         RuleFor(x => x.Last)
             .GreaterThanOrEqualTo(0)

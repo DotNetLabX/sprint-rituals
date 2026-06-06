@@ -10,9 +10,9 @@ public class GetTestTimelineEndpoint(
     TestExecutionRepository testExecutionRepository,
     TicketRepository ticketRepository,
     TestTimelineService testTimelineService)
-    : Endpoint<GetTestTimelineRequest, TestTimelineResponse>
+    : Endpoint<GetTestTimelineQuery, TestTimelineResponse>
 {
-    public override async Task HandleAsync(GetTestTimelineRequest req, CancellationToken ct)
+    public override async Task HandleAsync(GetTestTimelineQuery req, CancellationToken ct)
     {
         // 1. Load settings
         var settings = await appSettingsRepository.GetAsync(ct);

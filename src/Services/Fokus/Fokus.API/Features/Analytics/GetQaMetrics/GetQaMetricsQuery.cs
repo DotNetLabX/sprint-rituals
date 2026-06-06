@@ -1,14 +1,14 @@
 namespace Fokus.API.Features.Analytics.GetQaMetrics;
 
-public class GetQaMetricsRequest
+public class GetQaMetricsQuery
 {
     public int SprintId { get; set; }
     public string? SubTeam { get; set; }
 }
 
-public class GetQaMetricsRequestValidator : Validator<GetQaMetricsRequest>
+public class GetQaMetricsQueryValidator : Validator<GetQaMetricsQuery>
 {
-    public GetQaMetricsRequestValidator()
+    public GetQaMetricsQueryValidator()
     {
         RuleFor(x => x.SprintId)
             .GreaterThan(0)

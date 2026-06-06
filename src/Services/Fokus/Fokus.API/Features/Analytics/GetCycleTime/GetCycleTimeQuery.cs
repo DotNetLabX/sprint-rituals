@@ -1,15 +1,15 @@
 namespace Fokus.API.Features.Analytics.GetCycleTime;
 
-public class GetCycleTimeRequest
+public class GetCycleTimeQuery
 {
     public int? SprintId { get; set; }
     public int? Last { get; set; }
     public string? SubTeam { get; set; }
 }
 
-public class GetCycleTimeRequestValidator : Validator<GetCycleTimeRequest>
+public class GetCycleTimeQueryValidator : Validator<GetCycleTimeQuery>
 {
-    public GetCycleTimeRequestValidator()
+    public GetCycleTimeQueryValidator()
     {
         RuleFor(x => x.SprintId)
             .GreaterThan(0)

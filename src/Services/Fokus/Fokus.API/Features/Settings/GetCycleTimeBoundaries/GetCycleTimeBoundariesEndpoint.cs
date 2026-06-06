@@ -1,11 +1,5 @@
 namespace Fokus.API.Features.Settings.GetCycleTimeBoundaries;
 
-public record GetCycleTimeBoundariesResponse(
-    string StartStage,
-    string EndStage,
-    List<string> AvailableStages,
-    int WorkflowStageCount);
-
 [HttpGet("/api/settings/cycle-time-boundaries")]
 [Tags("Settings")]
 public class GetCycleTimeBoundariesEndpoint(AppSettingsRepository repository)

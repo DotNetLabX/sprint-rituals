@@ -1,37 +1,16 @@
 namespace Fokus.API.Features.Settings.SaveBoard;
 
-public class SaveBoardRequest
-{
-    public int? BoardId { get; set; }
-}
-
-public class SaveBoardRequestValidator : Validator<SaveBoardRequest>
-{
-    public SaveBoardRequestValidator()
-    {
-        RuleFor(x => x.BoardId)
-            .GreaterThan(0)
-            .When(x => x.BoardId.HasValue)
-            .WithMessage("Board ID must be greater than 0.");
-    }
-}
-
 [HttpPut("/api/settings/board")]
 [Tags("Settings")]
 [Authorize(Roles = "Admin")]
 public class SaveBoardEndpoint(AppSettingsRepository repository)
-    : Endpoint<SaveBoardRequest, SaveBoardResponse>
+    : Endpoint<SaveBoardCommand, SaveBoardResponse>
 {
-    public override async Task HandleAsync(SaveBoardRequest req, CancellationToken ct)
+    public override async Task HandleAsync(SaveBoardCommand req, CancellationToken ct)
     {
         var existing = await repository.GetAsync(ct);
-        existing.BoardId = req.BoardId;
+        req.Adapt(existing);
         await repository.SaveAsync(existing, ct);
         await Send.OkAsync(new SaveBoardResponse { Success = true }, ct);
     }
-}
-
-public class SaveBoardResponse
-{
-    public bool Success { get; set; }
 }

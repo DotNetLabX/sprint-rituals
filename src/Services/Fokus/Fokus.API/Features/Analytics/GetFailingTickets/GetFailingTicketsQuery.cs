@@ -1,14 +1,14 @@
 namespace Fokus.API.Features.Analytics.GetFailingTickets;
 
-public class GetFailingTicketsRequest
+public class GetFailingTicketsQuery
 {
     public int SprintId { get; set; }
     public string? SubTeam { get; set; }
 }
 
-public class GetFailingTicketsRequestValidator : Validator<GetFailingTicketsRequest>
+public class GetFailingTicketsQueryValidator : Validator<GetFailingTicketsQuery>
 {
-    public GetFailingTicketsRequestValidator()
+    public GetFailingTicketsQueryValidator()
     {
         RuleFor(x => x.SprintId)
             .GreaterThan(0)

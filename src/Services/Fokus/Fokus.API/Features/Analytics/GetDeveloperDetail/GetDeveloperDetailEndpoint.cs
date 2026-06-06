@@ -12,9 +12,9 @@ public class GetDeveloperDetailEndpoint(
     TicketRepository ticketRepository,
     DeveloperDetailService developerDetailService,
     IOptions<JiraOptions> jiraOptions)
-    : Endpoint<GetDeveloperDetailRequest, DeveloperDetailResponse>
+    : Endpoint<GetDeveloperDetailQuery, DeveloperDetailResponse>
 {
-    public override async Task HandleAsync(GetDeveloperDetailRequest req, CancellationToken ct)
+    public override async Task HandleAsync(GetDeveloperDetailQuery req, CancellationToken ct)
     {
         // 1. Look up developer
         var allDevelopers = await developerRepository.GetAllAsync(ct);

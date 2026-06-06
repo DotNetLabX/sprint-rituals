@@ -1,14 +1,14 @@
 namespace Fokus.API.Features.Analytics.GetUntestedTickets;
 
-public class GetUntestedTicketsRequest
+public class GetUntestedTicketsQuery
 {
     public int SprintId { get; set; }
     public string? SubTeam { get; set; }
 }
 
-public class GetUntestedTicketsRequestValidator : Validator<GetUntestedTicketsRequest>
+public class GetUntestedTicketsQueryValidator : Validator<GetUntestedTicketsQuery>
 {
-    public GetUntestedTicketsRequestValidator()
+    public GetUntestedTicketsQueryValidator()
     {
         RuleFor(x => x.SprintId)
             .GreaterThan(0)

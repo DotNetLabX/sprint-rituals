@@ -1,14 +1,14 @@
 namespace Fokus.API.Features.Analytics.GetDeveloperDetail;
 
-public class GetDeveloperDetailRequest
+public class GetDeveloperDetailQuery
 {
     public string AccountId { get; set; } = string.Empty;
     public int? Last { get; set; }
 }
 
-public class GetDeveloperDetailRequestValidator : Validator<GetDeveloperDetailRequest>
+public class GetDeveloperDetailQueryValidator : Validator<GetDeveloperDetailQuery>
 {
-    public GetDeveloperDetailRequestValidator()
+    public GetDeveloperDetailQueryValidator()
     {
         RuleFor(x => x.AccountId)
             .NotEmpty()

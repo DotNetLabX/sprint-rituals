@@ -2,12 +2,6 @@ using Xray.Contracts;
 
 namespace Fokus.API.Features.Xray.TestConnection;
 
-public class TestConnectionResponse
-{
-    public bool Success { get; set; }
-    public string Message { get; set; } = string.Empty;
-}
-
 [HttpPost("/api/xray/test-connection")]
 [Tags("Xray")]
 [Authorize(Roles = "Admin")]

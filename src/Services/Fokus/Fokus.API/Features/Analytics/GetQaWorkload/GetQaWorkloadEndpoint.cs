@@ -8,9 +8,9 @@ public class GetQaWorkloadEndpoint(
     DeveloperRepository developerRepository,
     TestExecutionRepository testExecutionRepository,
     QaWorkloadService qaWorkloadService)
-    : Endpoint<GetQaWorkloadRequest, QaWorkloadResponseDto>
+    : Endpoint<GetQaWorkloadQuery, QaWorkloadResponseDto>
 {
-    public override async Task HandleAsync(GetQaWorkloadRequest req, CancellationToken ct)
+    public override async Task HandleAsync(GetQaWorkloadQuery req, CancellationToken ct)
     {
         // 1. Load settings
         var settings = await appSettingsRepository.GetAsync(ct);
@@ -50,7 +50,7 @@ public class GetQaWorkloadEndpoint(
     }
 
     private async Task HandleMultiSprintAsync(
-        GetQaWorkloadRequest req,
+        GetQaWorkloadQuery req,
         List<Sprint> ascending,
         List<Developer> allDevelopers,
         AppSettings settings,
@@ -102,7 +102,7 @@ public class GetQaWorkloadEndpoint(
     }
 
     private async Task HandleSingleSprintAsync(
-        GetQaWorkloadRequest req,
+        GetQaWorkloadQuery req,
         List<Sprint> allSprints,
         List<Sprint> ascending,
         List<Developer> allDevelopers,

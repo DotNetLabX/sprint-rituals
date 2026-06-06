@@ -2,15 +2,15 @@ using Identity.API.Features.Auth.GetUsers;
 
 namespace Identity.API.Features.Auth.UpdateRole;
 
-public class UpdateRoleRequest
+public class UpdateRoleCommand
 {
     public int Id { get; set; }
     public string Role { get; set; } = string.Empty;
 }
 
-public class UpdateRoleRequestValidator : Validator<UpdateRoleRequest>
+public class UpdateRoleCommandValidator : Validator<UpdateRoleCommand>
 {
-    public UpdateRoleRequestValidator()
+    public UpdateRoleCommandValidator()
     {
         RuleFor(x => x.Id)
             .GreaterThan(0)

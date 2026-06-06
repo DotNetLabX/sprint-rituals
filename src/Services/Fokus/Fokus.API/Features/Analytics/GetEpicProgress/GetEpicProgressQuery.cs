@@ -1,13 +1,13 @@
 namespace Fokus.API.Features.Analytics.GetEpicProgress;
 
-public class GetEpicProgressRequest
+public class GetEpicProgressQuery
 {
     public string? SubTeam { get; set; }
 }
 
-public class GetEpicProgressRequestValidator : Validator<GetEpicProgressRequest>
+public class GetEpicProgressQueryValidator : Validator<GetEpicProgressQuery>
 {
-    public GetEpicProgressRequestValidator()
+    public GetEpicProgressQueryValidator()
     {
         RuleFor(x => x.SubTeam)
             .NotEmpty()

@@ -73,8 +73,8 @@ async function saveBoundaries() {
   boundariesSaving.value = true
   try {
     const result = await saveCycleTimeBoundaries(boundaryStartStage.value, boundaryEndStage.value)
-    boundaryStartStage.value = result.startStage
-    boundaryEndStage.value = result.endStage
+    boundaryStartStage.value = result.cycleTimeStartStage
+    boundaryEndStage.value = result.cycleTimeEndStage
     boundariesSaved.value = true
     setTimeout(() => boundariesSaved.value = false, 3000)
   } catch (e: any) {

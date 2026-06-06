@@ -4,9 +4,9 @@ namespace Fokus.API.Features.Auth.ValidateInvitation;
 [HttpGet("/api/invitations/{token}/validate")]
 [Tags("Invitations")]
 public class ValidateInvitationEndpoint(InvitationRepository invitationRepository)
-    : Endpoint<ValidateInvitationRequest, ValidateInvitationResponse>
+    : Endpoint<ValidateInvitationQuery, ValidateInvitationResponse>
 {
-    public override async Task HandleAsync(ValidateInvitationRequest req, CancellationToken ct)
+    public override async Task HandleAsync(ValidateInvitationQuery req, CancellationToken ct)
     {
         var invitation = await invitationRepository.GetByTokenAsync(req.Token, ct);
 

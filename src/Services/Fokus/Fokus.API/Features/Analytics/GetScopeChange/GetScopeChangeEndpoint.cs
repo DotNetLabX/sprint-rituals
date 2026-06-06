@@ -8,9 +8,9 @@ public class GetScopeChangeEndpoint(
     AppSettingsRepository appSettingsRepository,
     DeveloperRepository developerRepository,
     ScopeChangeService scopeChangeService)
-    : Endpoint<GetScopeChangeRequest, ScopeChangeResponse>
+    : Endpoint<GetScopeChangeQuery, ScopeChangeResponse>
 {
-    public override async Task HandleAsync(GetScopeChangeRequest req, CancellationToken ct)
+    public override async Task HandleAsync(GetScopeChangeQuery req, CancellationToken ct)
     {
         // 1. Load analytics sprints — multi-sprint averaging uses closed sprints only
         var analyticsSprints = await sprintRepository.GetAnalyticsSprintsAsync(ct);

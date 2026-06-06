@@ -6,9 +6,9 @@ namespace Identity.API.Features.Auth.UpdateStatus;
 [Tags("Users")]
 [Authorize(Roles = "Admin")]
 public class UpdateStatusEndpoint(UserRepository userRepository, PersonRepository personRepository)
-    : Endpoint<UpdateStatusRequest, UserResponse>
+    : Endpoint<UpdateStatusCommand, UserResponse>
 {
-    public override async Task HandleAsync(UpdateStatusRequest req, CancellationToken ct)
+    public override async Task HandleAsync(UpdateStatusCommand req, CancellationToken ct)
     {
         var user = await userRepository.GetByIdAsync(req.Id, ct);
         if (user is null)

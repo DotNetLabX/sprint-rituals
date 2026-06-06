@@ -1,15 +1,15 @@
 namespace Fokus.API.Features.Analytics.GetCarryOver;
 
-public class GetCarryOverRequest
+public class GetCarryOverQuery
 {
     public int? SprintId { get; set; }
     public int? Last { get; set; }
     public string? SubTeam { get; set; }
 }
 
-public class GetCarryOverRequestValidator : Validator<GetCarryOverRequest>
+public class GetCarryOverQueryValidator : Validator<GetCarryOverQuery>
 {
-    public GetCarryOverRequestValidator()
+    public GetCarryOverQueryValidator()
     {
         RuleFor(x => x.SprintId)
             .GreaterThan(0)

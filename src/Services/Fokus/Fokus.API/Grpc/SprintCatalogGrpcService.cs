@@ -10,7 +10,7 @@ namespace Fokus.API.Grpc;
 /// </summary>
 public class SprintCatalogGrpcService(SprintRepository sprintRepository) : ISprintCatalogService
 {
-    public async Task<SprintCatalogResponse> GetAvailableSprintsAsync(TeamRequest request, CancellationToken ct = default)
+    public async Task<SprintCatalogResponse> GetAvailableSprintsAsync(TeamQuery request, CancellationToken ct = default)
     {
         var sprints = await sprintRepository.GetAnalyticsSprintsAsync(ct);
 

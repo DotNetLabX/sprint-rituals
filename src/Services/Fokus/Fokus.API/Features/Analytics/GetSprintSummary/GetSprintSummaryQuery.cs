@@ -1,14 +1,14 @@
 namespace Fokus.API.Features.Analytics.GetSprintSummary;
 
-public class GetSprintSummaryRequest
+public class GetSprintSummaryQuery
 {
     public int? SprintId { get; set; }
     public string? SubTeam { get; set; }
 }
 
-public class GetSprintSummaryRequestValidator : Validator<GetSprintSummaryRequest>
+public class GetSprintSummaryQueryValidator : Validator<GetSprintSummaryQuery>
 {
-    public GetSprintSummaryRequestValidator()
+    public GetSprintSummaryQueryValidator()
     {
         RuleFor(x => x.SprintId)
             .GreaterThan(0)

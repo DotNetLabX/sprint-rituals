@@ -6,9 +6,9 @@ public class GetFailingTicketsEndpoint(
     SprintRepository sprintRepository,
     AppSettingsRepository appSettingsRepository,
     TestExecutionRepository testExecutionRepository)
-    : Endpoint<GetFailingTicketsRequest, FailingTicketsResponse>
+    : Endpoint<GetFailingTicketsQuery, FailingTicketsResponse>
 {
-    public override async Task HandleAsync(GetFailingTicketsRequest req, CancellationToken ct)
+    public override async Task HandleAsync(GetFailingTicketsQuery req, CancellationToken ct)
     {
         // 1. Load settings
         var settings = await appSettingsRepository.GetAsync(ct);

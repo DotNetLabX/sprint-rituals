@@ -8,9 +8,9 @@ public class GetQaMetricsEndpoint(
     TestExecutionRepository testExecutionRepository,
     TicketRepository ticketRepository,
     QaMetricsService qaMetricsService)
-    : Endpoint<GetQaMetricsRequest, QaMetricsResponse>
+    : Endpoint<GetQaMetricsQuery, QaMetricsResponse>
 {
-    public override async Task HandleAsync(GetQaMetricsRequest req, CancellationToken ct)
+    public override async Task HandleAsync(GetQaMetricsQuery req, CancellationToken ct)
     {
         // 1. Load settings
         var settings = await appSettingsRepository.GetAsync(ct);

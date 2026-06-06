@@ -1,14 +1,14 @@
 namespace Fokus.API.Features.Sprints.GetTestTimeline;
 
-public class GetTestTimelineRequest
+public class GetTestTimelineQuery
 {
     public int SprintId { get; set; }
     public string? SubTeam { get; set; }
 }
 
-public class GetTestTimelineRequestValidator : Validator<GetTestTimelineRequest>
+public class GetTestTimelineQueryValidator : Validator<GetTestTimelineQuery>
 {
-    public GetTestTimelineRequestValidator()
+    public GetTestTimelineQueryValidator()
     {
         RuleFor(x => x.SprintId)
             .GreaterThan(0)

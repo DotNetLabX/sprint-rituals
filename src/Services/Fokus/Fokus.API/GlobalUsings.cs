@@ -5,6 +5,7 @@ global using FluentValidation;
 global using Fokus.Domain;
 global using Fokus.Domain.Auth;
 global using Fokus.Persistence.Repositories;
+global using Mapster;
 global using Microsoft.AspNetCore.Authorization;
 global using Microsoft.AspNetCore.Http;
 global using Microsoft.Extensions.Logging;

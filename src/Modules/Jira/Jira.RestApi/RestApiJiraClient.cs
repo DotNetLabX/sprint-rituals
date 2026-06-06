@@ -60,7 +60,7 @@ public class RestApiJiraClient(IJiraApi api) : IJiraClient
 
     public async Task<JiraSprint> UpdateSprintAsync(int sprintId, string name, DateTime startDate, DateTime endDate, string? goal, CancellationToken ct)
     {
-        var request = new UpdateJiraSprintRequest
+        var request = new UpdateJiraSprintCommand
         {
             Name = name,
             StartDate = startDate,

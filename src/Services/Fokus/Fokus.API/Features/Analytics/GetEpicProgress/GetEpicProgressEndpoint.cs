@@ -8,9 +8,9 @@ public class GetEpicProgressEndpoint(
     SprintRepository sprintRepository,
     TestExecutionRepository testExecutionRepository,
     EpicProgressService epicProgressService)
-    : Endpoint<GetEpicProgressRequest, EpicProgressResponse>
+    : Endpoint<GetEpicProgressQuery, EpicProgressResponse>
 {
-    public override async Task HandleAsync(GetEpicProgressRequest req, CancellationToken ct)
+    public override async Task HandleAsync(GetEpicProgressQuery req, CancellationToken ct)
     {
         // 1. Normalize subTeam (empty string to null)
         var subTeam = string.IsNullOrWhiteSpace(req.SubTeam) ? null : req.SubTeam;

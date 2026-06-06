@@ -8,9 +8,9 @@ public class GetLeaderboardEndpoint(
     DeveloperRepository developerRepository,
     TicketRepository ticketRepository,
     LeaderboardService leaderboardService)
-    : Endpoint<GetLeaderboardRequest, LeaderboardResponse>
+    : Endpoint<GetLeaderboardQuery, LeaderboardResponse>
 {
-    public override async Task HandleAsync(GetLeaderboardRequest req, CancellationToken ct)
+    public override async Task HandleAsync(GetLeaderboardQuery req, CancellationToken ct)
     {
         // 1. Load analytics sprints — alert baseline uses closed sprints only; multi-sprint averaging is closed-only
         var analyticsSprints = await sprintRepository.GetAnalyticsSprintsAsync(ct);

@@ -4,9 +4,9 @@ namespace Fokus.API.Features.Developers.SetCapacity;
 [Tags("Developers")]
 [Authorize(Roles = "Admin")]
 public class SetCapacityEndpoint(DeveloperRepository developerRepository)
-    : Endpoint<SetCapacityRequest, SetCapacityResponse>
+    : Endpoint<SetCapacityCommand, SetCapacityResponse>
 {
-    public override async Task HandleAsync(SetCapacityRequest req, CancellationToken ct)
+    public override async Task HandleAsync(SetCapacityCommand req, CancellationToken ct)
     {
         var developer = await developerRepository.GetByIdAsync(req.AccountId, ct);
         if (developer is null)

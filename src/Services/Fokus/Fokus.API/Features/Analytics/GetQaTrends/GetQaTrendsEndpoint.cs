@@ -10,9 +10,9 @@ public class GetQaTrendsEndpoint(
     DeveloperRepository developerRepository,
     BugRatioService bugRatioService,
     QaTrendsService qaTrendsService)
-    : Endpoint<GetQaTrendsRequest, QaTrendsResponse>
+    : Endpoint<GetQaTrendsQuery, QaTrendsResponse>
 {
-    public override async Task HandleAsync(GetQaTrendsRequest req, CancellationToken ct)
+    public override async Task HandleAsync(GetQaTrendsQuery req, CancellationToken ct)
     {
         // 1. Load settings. If Xray is disabled, return empty.
         var settings = await appSettingsRepository.GetAsync(ct);

@@ -7,11 +7,11 @@ namespace Blocks.Contracts.Grpc;
 public interface ISprintAnalyticsService
 {
     [OperationContract]
-    Task<AnonymizedSprintSummary> GetSprintSummaryAsync(SprintRequest request, CancellationToken ct = default);
+    Task<AnonymizedSprintSummary> GetSprintSummaryAsync(SprintQuery request, CancellationToken ct = default);
 
     [OperationContract]
-    Task<DisruptionMetrics> GetDisruptionMetricsAsync(SprintRequest request, CancellationToken ct = default);
+    Task<DisruptionMetrics> GetDisruptionMetricsAsync(SprintQuery request, CancellationToken ct = default);
 
     [OperationContract]
-    Task<CarryOverHistory> GetCarryOverHistoryAsync(TeamRequest request, CancellationToken ct = default);
+    Task<CarryOverHistory> GetCarryOverHistoryAsync(TeamQuery request, CancellationToken ct = default);
 }

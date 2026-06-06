@@ -1,6 +1,6 @@
 namespace Fokus.API.Features.Developers.GetCapacity;
 
-public class GetCapacityRequest
+public class GetCapacityQuery
 {
     public string AccountId { get; set; } = string.Empty;
     public int? SprintId { get; set; }

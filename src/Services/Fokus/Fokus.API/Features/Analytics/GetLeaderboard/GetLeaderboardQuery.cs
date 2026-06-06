@@ -1,15 +1,15 @@
 namespace Fokus.API.Features.Analytics.GetLeaderboard;
 
-public class GetLeaderboardRequest
+public class GetLeaderboardQuery
 {
     public int? SprintId { get; set; }
     public int? Last { get; set; }
     public string? SubTeam { get; set; }
 }
 
-public class GetLeaderboardRequestValidator : Validator<GetLeaderboardRequest>
+public class GetLeaderboardQueryValidator : Validator<GetLeaderboardQuery>
 {
-    public GetLeaderboardRequestValidator()
+    public GetLeaderboardQueryValidator()
     {
         RuleFor(x => x.SprintId)
             .GreaterThan(0)

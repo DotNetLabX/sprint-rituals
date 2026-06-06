@@ -1,15 +1,15 @@
 namespace Fokus.API.Features.Analytics.GetDeveloperThroughput;
 
-public class GetDeveloperThroughputRequest
+public class GetDeveloperThroughputQuery
 {
     public int? SprintId { get; set; }
     public int? Last { get; set; }
     public string? SubTeam { get; set; }
 }
 
-public class GetDeveloperThroughputRequestValidator : Validator<GetDeveloperThroughputRequest>
+public class GetDeveloperThroughputQueryValidator : Validator<GetDeveloperThroughputQuery>
 {
-    public GetDeveloperThroughputRequestValidator()
+    public GetDeveloperThroughputQueryValidator()
     {
         RuleFor(x => x.SprintId)
             .GreaterThan(0)

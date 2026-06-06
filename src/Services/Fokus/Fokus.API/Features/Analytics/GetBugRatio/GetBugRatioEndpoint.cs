@@ -8,9 +8,9 @@ public class GetBugRatioEndpoint(
     DeveloperRepository developerRepository,
     TicketRepository ticketRepository,
     BugRatioService bugRatioService)
-    : Endpoint<GetBugRatioRequest, BugRatioResponse>
+    : Endpoint<GetBugRatioQuery, BugRatioResponse>
 {
-    public override async Task HandleAsync(GetBugRatioRequest req, CancellationToken ct)
+    public override async Task HandleAsync(GetBugRatioQuery req, CancellationToken ct)
     {
         // 1. Load analytics sprints — alert baseline uses closed sprints only; multi-sprint averaging is closed-only
         var analyticsSprints = await sprintRepository.GetAnalyticsSprintsAsync(ct);

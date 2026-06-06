@@ -129,12 +129,12 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
-  async function saveBugRatioAlertsAction(alertThreshold: number, consecutiveSprintCount: number, defaultSpPerBug: number) {
+  async function saveBugRatioAlertsAction(bugRatioAlertThreshold: number, bugRatioConsecutiveSprintCount: number, defaultSpPerBug: number) {
     saving.value = true
     error.value = null
     try {
-      await saveBugRatioAlerts(alertThreshold, consecutiveSprintCount, defaultSpPerBug)
-      settings.value = { ...settings.value, bugRatioAlertThreshold: alertThreshold, bugRatioConsecutiveSprintCount: consecutiveSprintCount, defaultSpPerBug }
+      await saveBugRatioAlerts(bugRatioAlertThreshold, bugRatioConsecutiveSprintCount, defaultSpPerBug)
+      settings.value = { ...settings.value, bugRatioAlertThreshold, bugRatioConsecutiveSprintCount, defaultSpPerBug }
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Failed to save bug ratio alerts'
     } finally {

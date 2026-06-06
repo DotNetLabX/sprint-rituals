@@ -6,9 +6,9 @@ public class GetUntestedTicketsEndpoint(
     SprintRepository sprintRepository,
     AppSettingsRepository appSettingsRepository,
     TestExecutionRepository testExecutionRepository)
-    : Endpoint<GetUntestedTicketsRequest, UntestedTicketsResponse>
+    : Endpoint<GetUntestedTicketsQuery, UntestedTicketsResponse>
 {
-    public override async Task HandleAsync(GetUntestedTicketsRequest req, CancellationToken ct)
+    public override async Task HandleAsync(GetUntestedTicketsQuery req, CancellationToken ct)
     {
         // 1. Load settings
         var settings = await appSettingsRepository.GetAsync(ct);

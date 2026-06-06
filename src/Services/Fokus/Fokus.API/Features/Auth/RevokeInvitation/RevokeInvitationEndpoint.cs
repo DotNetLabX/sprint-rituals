@@ -4,9 +4,9 @@ namespace Fokus.API.Features.Auth.RevokeInvitation;
 [Tags("Invitations")]
 [Authorize(Roles = "Admin")]
 public class RevokeInvitationEndpoint(InvitationRepository invitationRepository)
-    : Endpoint<RevokeInvitationRequest>
+    : Endpoint<RevokeInvitationCommand>
 {
-    public override async Task HandleAsync(RevokeInvitationRequest req, CancellationToken ct)
+    public override async Task HandleAsync(RevokeInvitationCommand req, CancellationToken ct)
     {
         var invitation = await invitationRepository.GetByIdAsync(req.Id, ct);
         if (invitation is null)

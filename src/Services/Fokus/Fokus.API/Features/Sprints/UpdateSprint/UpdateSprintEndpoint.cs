@@ -4,9 +4,9 @@ namespace Fokus.API.Features.Sprints.UpdateSprint;
 [Tags("Sprints")]
 [Authorize(Roles = "Admin")]
 public class UpdateSprintEndpoint(IJiraClient jiraClient, SprintRepository sprintRepository)
-    : Endpoint<UpdateSprintRequest, UpdateSprintResponse>
+    : Endpoint<UpdateSprintCommand, UpdateSprintResponse>
 {
-    public override async Task HandleAsync(UpdateSprintRequest req, CancellationToken ct)
+    public override async Task HandleAsync(UpdateSprintCommand req, CancellationToken ct)
     {
         var sprint = await sprintRepository.GetByIdAsync(req.SprintId, ct);
         if (sprint is null)

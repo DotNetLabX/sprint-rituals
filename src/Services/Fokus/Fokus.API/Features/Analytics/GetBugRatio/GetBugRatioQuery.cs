@@ -1,15 +1,15 @@
 namespace Fokus.API.Features.Analytics.GetBugRatio;
 
-public class GetBugRatioRequest
+public class GetBugRatioQuery
 {
     public int? SprintId { get; set; }
     public int? Last { get; set; }
     public string? SubTeam { get; set; }
 }
 
-public class GetBugRatioRequestValidator : Validator<GetBugRatioRequest>
+public class GetBugRatioQueryValidator : Validator<GetBugRatioQuery>
 {
-    public GetBugRatioRequestValidator()
+    public GetBugRatioQueryValidator()
     {
         RuleFor(x => x.SprintId)
             .GreaterThan(0)

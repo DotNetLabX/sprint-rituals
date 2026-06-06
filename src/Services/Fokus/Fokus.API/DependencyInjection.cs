@@ -6,6 +6,7 @@ using Fokus.API.Grpc;
 using Fokus.API.Hubs;
 using Fokus.Persistence;
 using Jira.RestApi;
+using Mapster;
 using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddFokusModule(this IServiceCollection services, IConfiguration configuration)
     {
+        TypeAdapterConfig.GlobalSettings.Scan(typeof(DependencyInjection).Assembly);
         services.AddFokusPersistence(configuration);
 
         // gRPC server (code-first protobuf-net.Grpc)

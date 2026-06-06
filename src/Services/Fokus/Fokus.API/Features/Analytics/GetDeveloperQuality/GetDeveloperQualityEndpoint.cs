@@ -9,9 +9,9 @@ public class GetDeveloperQualityEndpoint(
     TicketRepository ticketRepository,
     TestExecutionRepository testExecutionRepository,
     DeveloperQualityService developerQualityService)
-    : Endpoint<GetDeveloperQualityRequest, DeveloperQualityResponse>
+    : Endpoint<GetDeveloperQualityQuery, DeveloperQualityResponse>
 {
-    public override async Task HandleAsync(GetDeveloperQualityRequest req, CancellationToken ct)
+    public override async Task HandleAsync(GetDeveloperQualityQuery req, CancellationToken ct)
     {
         // 1. Load settings
         var settings = await appSettingsRepository.GetAsync(ct);

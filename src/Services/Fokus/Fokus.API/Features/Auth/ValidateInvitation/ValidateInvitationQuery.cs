@@ -1,6 +1,6 @@
 namespace Fokus.API.Features.Auth.ValidateInvitation;
 
-public class ValidateInvitationRequest
+public class ValidateInvitationQuery
 {
     public string Token { get; set; } = string.Empty;
 }

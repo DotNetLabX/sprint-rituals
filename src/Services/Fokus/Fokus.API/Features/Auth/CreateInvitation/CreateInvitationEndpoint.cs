@@ -8,9 +8,9 @@ namespace Fokus.API.Features.Auth.CreateInvitation;
 public class CreateInvitationEndpoint(
     InvitationRepository invitationRepository,
     AppSettingsRepository appSettingsRepository)
-    : Endpoint<CreateInvitationRequest, CreateInvitationResponse>
+    : Endpoint<CreateInvitationCommand, CreateInvitationResponse>
 {
-    public override async Task HandleAsync(CreateInvitationRequest req, CancellationToken ct)
+    public override async Task HandleAsync(CreateInvitationCommand req, CancellationToken ct)
     {
         var settings = await appSettingsRepository.GetAsync(ct);
         var email = req.Email.Trim().ToLowerInvariant();

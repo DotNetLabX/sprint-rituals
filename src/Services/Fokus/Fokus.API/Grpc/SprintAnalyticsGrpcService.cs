@@ -26,7 +26,7 @@ public class SprintAnalyticsGrpcService(
     CarryOverService carryOverService,
     QaMetricsService qaMetricsService) : ISprintAnalyticsService
 {
-    public async Task<AnonymizedSprintSummary> GetSprintSummaryAsync(SprintRequest request, CancellationToken ct = default)
+    public async Task<AnonymizedSprintSummary> GetSprintSummaryAsync(SprintQuery request, CancellationToken ct = default)
     {
         var (selectedSprint, windowSprints, activeDevelopers, allDevelopers, settings,
             capacityLookup, statusTransitions, allEpicTickets, excludedIds) =
@@ -51,7 +51,7 @@ public class SprintAnalyticsGrpcService(
         return MapToAnonymizedSummary(result, selectedSprint, statusTransitions, settings);
     }
 
-    public async Task<DisruptionMetrics> GetDisruptionMetricsAsync(SprintRequest request, CancellationToken ct = default)
+    public async Task<DisruptionMetrics> GetDisruptionMetricsAsync(SprintQuery request, CancellationToken ct = default)
     {
         var analyticsSprints = await sprintRepository.GetAnalyticsSprintsAsync(ct);
         var target = analyticsSprints.FirstOrDefault(s => s.Id == request.SprintId);
@@ -79,7 +79,7 @@ public class SprintAnalyticsGrpcService(
         return MapToDisruptionMetrics(singleResult);
     }
 
-    public async Task<CarryOverHistory> GetCarryOverHistoryAsync(TeamRequest request, CancellationToken ct = default)
+    public async Task<CarryOverHistory> GetCarryOverHistoryAsync(TeamQuery request, CancellationToken ct = default)
     {
         var analyticsSprints = await sprintRepository.GetAnalyticsSprintsAsync(ct);
         var ascending = analyticsSprints.Where(s => s.State == SprintState.Closed)

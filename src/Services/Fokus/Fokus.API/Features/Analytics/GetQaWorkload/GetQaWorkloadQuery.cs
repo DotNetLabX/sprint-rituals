@@ -1,15 +1,15 @@
 namespace Fokus.API.Features.Analytics.GetQaWorkload;
 
-public class GetQaWorkloadRequest
+public class GetQaWorkloadQuery
 {
     public int? SprintId { get; set; }
     public int? Last { get; set; }
     public string? SubTeam { get; set; }
 }
 
-public class GetQaWorkloadRequestValidator : Validator<GetQaWorkloadRequest>
+public class GetQaWorkloadQueryValidator : Validator<GetQaWorkloadQuery>
 {
-    public GetQaWorkloadRequestValidator()
+    public GetQaWorkloadQueryValidator()
     {
         RuleFor(x => x.SprintId)
             .GreaterThan(0)

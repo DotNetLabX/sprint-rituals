@@ -8,9 +8,9 @@ public class GetCycleTimeEndpoint(
     AppSettingsRepository appSettingsRepository,
     DeveloperRepository developerRepository,
     CycleTimeService cycleTimeService)
-    : Endpoint<GetCycleTimeRequest, CycleTimeResponse>
+    : Endpoint<GetCycleTimeQuery, CycleTimeResponse>
 {
-    public override async Task HandleAsync(GetCycleTimeRequest req, CancellationToken ct)
+    public override async Task HandleAsync(GetCycleTimeQuery req, CancellationToken ct)
     {
         // 1. Load analytics sprints — multi-sprint averaging uses closed sprints only
         var analyticsSprints = await sprintRepository.GetAnalyticsSprintsAsync(ct);

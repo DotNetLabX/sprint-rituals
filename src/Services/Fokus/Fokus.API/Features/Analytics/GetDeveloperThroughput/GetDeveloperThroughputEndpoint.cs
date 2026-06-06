@@ -8,9 +8,9 @@ public class GetDeveloperThroughputEndpoint(
     AppSettingsRepository appSettingsRepository,
     TicketRepository ticketRepository,
     DeveloperThroughputService developerThroughputService)
-    : Endpoint<GetDeveloperThroughputRequest, DeveloperThroughputResponse>
+    : Endpoint<GetDeveloperThroughputQuery, DeveloperThroughputResponse>
 {
-    public override async Task HandleAsync(GetDeveloperThroughputRequest req, CancellationToken ct)
+    public override async Task HandleAsync(GetDeveloperThroughputQuery req, CancellationToken ct)
     {
         // 1. Load analytics sprints — last-N and rolling average window use closed sprints only
         var analyticsSprints = await sprintRepository.GetAnalyticsSprintsAsync(ct);

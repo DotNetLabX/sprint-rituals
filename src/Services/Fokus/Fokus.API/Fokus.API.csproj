@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="FastEndpoints" />
+    <PackageReference Include="Mapster" />
     <PackageReference Include="MassTransit" />
     <PackageReference Include="protobuf-net.Grpc.AspNetCore" />
   </ItemGroup>

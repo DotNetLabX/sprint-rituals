@@ -1,15 +1,15 @@
 namespace Fokus.API.Features.Analytics.GetDeveloperQuality;
 
-public class GetDeveloperQualityRequest
+public class GetDeveloperQualityQuery
 {
     public int? SprintId { get; set; }
     public int? Last { get; set; }
     public string? SubTeam { get; set; }
 }
 
-public class GetDeveloperQualityRequestValidator : Validator<GetDeveloperQualityRequest>
+public class GetDeveloperQualityQueryValidator : Validator<GetDeveloperQualityQuery>
 {
-    public GetDeveloperQualityRequestValidator()
+    public GetDeveloperQualityQueryValidator()
     {
         RuleFor(x => x.SprintId)
             .GreaterThan(0)
