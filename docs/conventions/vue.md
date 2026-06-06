@@ -1,6 +1,6 @@
 # Vue Conventions
 
-Programming conventions for Vue 3 + TypeScript specific to this codebase. Referenced by developer and reviewer agents. Complements the skills in `.claude/skills/` (vue-patterns, vue-component-architecture, pinia-patterns, tailwind-theme).
+Programming conventions for Vue 3 + TypeScript specific to this codebase. Referenced by developer and reviewer agents. Complements the `vue-patterns`, `vue-component-architecture`, `pinia-patterns`, and `tailwind-theme` skills (provided by the nexus-dotnet plugin).
 
 ## Reactivity Gotchas
 

@@ -37,4 +37,4 @@ Cross-cutting, mechanical, no per-feature semantics. No user input required — 
 - **Decision order (ADR-003):** correct skill → reference project `<reference-repo>` → fix/create the skill. Every fix is a problem *class* (fix all instances).
 - **Pass 1 (skill repair)** has open design detail (the new `domain-service` skill shape) — the user wants to review that interactively, so checkpoint before finalizing it.
 - **Pass 4 (Identity extraction)** needs the user to define what stays in Fokus vs moves to Identity before planning.
-- Use the **project** agents (`.claude/agents/`), not OMC equivalents (per `pipeline-guardrails`).
+- Use the **nexus** pipeline agents (`/nexus:{agent}`), not OMC equivalents (per the `pipeline-guardrails` rule).
