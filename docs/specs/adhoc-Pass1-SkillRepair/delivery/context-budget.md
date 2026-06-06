@@ -1,125 +1,88 @@
-# Context Budget — measured accounting (session 3bde26f8)
+# Context Budget — corrected, API-measured accounting (session 3bde26f8)
 
-**Why this exists:** I gave two contradictory estimates of harness overhead (~60–90k, then ~23–25k). Both were guesses. This is the measured truth, parsed from the session transcript.
+**Why this was rewritten:** the first version of this file had two real errors the user caught:
+1. It claimed **`thinking` ≈ 114,555 tok**. That was a **phantom** — thinking is stored *signature-only* (encrypted) in the transcript; readable thinking text = **0 chars**. The 114k never existed and broke the whole reconciliation.
+2. It blamed a "**135k of per-turn envelopes (cwd/git/timestamps)**". Wrong attribution. cwd/git/timestamps are tiny top-level fields. That bucket is **OMC hook output** (~115k tok) — see below.
 
-**Method:** parsed `~/.claude/projects/session-folder/3bde26f8-…jsonl` (the append-only event log = ground truth of everything that flowed through the session) with `_ctxcount.py` / `_ctxcount2.py`. Token figures are `chars ÷ 4` (rough; code/paths/markdown tables tokenize *denser* than 4 ch/tok, so real tokens for retained prose run ~10–30% higher).
-
----
-
-## Headline reconciliation: log = 629k, live window = 350k
-
-| | tok (≈) | In the live 350k window? |
-|---|--------:|---|
-| **Raw transcript log total** | **628,786** | — (append-only log, not the window) |
-| − `thinking` blocks | −114,555 | **No** — my reasoning is logged but not resent next turn |
-| − transient per-turn attachments + meta (envelopes, system-reminders, cwd/git, queue/mode/title) | ~−130,000 | **Mostly no** — injected per-turn, not retained |
-| + system prompt & tool schemas (NOT in the jsonl) | ~+15–25,000 | **Yes** — always in-window |
-| **≈ live window** | **~350,000** | ✓ matches what you see |
-
-**So the log being 629k while the window is 350k is expected** — ~115k is ephemeral thinking and ~130k is transient per-turn injection. Neither is the "350k" you're paying for each turn.
+**Ground-truth instrument (new):** the API's own `usage` block on every assistant record (`input_tokens + cache_read_input_tokens + cache_creation_input_tokens`). This is what the model actually received — not `chars ÷ 4`. The old file used chars/4, which systematically **undercounts** real tokens for code/markdown/JSON by ~10–30%. All headline numbers below are now API-measured.
 
 ---
 
-## What's actually in the LIVE window (the 350k)
+## Headline (API-measured)
 
-Ranked by what I can control:
+| Moment | Context tokens | Source |
+|---|--:|---|
+| **Session start baseline** (turn 0) | **45,360** | system prompt + tool schemas + CLAUDE.md + SessionStart + persona, before any conversation |
+| **Peak** (pre-compact) | **404,095** | the real number — the "350k" was eyeballed off the status line |
+| **Now** (post-`/compact`) | **~97,000** | `/compact` cut it ~4× |
 
-| Rank | Bucket | Log tok | Live? | Mine to fix? |
-|------|--------|--------:|-------|--------------|
-| 1 | **`tool_result` from `Read`** | 63,708 | mostly retained | **YES — the leak** |
-| 2 | **`tool_use` SendMessage (12.6k) + Edit (11.8k)** + their results | ~37,000 | retained | **YES — verbose dispatches/edits** |
-| 3 | Persistent harness: CLAUDE.md inj. (~12–25k live) + tool schemas/system (~15–25k, not in log) + team-lead persona (3.4k) | ~35,000 | retained | partly (trim) |
-| 4 | `assistant:text` (my prose) | 13,920 | retained | YES |
-| 5 | `Bash` results (5k) + other tool results | ~9,000 | retained | YES |
-| 6 | `user:text` (your messages) | 5,389 | retained | no |
-| — | `thinking` | 114,555 | **ephemeral** | indirectly (be decisive) |
-| — | attachments/meta envelopes | ~142,000 | **mostly transient** | no (harness) |
+The window grows **45k → 404k** monotonically: every `Read`/`Edit`/`Bash`/`SendMessage` appends its tool_result **and** the OMC hook output for that call, and all of it stays resident until compaction.
 
 ---
 
-## Measured raw log breakdown (hard data)
+## The fixed harness baseline = ~45k (the user was right)
 
-### By top-level event type
-| chars | tok | type |
-|------:|----:|------|
-| 985,286 | 246,321 | assistant |
-| 871,074 | 217,768 | user |
-| 569,469 | 142,367 | attachment |
-| 35,772 | 8,943 | system |
-| 17,579 | 4,394 | last-prompt |
-| 12,562 | 3,140 | queue-operation |
-| 6,832 | 1,708 | ai-title |
-| 5,957 | 1,489 | file-history-snapshot |
-| 5,858 | 1,464 | permission-mode |
-| 4,756 | 1,189 | mode |
+Turn 0 total = **45,360 tok** with *zero* conversation yet. Decomposed:
+- **System prompt + tool schemas ≈ 37k.** The tool schemas dominate — this session loads a very large MCP surface (Atlassian, Canva, Figma, Gmail, Google Calendar, Google Drive, oh-my-claudecode ~80 tools) plus the deferred-tool list. This is the single biggest fixed cost and the one I previously dismissed as "15–25k, second-order."
+- **Fixed files ≈ 8–10k:** global CLAUDE.md 1,025t · project CLAUDE.md 1,377t · SessionStart rules dump 4,336t · team-lead persona 3,368t.
 
-### By semantic category
-| chars | tok | category |
-|------:|----:|----------|
-| 569,469 | 142,367 | attachment (per-turn envelopes) |
-| 458,222 | 114,555 | **assistant: thinking** (ephemeral) |
-| 300,794 | 75,198 | **user: tool_result** |
-| 142,042 | 35,510 | **assistant: tool_use** |
-| 55,680 | 13,920 | assistant: text |
-| 35,772 | 8,943 | system events |
-| 21,558 | 5,389 | user: text |
-
-### tool_result returned to me — by tool (this is #1 leak)
-| chars | tok | tool |
-|------:|----:|------|
-| 254,833 | 63,708 | **Read** |
-| 20,009 | 5,002 | Bash |
-| 7,545 | 1,886 | Edit |
-| 5,675 | 1,418 | Grep |
-| 5,652 | 1,413 | SendMessage |
-| 2,909 | 727 | AskUserQuestion |
-
-### tool_use I emitted — by tool (this is #2 leak)
-| chars | tok | tool |
-|------:|----:|------|
-| 50,308 | 12,577 | **SendMessage** (long dispatches) |
-| 47,399 | 11,849 | **Edit** (~34 comm-log edits) |
-| 13,142 | 3,285 | Bash |
-| 9,761 | 2,440 | Agent |
-| 8,744 | 2,186 | AskUserQuestion |
-| 5,756 | 1,439 | Write |
-| 5,527 | 1,381 | Read |
-
-### Top individual blocks (the worst offenders)
-Nearly all are **full reads of the delivery folder** + my **thinking**:
-- 43.0k Read (review.md re-review) · 42.6k thinking · 33.1k thinking · 30.2k Read (plan.md) · 23.9k Read (questions.md) · 20.0k thinking · 18.9k Read (Codex runtime log) · 16.2k Read (refactor-triage.md) · 15.5k/15.1k/13.5k/13.2k/11.0k more delivery-folder Reads.
-
-### Attachment bucket (142k) sub-breakdown
-| chars | tok | tag |
-|------:|----:|-----|
-| 528,575 | 132,143 | per-turn envelopes (cwd/git/timestamps/system-reminders) across **773 records** (~685 ch avg) |
-| 48,141 | 12,035 | CLAUDE.md injection (re-injected ~3× in log; ~1 copy live) |
-| 2,573 | 643 | MCP instructions |
-
-### Fixed harness files (measured by `wc`, for reference)
-global CLAUDE.md 1,025t · project CLAUDE.md 1,377t · SessionStart rules dump 4,336t · team-lead persona 3,368t = **~10.1k measured**; + tool schemas/system (est, not in log) ~15–25k.
+**Verdict on the old estimates, corrected:** "harness 60–90k" was too high; "harness 23–35k" was **too low** — the true fixed baseline is **~45k**, dominated by tool schemas. The user's first instinct ("harness — too big, count exactly what you load") was the correct one.
 
 ---
 
-## Verdict on my earlier estimates
+## "135k of what?" → it's OMC hook output (115k tok, 1024 records)
 
-- **"Harness 60–90k" (1st answer): too high** — I swept transient attachments + ephemeral thinking into "harness."
-- **"Harness 23–25k" (2nd answer): right order for the *fixed* files, but understated the *persistent* injected total** (CLAUDE.md re-injection + tool schemas + persona ≈ 25–35k live).
-- **The real driver of 350k is NOT the harness.** It's (1) my full-artifact `Read`s (~64k) and (2) my verbose `SendMessage`/`Edit` traffic (~37k) — both 100% my behavior. Harness is a second-order ~25–35k.
+The mystery bucket is **`attachment`-type records = 115,363 tok across 1,024 records**, and it is **100% hook machinery**, not cwd/git/timestamps:
+
+| attachment kind | ~tok | what it is |
+|---|--:|---|
+| `hook_success` | **77,636** | the JSON every PreToolUse/PostToolUse/Stop hook returns, on **every** tool call |
+| `hook_additional_context` | 12,686 | the "Verify changes work…", "Use parallel execution…", "Code modified…" nags appended to tool results |
+| `deferred_tools_delta` | 8,132 | the deferred MCP tool list |
+| `skill_listing` | 6,285 | available-skills dump |
+| `invoked_skills` | 3,507 | |
+| `file` | 3,606 | |
+| `output_style` / `mcp_instructions_delta` / `task_reminder` / misc | ~3,400 | |
+
+**The worst repeat offenders** (same string, re-emitted):
+- `{"continue":true,"suppressOutput":true}` — **×340** = 31,583 tok
+- `{"continue":true,"hookSpecificOutput":{…}}` — **×188** = 25,227 tok
+- `{"continue":true,"suppressOutput":true}` (variant) — ×67 = 6,400 tok
+- SessionStart hook dumps — ×2 = ~9,400 tok
+
+By hook event: PostToolUse:Edit 12.8k · PostToolUse:Read 9.9k · PostToolUse:Bash 9.2k · Stop 8.0k · PreToolUse:Bash 7.2k · PreToolUse:Edit 6.5k · … Every tool call pays a PreToolUse **and** PostToolUse hook tax, and the output is retained in-window. **This is the most reducible bucket on the board** — quieting OMC hooks (`suppressOutput`, trim `additionalContext`, or `OMC_SKIP_HOOKS`) would cut ~90–115k cumulative.
 
 ---
 
-## Reducible vs fixed
+## Full decomposition of the 404k peak (API-anchored)
 
-| Item | Now | Achievable | How |
-|------|----:|-----------:|-----|
-| Read tool_results | ~64k | ~15k | Grep verdict lines / read only changed sections; never re-read unchanged artifacts |
-| SendMessage dispatches | ~13k | ~5k | Point to artifact paths; don't inline on-disk findings |
-| Edit (comm-log) | ~12k | ~6k | Smaller, less-frequent log edits; fewer full-row rewrites |
-| thinking | ~115k log | lower | Be decisive; less re-derivation (not in window, but adds latency/cost) |
-| Harness rules dump | 4.3k | ~1.5k | Trim SessionStart to coordination-relevant rules |
-| MCP/deferred tools | ~3–5k | ~1k | Disable unused servers (Canva/Figma/Gmail/Calendar/Drive) |
+| Bucket | ~tok | Mine to fix? |
+|---|--:|---|
+| System prompt + tool schemas (MCP surface) | ~37k | partly — disable unused MCP servers |
+| Fixed files (CLAUDE.md ×2, rules dump, persona) | ~9k | trim rules dump |
+| **OMC hook attachments** (hook_success + additional_context + listings) | **~115k** | **YES — quiet the hooks** |
+| `tool_result` (Read **63k**, Bash 8k, Grep, Edit, SendMessage…) | ~78k | **YES — my full-artifact Reads** |
+| `tool_use` (Edit 14k, SendMessage 13k, Write 7k, Bash 3.5k…) | ~43k | **YES — verbose dispatches/edits** |
+| `assistant` text (my prose) | ~15k | YES |
+| `user` text (your messages) | ~10k | no |
+| small meta (file-history 5k, hookInfos 4k, queue-op 2.4k, ai-title 0.7k) | ~13k | no (harness) |
+| `thinking` | **~0 stored** | n/a — signature-only, not text |
 
-**Lean protocol now in force:** (1) own only `communication-log.md`; (2) `Grep` verdict lines, never full artifacts unless a verdict self-contradicts; (3) dispatches reference artifact paths, no inlined findings; (4) terse log edits.
+Sum of identifiable ≈ 320k by chars/4; the gap to the API's 404k is tokenizer density (chars/4 undercounts code/JSON/markdown by 10–30%) + cache-accounting. The buckets reconcile within that margin — no missing 190k this time.
 
-*Method scripts `_ctxcount.py` / `_ctxcount2.py` were used to generate this and then removed (not pipeline artifacts).*
+---
+
+## The two leaks ranked, with the fix
+
+1. **OMC hooks — ~115k cumulative.** Fires Pre+Post on every tool call; output retained. *Fix:* `suppressOutput` on the noisy hooks, trim `hook_additional_context`, or `OMC_SKIP_HOOKS` / `DISABLE_OMC` for coordination-only sessions. Biggest single win.
+2. **My full-artifact `Read`s — ~63k.** *Fix (lean protocol, in force):* `Grep` verdict lines; read only changed sections; never re-read unchanged artifacts.
+3. **My `SendMessage`/`Edit`/`Write` traffic — ~34k.** *Fix:* dispatches point to artifact paths, no inlined findings; terse, infrequent log edits.
+4. **Tool schemas — ~37k fixed.** *Fix:* disable MCP servers not needed this session (Canva/Figma/Gmail/Calendar/Drive).
+
+**Lean protocol (still in force):** own only `communication-log.md`; Grep verdicts, never full-read peer artifacts; path-pointer dispatches; terse log edits.
+
+---
+
+## Method (reproducible)
+
+Parsed `~/.claude/projects/session-folder/3bde26f8-….jsonl` (1,934 records) with a Python probe: classified every record by `type`, summed `attachment` payloads by `attachment.type` + signature, summed `message.content` blocks by kind, and — crucially — read the API `usage` block per assistant turn for the **true** token curve (45k baseline → 404k peak → 97k post-compact). Probe scripts ran out-of-context (temp dir) and were removed; they are not pipeline artifacts. *The authoritative live-window number is always Claude Code's `/context` command or the `usage` block — not `chars ÷ 4`.*
