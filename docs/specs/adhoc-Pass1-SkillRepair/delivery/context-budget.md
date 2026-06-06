@@ -14,9 +14,11 @@
 |---|--:|---|
 | **Session start baseline** (turn 0) | **45,360** | system prompt + tool schemas + CLAUDE.md + SessionStart + persona, before any conversation |
 | **Peak** (pre-compact) | **404,095** | the real number — the "350k" was eyeballed off the status line |
-| **Now** (post-`/compact`) | **~97,000** | `/compact` cut it ~4× |
+| **Now** (post-`/compact`, still climbing) | **~128,000** | `/compact` cut it to ~97k; the budget investigation itself has since pushed it to ~128k |
 
-The window grows **45k → 404k** monotonically: every `Read`/`Edit`/`Bash`/`SendMessage` appends its tool_result **and** the OMC hook output for that call, and all of it stays resident until compaction.
+The window grows **45k → 404k** steadily: every `Read`/`Edit`/`Bash`/`SendMessage` appends its tool_result **and** the OMC hook output for that call, and all of it stays resident until compaction.
+
+> **Snapshot note.** Only **baseline (45,360)** and **peak (404,095)** are fixed historical points. All record counts and cumulative-tok figures below are a **live snapshot** (transcript = 2,097 records at time of measurement) and keep rising as work continues — treat them as orders of magnitude, not frozen totals.
 
 ---
 
@@ -30,14 +32,14 @@ Turn 0 total = **45,360 tok** with *zero* conversation yet. Decomposed:
 
 ---
 
-## "135k of what?" → it's OMC hook output (115k tok, 1024 records)
+## "135k of what?" → it's OMC hook output (~120k tok, 1,083 records)
 
-The mystery bucket is **`attachment`-type records = 115,363 tok across 1,024 records**, and it is **100% hook machinery**, not cwd/git/timestamps:
+The mystery bucket is **`attachment`-type records = ~120,000 tok across 1,083 records** (and climbing), and it is **100% hook machinery**, not cwd/git/timestamps:
 
 | attachment kind | ~tok | what it is |
 |---|--:|---|
-| `hook_success` | **77,636** | the JSON every PreToolUse/PostToolUse/Stop hook returns, on **every** tool call |
-| `hook_additional_context` | 12,686 | the "Verify changes work…", "Use parallel execution…", "Code modified…" nags appended to tool results |
+| `hook_success` | **81,552** | the JSON every PreToolUse/PostToolUse/Stop hook returns, on **every** tool call |
+| `hook_additional_context` | 13,462 | the "Verify changes work…", "Use parallel execution…", "Code modified…" nags appended to tool results |
 | `deferred_tools_delta` | 8,132 | the deferred MCP tool list |
 | `skill_listing` | 6,285 | available-skills dump |
 | `invoked_skills` | 3,507 | |
@@ -85,4 +87,4 @@ Sum of identifiable ≈ 320k by chars/4; the gap to the API's 404k is tokenizer 
 
 ## Method (reproducible)
 
-Parsed `~/.claude/projects/session-folder/3bde26f8-….jsonl` (1,934 records) with a Python probe: classified every record by `type`, summed `attachment` payloads by `attachment.type` + signature, summed `message.content` blocks by kind, and — crucially — read the API `usage` block per assistant turn for the **true** token curve (45k baseline → 404k peak → 97k post-compact). Probe scripts ran out-of-context (temp dir) and were removed; they are not pipeline artifacts. *The authoritative live-window number is always Claude Code's `/context` command or the `usage` block — not `chars ÷ 4`.*
+Parsed `~/.claude/projects/session-folder/3bde26f8-….jsonl` (2,097 records at snapshot) with a Python probe: classified every record by `type`, summed `attachment` payloads by `attachment.type` + signature, summed `message.content` blocks by kind, and — crucially — read the API `usage` block per assistant turn for the **true** token curve (45,360 baseline → 404,095 peak → 97k right after `/compact`, ~128k now). Probe scripts ran out-of-context (temp dir) and were removed; they are not pipeline artifacts. *The authoritative live-window number is always Claude Code's `/context` command or the `usage` block — not `chars ÷ 4`.*
