@@ -101,3 +101,137 @@ The previous `review.md` raised one HIGH: "Step 3 fat-file list is incomplete �
 | Referenced skills exist | yes | `ls nexus-dotnet/.../skills` | central-package-management, extract-endpoint-types, framework-currency present |
 
 Reviewed: docs/specs/adhoc-Pass2-SliceHygiene/delivery/plan.md
+
+---
+
+## Step 2 — Code Review
+
+### Reviewed By
+Reviewer agent (nexus:reviewer), commit 3f07fa7. Read all 5 `IRegister` / `Mappings.cs` files, all modified endpoint handlers, the `AppSettings` entity, value-object types, gRPC contract diffs, Jira diff, Vue client diffs, and the DI bootstrap diffs. Traced logic for the data-loss risk flagged by the done-check.
+
+### Verdict: APPROVE
+
+No CRITICAL or HIGH findings. All plan steps implemented correctly. Two MEDIUM and two LOW findings noted as non-blocking follow-ups.
+
+### Pre-commitment Predictions
+- Expected the `IgnoreNonMapped(true)` + `.Adapt(existing)` combination to be the highest-risk area (done-check flagged it). **Result:** Confirmed safe — all 5 command types map exactly the fields they own; no unmapped target fields are touched.
+- Expected the `SaveCycleTimeBoundariesResponse` response-key deviation to create a Vue read-path regression. **Result:** Developer updated both `types/index.ts` and `WorkflowTab.vue` save-response handler consistently; the GET read path (`CycleTimeBoundariesResponse.startStage/endStage`) was correctly left alone.
+- Expected at least one gRPC `[DataMember(Order)]` to have been accidentally reordered. **Result:** Diff shows only class-name lines changed; all `Order=` values and member declarations are identical.
+
+---
+
+### Findings
+
+#### [MEDIUM] `SaveHealthConfig` Mapster map replaces complex reference-type fields rather than merging in place
+
+**File:** `src/Services/Fokus/Fokus.API/Features/Settings/SaveHealthConfig/SaveHealthConfigMappings.cs:9` + `SaveHealthConfigEndpoint.cs:12`
+**Issue:** `SaveHealthConfigCommand` has 5 fields that are complex reference types (`HealthThresholdConfig`, `HealthWeights`, `QaHealthThresholds`, `QualitySubScoreWeights` as objects; `QualityHealthWeight` as int). With `IgnoreNonMapped(true)`, Mapster only writes those 5 fields and leaves the remaining ~15 `AppSettings` scalar/list fields untouched — this is correct. However, for the 4 complex reference-type properties Mapster performs a **deep copy** (it constructs new instances of `HealthThresholdConfig` etc. from `req.*`) rather than mutating the existing reference. The original hand-written code did `existing.HealthThresholds = req.HealthThresholds` — a direct reference swap. The Mapster behaviour is semantically equivalent for EF (EF tracks the property change regardless of whether it is a new instance or the same reference), but it is a subtle semantic difference that future maintainers should be aware of. More importantly: if EF's change tracker is configured with value-object-owned-entity semantics (which is planned for Pass 3 with `ComplexProperty`), deep-copy vs reference-swap may interact differently. No runtime impact today, but documented here so it is not a surprise in Pass 3.
+**Fix:** No code change required now. Add a comment in `SaveHealthConfigMappings.cs` noting that the 4 reference-type fields are deep-copied by Mapster and that this will need revisiting when Pass 3 introduces `ComplexProperty` owned-entity configuration.
+**Confidence:** MEDIUM
+
+#### [MEDIUM] `CycleTimeBoundariesResponse` GET type and PUT response now have mismatched field names — no TS type guard
+
+**File:** `client/src/types/index.ts:868` (`CycleTimeBoundariesResponse`) vs `:871` (`SaveCycleTimeBoundariesResponse`)
+**Issue:** `CycleTimeBoundariesResponse` (GET) still has `startStage`/`endStage`. `SaveCycleTimeBoundariesResponse` (PUT) now has `cycleTimeStartStage`/`cycleTimeEndStage`. These two types describe the same domain concept (cycle-time boundaries) with different field names. `WorkflowTab.vue` correctly reads from the GET type using `startStage`/`endStage` (lines 42-43 — unchanged) and from the PUT response using `cycleTimeStartStage`/`cycleTimeEndStage` (lines 73-74 — updated). The divergence is intentional (the done-check Deviation note confirms it). The risk is that a future developer editing `WorkflowTab.vue` may attempt to unify these types or assume they are the same shape, leading to a copy-paste bug. There is no TypeScript union or shared base that makes the asymmetry visible.
+**Fix:** Add a JSDoc comment on `CycleTimeBoundariesResponse` in `types/index.ts` noting that the GET response uses short field names (`startStage`/`endStage`) while the PUT request and PUT response use entity-aligned names (`cycleTimeStartStage`/`cycleTimeEndStage`), and that Pass 3 may unify them. No breaking change now.
+**Confidence:** HIGH
+
+#### [LOW] `SaveBugRatioAlertsCommand` and siblings are `class` not `record` — ADR-009 "prefer record" not applied
+
+**File:** `src/Services/Fokus/Fokus.API/Features/Settings/SaveBugRatioAlerts/SaveBugRatioAlertsCommand.cs:3`; same pattern in all 5 Settings command files and the other new `*Command.cs` / `*Query.cs` siblings.
+**Issue:** ADR-009 says "Prefer `record` for commands/queries/responses/DTOs." The new command/query sibling files use `class` (mutable setters). Q4b marks this opportunistic and non-blocking, so this is expected. The split + rename binding criteria are met. Noted here for completeness.
+**Fix:** Convert to `record` with `{ get; init; }` properties in a follow-up pass (Q4b). Non-blocking.
+**Confidence:** HIGH
+
+#### [LOW] `SaveBugRatioAlertsCommand.cs` defines `SaveBugRatioAlertsResponse` — response class in the Command file
+
+**File:** `src/Services/Fokus/Fokus.API/Features/Settings/SaveBugRatioAlerts/SaveBugRatioAlertsCommand.cs:27`
+**Issue:** ADR-008 specifies the sibling holds "request + response + DTOs + validator." The response class is correctly placed in the Command file (not the Endpoint). This is conformant. Noted because `SaveBugRatioAlertsResponse` is a trivial `{ bool Success }` class shared with 9 other Settings commands — each has its own copy. This is minor duplication that is acceptable today (no DRY threshold of 3 violated at the sibling level) but may be cleaned up in Pass 3.
+**Fix:** None required now. If all Settings save-responses have the same shape, a shared `SettingsSaveResponse` in a shared file could eliminate the duplication — but that is a separate refactoring decision (ADR-003 pattern-class fix).
+**Confidence:** LOW
+
+---
+
+### Positive Observations
+- **`IgnoreNonMapped(true)` is correctly applied on all 5 Mapster configs** — this is the load-bearing guard against data loss. The done-check concern is resolved: `SaveBugRatioAlerts` maps only `BugRatioAlertThreshold`, `BugRatioConsecutiveSprintCount`, `DefaultSpPerBug`; all remaining ~17 `AppSettings` fields are untouched by `.Adapt(existing)`.
+- **gRPC wire contract is strictly preserved.** Both `TeamQuery.cs` and `SprintQuery.cs` diffs show only the class-name declaration line changed. `[DataContract]`, `[DataMember(Order=1)]`/`[DataMember(Order=2)]` and member declarations are byte-for-byte identical to their pre-rename originals.
+- **Jira Refit wire contract is preserved.** `UpdateJiraSprintCommand` retains all four property names (`Name`, `StartDate`, `EndDate`, `Goal`) unchanged; only the type name changed. Refit serializes by property name, so the JSON body the Jira REST API receives is identical.
+- **Vue false-positive collision fence held.** `QaWorkloadDevTable.vue:145` `dev.workloadAlert.consecutiveSprintCount` was not touched. The plan's explicit warning was operationally effective.
+- **`SaveCycleTimeBoundaries` business logic retained.** The `orderedStages.IndexOf` + stage-order guard (`startIndex >= endIndex`) is unchanged. The handler is correctly excluded from Mapster application. The only changes are the field-name references (`req.StartStage` → `req.CycleTimeStartStage`, etc.).
+- **`SaveXraySettings` secret-preservation logic retained.** The conditional `if (!string.IsNullOrEmpty(req.XrayClientSecret))` block that prevents overwriting a stored secret with null is unchanged — correctly NOT Adapt-ed.
+- **List-based commands (`SaveDoneStatuses`, `SaveExcludedStatuses`, `SaveWorkflowStages`) use explicit field assignment** — correct, since their command field names (`Statuses`/`Stages`) do not match `AppSettings` field names (`DoneStatuses`/`ExcludedFromScopeStatuses`/`WorkflowStages`), so Mapster would silently no-op without `IgnoreNonMapped` and a field map. Explicit assignment is the right choice.
+- **Mapster DI bootstrap placed correctly.** `TypeAdapterConfig.GlobalSettings.Scan(typeof(DependencyInjection).Assembly)` is the first call inside `AddFokusModule` / `AddIdentityModule` — scanning happens before any endpoint registration, so `IRegister` implementations are discovered before any `.Adapt()` call.
+- **No `AddMapster` / `Mapster.DependencyInjection` introduced.** Q4a is fully respected.
+- **`global using Mapster;` added to `Fokus.API/GlobalUsings.cs`** only — Identity does not add a global using, which is correct since Identity currently has no `IRegister` maps (the scan is registered but discovers nothing, which is harmless).
+
+---
+
+### Gaps
+- **Runtime smoke of the gRPC h2c endpoint and Jira sprint-update round-trip** is not included in the grep-based verification. Structurally safe (wire analysis confirmed), but a live-fire test of both would close the acceptance loop. This is the user's call per the plan's manual smoke note.
+- **`SaveHealthConfig` deep-copy vs reference-swap** interaction with EF owned-entity configuration (Pass 3) is unverified — documented above as MEDIUM.
+
+---
+
+### Open Questions
+None. All plan decisions are binding (Q1–Q5 all Answered). The two MEDIUM findings are follow-up notes, not blockers.
+
+---
+
+### Evidence
+| Check | Result | Command / source | Output |
+|-------|--------|------------------|--------|
+| `IgnoreNonMapped(true)` on all 5 maps | PASS | Read all 5 `*Mappings.cs` files | Present on every `NewConfig<Command, AppSettings>()` call |
+| gRPC `[DataMember(Order)]` unchanged | PASS | git diff df142ce..3f07fa7 DataContracts/ | Only class-name declaration lines changed; Order= values identical |
+| Jira property names unchanged | PASS | git diff df142ce..3f07fa7 Jira.Contracts/ | Only class-name declaration line changed |
+| SaveCycleTimeBoundaries business logic preserved | PASS | Read `SaveCycleTimeBoundariesEndpoint.cs` post-commit | `orderedStages.IndexOf`, `startIndex >= endIndex` guard, `AddError` calls all intact |
+| SaveXraySettings secret guard preserved | PASS | git diff SaveXraySettings/ | `IsNullOrEmpty(req.XrayClientSecret)` conditional unchanged |
+| Vue false-positive fence | PASS | git diff WorkflowTab.vue; QaWorkloadDevTable.vue | `workloadAlert.consecutiveSprintCount` untouched |
+| Vue GET read path unchanged | PASS | git diff WorkflowTab.vue | Lines 42-43 (`result.startStage/endStage` from GET) not in diff |
+| SaveCycleTimeBoundariesResponse Vue consumers updated | PASS | git diff types/index.ts WorkflowTab.vue | `SaveCycleTimeBoundariesResponse` fields + WorkflowTab save-response handler consistently updated |
+| No `AddMapster` / `Mapster.DependencyInjection` | PASS | git diff DependencyInjection.cs (both) | Only `using Mapster;` + `GlobalSettings.Scan(...)` added |
+| Mapster DI scan order | PASS | Read `Fokus.API/DependencyInjection.cs:22-23` | `Scan(...)` is first line in `AddFokusModule` body |
+| List commands use explicit assignment (not Adapt) | PASS | Read SaveDoneStatuses/Excluded/WorkflowStages endpoints | All 3 use `existing.{Field} = req.Statuses` / `req.Stages` |
+| Build (backend) | PASS (architect done-check) | `dotnet build SprintRituals.slnx` | "Build succeeded", 0 errors, 6 pre-existing warnings |
+| Build (frontend) | PASS (architect done-check) | `npm run build` (client/) | built in 1.17s, 0 TS errors |
+
+---
+
+## Step 2 — Cycle 1 Re-review (working tree atop 3f07fa7)
+
+### Reviewed By
+Reviewer agent (nexus:reviewer), Cycle 1. Diff: `git diff 3f07fa7` against working tree. Read `SaveCycleTimeBoundariesCommand.cs`, `SaveCycleTimeBoundariesEndpoint.cs`, `SaveHealthConfigEndpoint.cs`, `SaveHealthConfigMappings.cs` (deleted), `client/src/types/index.ts`, `client/src/components/settings/WorkflowTab.vue`, `SaveBugRatioAlertsCommand.cs`.
+
+### Verdict: APPROVE
+
+All three Cycle 1 findings are resolved. No CRITICAL or HIGH findings remain.
+
+### Finding resolution
+
+#### [MEDIUM — RESOLVED] CycleTime PUT/GET response field mismatch
+The `SaveCycleTimeBoundariesResponse` record was reverted from `(CycleTimeStartStage, CycleTimeEndStage)` back to `(StartStage, EndStage)` in `SaveCycleTimeBoundariesCommand.cs:23`. The endpoint now constructs it as `new SaveCycleTimeBoundariesResponse(StartStage: settings.CycleTimeStartStage, EndStage: settings.CycleTimeEndStage)` using named positional arguments — correct. The Vue `SaveCycleTimeBoundariesResponse` type in `types/index.ts` is reverted to `{ startStage: string, endStage: string }` and `WorkflowTab.vue` lines 74-75 read `result.startStage`/`result.endStage`. GET and PUT response shapes now match — the asymmetry is gone. No adjacent regressions: `WorkflowTab.vue` GET read path (lines 42-43) is unchanged, and the QA-workload false-positive fence is untouched.
+
+#### [MEDIUM — RESOLVED] SaveHealthConfig Mapster deep-copy concern
+`SaveHealthConfigMappings.cs` is deleted. `SaveHealthConfigEndpoint.cs` now uses explicit reference assignment for all 5 fields (`existing.HealthThresholds = req.HealthThresholds` etc.) with a comment documenting the Pass 3 `ComplexProperty` rationale. All 5 `SaveHealthConfigCommand` fields are assigned — no field dropped. `SaveHealthConfigResponse { Success = true }` construction is unchanged. Behaviour is equivalent to the pre-Pass-2 handler.
+
+#### [LOW — CONFIRMED CORRECT, NO CHANGE NEEDED] SaveBugRatioAlertsResponse in Command file
+`SaveBugRatioAlertsCommand.cs` is unchanged from 3f07fa7. `SaveBugRatioAlertsResponse` remains in the Command file — this is the correct ADR-008 placement ("sibling holds request + response + DTOs + validator"). The Cycle 1 finding was about minor duplication (9 identical `{ bool Success }` classes), not misplacement. No code change was required or applied. Confirmed correct.
+
+### Adjacent-area checks (Cycle 2 rubber-stamp avoidance)
+- `SaveCycleTimeBoundariesCommand.cs` — `CycleTimeStartStage`/`CycleTimeEndStage` command fields unchanged (PUT body contract preserved). Validator messages updated to match renamed field names. Correct.
+- Endpoint business logic (`orderedStages.IndexOf`, `AddError` lambdas referencing `r.CycleTimeStartStage`/`r.CycleTimeEndStage`) — unchanged from 3f07fa7. Logic intact.
+- No new files introduced by the fix set. Only 5 code files modified + `SaveHealthConfigMappings.cs` deleted.
+- `SaveHealthConfigCommand.cs` (5 fields) vs `SaveHealthConfigEndpoint.cs` (5 explicit assignments) — count matches exactly. No field dropped.
+
+### Evidence
+| Check | Result | Source | Output |
+|-------|--------|--------|--------|
+| `SaveCycleTimeBoundariesResponse` reverted to `(StartStage, EndStage)` | PASS | Read `SaveCycleTimeBoundariesCommand.cs:23` | `public record SaveCycleTimeBoundariesResponse(string StartStage, string EndStage);` |
+| Endpoint constructs response with correct named args | PASS | Read `SaveCycleTimeBoundariesEndpoint.cs:46` | `new SaveCycleTimeBoundariesResponse(StartStage: settings.CycleTimeStartStage, EndStage: settings.CycleTimeEndStage)` |
+| Vue `SaveCycleTimeBoundariesResponse` reverted | PASS | git diff 3f07fa7 client/src/types/index.ts | `startStage`/`endStage` keys restored |
+| `WorkflowTab.vue` save handler reverted | PASS | git diff 3f07fa7 WorkflowTab.vue | `result.startStage`/`result.endStage` restored at lines 74-75 |
+| `SaveHealthConfigMappings.cs` deleted | PASS | git diff --stat 3f07fa7 | File deleted |
+| `SaveHealthConfigEndpoint.cs` — all 5 fields explicitly assigned | PASS | Read `SaveHealthConfigEndpoint.cs:15-19` | `HealthThresholds`, `HealthWeights`, `QaHealthThresholds`, `QualityHealthWeight`, `QualitySubScoreWeights` all assigned |
+| No field dropped vs `SaveHealthConfigCommand` | PASS | Compare Command (5 fields) to Endpoint (5 assignments) | Count matches |
+| `SaveBugRatioAlertsCommand.cs` — no change | PASS | git diff 3f07fa7 SaveBugRatioAlerts/ | No diff; file unchanged |
+| QA-workload fence untouched | PASS | git diff 3f07fa7 WorkflowTab.vue; QaWorkloadDevTable.vue | `workloadAlert.consecutiveSprintCount` untouched; QaWorkloadDevTable.vue not in diff |
+| Build | NOT re-run (working tree, uncommitted) | n/a — build must be confirmed before commit | Pending developer confirmation |

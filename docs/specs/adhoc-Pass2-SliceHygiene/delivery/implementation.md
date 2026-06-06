@@ -84,14 +84,14 @@ Wire stability confirmed: protobuf-net.Grpc uses `[DataMember(Order=N)]` for wir
 C# changes:
 - `SaveBugRatioAlertsCommand.cs` — `AlertThreshold`→`BugRatioAlertThreshold`, `ConsecutiveSprintCount`→`BugRatioConsecutiveSprintCount`; validator lambda targets updated
 - `SaveBugRatioAlertsEndpoint.cs` — handler updated to use renamed fields
-- `SaveCycleTimeBoundariesCommand.cs` — `StartStage`→`CycleTimeStartStage`, `EndStage`→`CycleTimeEndStage`; validator messages updated; response record fields renamed
-- `SaveCycleTimeBoundariesEndpoint.cs` — all field references, AddError lambdas, and response construction updated
+- `SaveCycleTimeBoundariesCommand.cs` — `StartStage`→`CycleTimeStartStage`, `EndStage`→`CycleTimeEndStage`; validator messages updated; `SaveCycleTimeBoundariesResponse` record **kept as `(StartStage, EndStage)`** per user decision (Cycle 1 revert)
+- `SaveCycleTimeBoundariesEndpoint.cs` — all field references, AddError lambdas, and response construction updated; response uses named args: `SaveCycleTimeBoundariesResponse(StartStage: ..., EndStage: ...)`
 
 Vue client changes:
 - `client/src/api/settings.ts` — `saveBugRatioAlerts` param names and JSON payload keys updated (`alertThreshold`→`bugRatioAlertThreshold`, `consecutiveSprintCount`→`bugRatioConsecutiveSprintCount`); `saveCycleTimeBoundaries` params updated (`startStage`→`cycleTimeStartStage`, `endStage`→`cycleTimeEndStage`)
 - `client/src/stores/settingsStore.ts` — `saveBugRatioAlertsAction` param names updated
-- `client/src/types/index.ts` — `SaveCycleTimeBoundariesResponse` fields updated to `cycleTimeStartStage`/`cycleTimeEndStage`
-- `client/src/components/settings/WorkflowTab.vue` — `result.startStage`→`result.cycleTimeStartStage`, `result.endStage`→`result.cycleTimeEndStage` in save response handler
+- `client/src/types/index.ts` — `SaveCycleTimeBoundariesResponse` kept as `startStage`/`endStage` (reverted per Cycle 1)
+- `client/src/components/settings/WorkflowTab.vue` — save-response handler uses `result.startStage`/`result.endStage` (reverted per Cycle 1; both GET and PUT responses now use same field names)
 
 Call sites NOT changed (correct):
 - `HealthTab.vue` line 57 — passes `form.bugRatioAlertThreshold` and `form.bugRatioConsecutiveSprintCount` positionally; store action signature was updated to match
@@ -104,12 +104,13 @@ Call sites NOT changed (correct):
 - `SaveBoardEndpoint.cs` — replaced 1 manual assignment with `req.Adapt(existing)`
 - `SaveSyncConfigEndpoint.cs` — replaced 2 manual assignments with `req.Adapt(existing)`
 - `SaveAnalyticsTargetsEndpoint.cs` — replaced 1 manual assignment with `req.Adapt(existing)`
-- `SaveHealthConfigEndpoint.cs` — replaced 5 manual assignments with `req.Adapt(existing)`
+- `SaveHealthConfigEndpoint.cs` — reverted to explicit assignment (Cycle 1 fix: `HealthThresholdConfig`, `HealthWeightConfig`, `QaHealthThresholdConfig`, `QualitySubScoreWeightConfig` are `ValueObject`-derived; Mapster deep-copy avoided to preserve EF change-tracking semantics ahead of Pass 3 `ComplexProperty` rework); `SaveHealthConfigMappings.cs` deleted (unused after revert)
 
 NOT eligible (per plan Q3/decisions):
 - `SaveXraySettingsEndpoint` — conditional secret handling (`xrayClientSecret` only updated when non-null)
 - `SaveCycleTimeBoundariesEndpoint` — stage-order validation logic, non-trivial
 - `GetCycleTimeBoundariesEndpoint` — read-only endpoint with custom default-value logic (not a mapping target)
+- `SaveHealthConfigEndpoint` — reference-type `ValueObject` fields; explicit assignment retained (see Cycle 1 fix above)
 - `UserResponse` assembly — two-source mapping (Person + User), excluded per ADR-010
 
 ## Step 8 — Verification Sweep Results
@@ -123,9 +124,13 @@ NOT eligible (per plan Q3/decisions):
 6. `grep -rn ": IRegister"` → 5 hits (5 Mappings classes)
 7. `grep -rn "RequestValidator"` in src/ → 0 hits (all renamed to CommandValidator/QueryValidator)
 
-### Build results
+### Build results (post-commit)
 - `dotnet build SprintRituals.slnx` — Build succeeded, 0 errors, 6 pre-existing warnings (NU1903 vulnerability advisory, CS8629, CS9107)
 - `npm run build` (client/) — built in 1.28s, 0 errors
+
+### Build results (Cycle 1 fixes)
+- `dotnet build SprintRituals.slnx` — Build succeeded, 0 errors, 6 pre-existing warnings (unchanged)
+- `npm run build` (client/) — built in 0.97s, 0 errors
 
 ## Key Decisions
 - Mapster 7.4.0 selected as latest stable 7.x per plan guidance.
@@ -145,3 +150,21 @@ NOT eligible (per plan Q3/decisions):
 ## Deviations from Plan
 - Step 4 "~29 types" header (critic LOW): treated 37 as truth — all 37 types confirmed renamed.
 - Step 6 "2 concrete Vue call sites" (critic LOW): identified as `HealthTab.vue` (saveBugRatioAlertsAction call) and `WorkflowTab.vue` (saveBoundaries + onMounted boundary response). Both updated correctly.
+
+## Cycle 1 Fixes (reviewer findings)
+
+### Finding 1 [CRITICAL — user revert]: SaveCycleTimeBoundariesResponse response keys reverted
+- `SaveCycleTimeBoundariesCommand.cs` — response record reverted to `(string StartStage, string EndStage)` (was: `CycleTimeStartStage`/`CycleTimeEndStage`)
+- `SaveCycleTimeBoundariesEndpoint.cs` — response construction updated to use named args `StartStage: ...`, `EndStage: ...`
+- `client/src/types/index.ts` — `SaveCycleTimeBoundariesResponse` reverted to `startStage`/`endStage`
+- `client/src/components/settings/WorkflowTab.vue` — save-response handler reverted to `result.startStage`/`result.endStage`
+- Request fields (`CycleTimeStartStage`/`CycleTimeEndStage`) and all request payload keys KEPT — only the PUT *response* keys reverted.
+
+### Finding 2 [MEDIUM]: SaveHealthConfig Mapster map replaced with explicit assignment
+- `SaveHealthConfigEndpoint.cs` — `req.Adapt(existing)` replaced with explicit property assignment for all 5 complex/reference-type fields (`HealthThresholds`, `HealthWeights`, `QaHealthThresholds`, `QualityHealthWeight`, `QualitySubScoreWeights`). Reason: `HealthThresholdConfig` etc. are `ValueObject`-derived classes; Mapster deep-copy semantics differ from reference-swap when EF change-tracking is involved, and Pass 3 will introduce `ComplexProperty` owned-entity config that would interact differently with deep-copy vs reference-swap.
+- `SaveHealthConfigMappings.cs` — **deleted** (IRegister was unused after reverting to explicit assignment; leaving it registered would silently apply a no-op map without the `IgnoreNonMapped` guard, creating confusion).
+
+### Finding 3 [LOW]: SaveBugRatioAlertsResponse placement — no change
+- The response class is already in `SaveBugRatioAlertsCommand.cs`, which IS the correct ADR-008 sibling (command file holds request + response + DTOs + validator). Established pattern confirmed by `SetCapacity`, `UpdateTeamConfig`, etc. Finding is conformant per review.md ("[This is conformant]"). No move performed.
+
+### Finding 4 [LOW]: record conversion — skipped per Q4b (opportunistic, non-blocking)

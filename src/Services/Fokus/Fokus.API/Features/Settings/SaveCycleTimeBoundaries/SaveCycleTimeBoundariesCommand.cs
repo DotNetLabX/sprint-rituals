@@ -20,4 +20,4 @@ public class SaveCycleTimeBoundariesCommandValidator : Validator<SaveCycleTimeBo
     }
 }
 
-public record SaveCycleTimeBoundariesResponse(string CycleTimeStartStage, string CycleTimeEndStage);
+public record SaveCycleTimeBoundariesResponse(string StartStage, string EndStage);

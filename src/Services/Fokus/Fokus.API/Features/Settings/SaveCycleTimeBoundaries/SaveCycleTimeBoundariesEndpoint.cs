@@ -43,6 +43,6 @@ public class SaveCycleTimeBoundariesEndpoint(AppSettingsRepository repository)
         settings.CycleTimeEndStage = req.CycleTimeEndStage;
         await repository.SaveAsync(settings, ct);
 
-        await Send.OkAsync(new SaveCycleTimeBoundariesResponse(settings.CycleTimeStartStage, settings.CycleTimeEndStage), ct);
+        await Send.OkAsync(new SaveCycleTimeBoundariesResponse(StartStage: settings.CycleTimeStartStage, EndStage: settings.CycleTimeEndStage), ct);
     }
 }

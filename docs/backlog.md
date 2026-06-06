@@ -8,8 +8,8 @@ Order is dependency-driven (skills before the domain work that applies them; mec
 |----|------|------|--------|-----------|
 | 0 | adhoc-Pass0-Foundations | Foundations (cross-cutting, mechanical) | **Done** | — |
 | 1 | adhoc-Pass1-SkillRepair | Repair/create skills (root cause) | **Done** | — |
-| 2 | adhoc-Pass2-SliceHygiene | Endpoint split + naming + Mapster | Ready | Pass 1 ✓ (+ add Mapster to CPM) |
-| 3 | adhoc-Pass3-DomainEnrichment | VOs, domain services, no-DTO-in-domain | Blocked | Pass 1, Pass 2 |
+| 2 | adhoc-Pass2-SliceHygiene | Endpoint split + naming + Mapster | **Done** | Pass 1 ✓ (+ add Mapster to CPM ✓) |
+| 3 | adhoc-Pass3-DomainEnrichment | VOs, domain services, no-DTO-in-domain | Ready | Pass 1 ✓, Pass 2 ✓ |
 | 4 | adhoc-Pass4-IdentityExtraction | Finish Fokus→Identity cut | Blocked | needs user scope (A2) |
 | 5 | adhoc-Pass5-EventCorrectness | Domain-event dispatch fixes | Blocked | Pass 3 |
 
