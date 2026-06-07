@@ -9,9 +9,13 @@ Order is dependency-driven (skills before the domain work that applies them; mec
 | 0 | adhoc-Pass0-Foundations | Foundations (cross-cutting, mechanical) | **Done** | — |
 | 1 | adhoc-Pass1-SkillRepair | Repair/create skills (root cause) | **Done** | — |
 | 2 | adhoc-Pass2-SliceHygiene | Endpoint split + naming + Mapster | **Done** | Pass 1 ✓ (+ add Mapster to CPM ✓) |
-| 3 | adhoc-Pass3-DomainEnrichment | VOs, domain services, no-DTO-in-domain | Ready | Pass 1 ✓, Pass 2 ✓ |
+| 3a | adhoc-Pass3-DomainEnrichment | No-DTO-in-domain (ADR-006) — relocate 8 Jira/Xray factories to boundary mappers | **Done** | Pass 1 ✓, Pass 2 ✓ |
+| 3b | adhoc-Pass3b-AppSettingsVOs | AppSettings scalars → config VOs + Identity Person/User encapsulation (ADR-007) | Ready | Pass 3a ✓ |
+| 3c | adhoc-Pass3c-ComputationToDomain | Migrate all 15 analytics services to Fokus.Domain calculators + endpoint-owned DTOs (ADR-005) | Ready | Pass 3b |
 | 4 | adhoc-Pass4-IdentityExtraction | Finish Fokus→Identity cut | Blocked | needs user scope (A2) |
-| 5 | adhoc-Pass5-EventCorrectness | Domain-event dispatch fixes | Blocked | Pass 3 |
+| 5 | adhoc-Pass5-EventCorrectness | Domain-event dispatch fixes | Blocked | Pass 3c |
+
+**Pass 3 split (decided at the Pass 3a launch):** Pass 3 was ~3–4× Pass 2, so it was split into 3a/3b/3c, each its own pipeline run. 3a delivered (no-DTO-in-domain). Decisions for 3b/3c are locked in `docs/specs/adhoc-Pass3-DomainEnrichment/delivery/communication-log.md` + `summary.md` — those runs should not re-litigate scope (Q2=full ADR-005 migration; Q3=AppSettings VOs + Identity now; Fokus sync aggregates stay anemic per B3).
 
 ---
 
