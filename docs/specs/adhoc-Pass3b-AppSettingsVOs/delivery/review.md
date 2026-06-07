@@ -1,3 +1,63 @@
+# Pass 3b — AppSettings VOs + Identity Encapsulation — Step 2 Code Review
+
+## Reviewed By
+Reviewer (nexus:reviewer), cycle 1/3. Loaded: coding-conventions.md, csharp.md, ef-core.md. Fresh build run. Key files read: all 4 new VOs, AppSettings.cs, AppSettingsConfiguration.cs, AppSettingsRepository.cs, the migration, all 6 Settings endpoints, GetSettings response DTO, Identity Person/User (state + behaviors). All ~40 read-site files spot-checked via grep output. Client diff verified empty.
+
+## Verdict: APPROVE
+
+No CRITICAL or HIGH issues. One MEDIUM finding (VO class type vs csharp.md `sealed record` convention — pre-existing pattern followed by design). No blocking issues. Build is green, all plan acceptance checks independently confirmed.
+
+## Pre-commitment Predictions
+- Predicted: repository write funnel (critic HIGH-1 fix) most likely area to find an error. Found: correctly implemented — 4 re-assignments at lines 35-38 with an explanatory comment; diff confirmed.
+- Predicted: a read site missed in the ~40-site sweep, esp. the `settings2.Xray.Enabled` variant. Found: zero flat AppSettings reads remain — verified by running the plan's own Step-7 grep.
+- Predicted: migration might have a column-default mismatch for `BugRatio.Target` (decimal). Found: config uses `HasDefaultValue(30m)`; VO initializer `= 30` — these match.
+- Predicted: `SaveCycleTimeBoundaries` uses `SaveAsync(settings, ct)` (local variable named `settings`, not `existing`) — risk of confusion with detached path. Found: `settings` IS the tracked entity from `GetAsync`; the pattern is identical to `SaveExcludedStatuses`. Confirmed safe.
+
+## Findings
+
+### [MEDIUM] New VOs use `class` instead of `sealed record` — minor deviation from csharp.md convention
+
+**File:** `src/Services/Fokus/Fokus.Domain/Settings/ValueObjects/BugRatioConfig.cs:3`, `XrayConfig.cs:3`, `CycleTimeConfig.cs:3`, `SyncConfig.cs:3`
+**Issue:** `csharp.md` states "Use `sealed record` for DTOs, value objects, and domain events." The 4 new VOs are `public class ... : ValueObject` — not sealed records. They have public setters (mutable), which also conflicts with the record convention of `init`-only properties.
+**Context:** This is NOT a deviation introduced by this pass. The plan explicitly instructs "match `HealthThresholdConfig.cs`" (the live template), and all 4 existing VOs (`HealthThresholdConfig`, `HealthWeightConfig`, `QaHealthThresholdConfig`, `QualitySubScoreWeightConfig`) use the identical `public class : ValueObject` pattern with public setters. `AppSettings` keeps public setters on these VOs by design (EF `ComplexProperty` + the Save endpoints mutate them directly). Switching to `sealed record` would require `init`-only properties, which conflicts with the EF mutation path.
+**Fix:** No fix needed in this pass — the pattern is intentional and consistent with the live template. File as a follow-up if the team decides to reconcile the `csharp.md` VO convention with the `ValueObject` base class pattern.
+**Confidence:** HIGH
+
+## Positive Observations
+- **Behavioral parity verified.** Every rewritten read site changes ONLY the member path (`settings.BugRatio.DefaultSpPerBug` etc.). The plan's Step-7 grep returns zero flat AppSettings reads; all remaining hits in Save* command/validator files are flat wire DTO fields (correct by design). No logic was altered at any of the ~40 sites.
+- **Critic HIGH-1 (repository write funnel) fully resolved.** `AppSettingsRepository.SaveAsync` at lines 35-38 re-assigns all 4 new VOs (`existing.BugRatio/Xray/CycleTime/Sync = settings.{VO}`) after line 32, with a correct explanatory comment mirroring the JSON-VO pattern. The detached-settings round-trip acceptance is sound: all live endpoints pass the tracked `existing` to `SaveAsync`, but the re-assignment block correctly handles the detached case too.
+- **Migration is all-RenameColumn, no drop+add.** All 11 columns use `RenameColumn` in both `Up` and `Down`. The singleton row's values (esp. `Xray_ClientSecret`, `Sync_PlanningWindowDays`) are preserved. No column defaults are needed in the migration (renames, not adds); `HasDefaultValue` is correctly in the EF configuration for new-row seeding.
+- **Column defaults match VO initializers.** `BugRatio.AlertThreshold=50`, `ConsecutiveSprintCount=2`, `Target=30m`, `DefaultSpPerBug=3`; `Xray.Enabled=false`; `Sync.BackSprintCount=20`, `PlanningWindowDays=2` — all match. Nullable members (`Xray.ClientId/ClientSecret`, `CycleTime.StartStage/EndStage`) correctly have no default.
+- **Wire stays flat.** `GetSettingsResponse` is byte-for-byte identical to the pre-pass version (confirmed via `git show HEAD~1`). `client/` diff is empty. The 5 Save command/response records are unchanged. `ExcludedFromScopeStatuses` and `CycleTimeStartStage/EndStage` were never in `GetSettingsResponse` — pre-existing design confirmed by checking the pre-pass state.
+- **GetSettings boundary mapping correct.** All 11 grouped paths are explicit in the response builder. `MaskSecret(settings.Xray.ClientSecret)` preserved. Secret-preservation in `SaveXraySettings` intact.
+- **Identity encapsulation correct.** `Person.cs`: 8 `private set`, 1 computed get-only, private ctor for EF. `User.cs`: 5 `private set`. All factory/behavior methods in-assembly — `CreateFromGoogle` object-initializer factory compiles correctly against `private set` (same-assembly rule). The `required` removal is a valid deviation given the C# CS9032 constraint; the invariant is preserved via the private ctor.
+- **EF config correct.** 4 existing VOs remain `OwnsOne().ToJson()`; 4 new VOs use `ComplexProperty` with correct per-member config. `HasMaxLength(512)` preserved on `Xray.ClientId/ClientSecret`. `CompanyDomain` `HasMaxLength(256)` unchanged.
+- **`Fokus/CLAUDE.md` updated** to name all 8 VOs and state the wire-flat boundary-mapping rule.
+
+## Gaps
+- None that are blocking. The MEDIUM finding above is a follow-up for a future convention-alignment pass.
+
+## Open Questions
+- None. All findings are evidence-backed.
+
+## Evidence
+| Check | Result | Command | Output |
+|-------|--------|---------|--------|
+| Build | pass | `dotnet build SprintRituals.slnx` | Build succeeded. 0 Error(s), 4 Warning(s) (all pre-existing NU1903 vulnerability warnings on Blocks.Contracts). |
+| Flat-scalar grep | pass (zero AppSettings reads) | Plan Step-7 grep on 11 member names across `src/*.cs` | All hits are in analytics services via grouped paths (`settings.BugRatio.DefaultSpPerBug` etc.) or are flat wire DTO field references in Save\* command/validator files. Zero flat `AppSettings` reads remain. |
+| Repository write funnel | pass | `git diff HEAD~1 -- AppSettingsRepository.cs` | +6 lines: comment + `existing.BugRatio/Xray/CycleTime/Sync = settings.{VO}` at lines 33-38. |
+| Migration column strategy | pass | Read `20260607075717_GroupAppSettingsScalarsIntoVOs.cs` | All 11 `RenameColumn` in `Up` and `Down`. No drop+add. |
+| Column defaults vs VO initializers | pass | Read `AppSettingsConfiguration.cs` + VO files | `HasDefaultValue` values match property initializers for all non-nullable members. |
+| Wire unchanged | pass | `git show HEAD~1:GetSettingsQuery.cs` | Pre-pass and post-pass `GetSettingsResponse` are identical. |
+| Client untouched | pass | `git diff HEAD~1 -- client/` | Empty (no output). |
+| Person setters | pass | Read `Person.cs`, `Person/Behaviors/Person.cs` | 8 `private set`, 1 computed get-only, `private Person() {}` ctor. Factory `CreateFromGoogle` uses object-initializer in same assembly — correct. |
+| User setters | pass | Read `User.cs`, `User/Behaviors/User.cs` | 5 `private set` (`PersonId`, `Role`, `IsActive`, `RegistrationDate`, `LastLogin`). |
+| BugRatio.Target decimal | pass | VO: `decimal Target { get; set; } = 30;`, Config: `HasDefaultValue(30m)` | Match. |
+| XrayConfig.Enabled | pass | `SaveXraySettings`: `existing.Xray.Enabled = req.XrayEnabled` | Secret-preservation rule intact. |
+| SaveCycleTimeBoundaries detached risk | pass | Pre-pass `git show` + current read | `settings` is the tracked entity from `GetAsync` — same pattern as `SaveExcludedStatuses`. Not a detached case. |
+
+---
+
 # Pass 3b — AppSettings VOs + Identity Encapsulation — Critic Plan Review
 
 ## Reviewed By

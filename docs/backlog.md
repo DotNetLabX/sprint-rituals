@@ -10,8 +10,8 @@ Order is dependency-driven (skills before the domain work that applies them; mec
 | 1 | adhoc-Pass1-SkillRepair | Repair/create skills (root cause) | **Done** | — |
 | 2 | adhoc-Pass2-SliceHygiene | Endpoint split + naming + Mapster | **Done** | Pass 1 ✓ (+ add Mapster to CPM ✓) |
 | 3a | adhoc-Pass3-DomainEnrichment | No-DTO-in-domain (ADR-006) — relocate 8 Jira/Xray factories to boundary mappers | **Done** | Pass 1 ✓, Pass 2 ✓ |
-| 3b | adhoc-Pass3b-AppSettingsVOs | AppSettings scalars → config VOs + Identity Person/User encapsulation (ADR-007) | Ready | Pass 3a ✓ |
-| 3c | adhoc-Pass3c-ComputationToDomain | Migrate all 15 analytics services to Fokus.Domain calculators + endpoint-owned DTOs (ADR-005) | Ready | Pass 3b |
+| 3b | adhoc-Pass3b-AppSettingsVOs | AppSettings scalars → config VOs + Identity Person/User encapsulation (ADR-007) | **Done** | Pass 3a ✓ |
+| 3c | adhoc-Pass3c-ComputationToDomain | Migrate all 15 analytics services to Fokus.Domain calculators + endpoint-owned DTOs (ADR-005) | Ready | Pass 3b ✓ |
 | 4 | adhoc-Pass4-IdentityExtraction | Finish Fokus→Identity cut | Blocked | needs user scope (A2) |
 | 5 | adhoc-Pass5-EventCorrectness | Domain-event dispatch fixes | Blocked | Pass 3c |
 
