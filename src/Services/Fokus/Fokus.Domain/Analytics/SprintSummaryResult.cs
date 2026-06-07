@@ -4,7 +4,7 @@ namespace Fokus.Domain.Analytics;
 // QaBreakdownData is defined in QaMetricsResult.cs (same namespace) — not redefined here.
 // TestingCrunchFlag is defined in TestTimelineResult.cs (same namespace) — not redefined here.
 
-public record SprintInfoData(
+public sealed record SprintInfoData(
     int Id,
     string Name,
     DateTime StartDate,
@@ -12,7 +12,7 @@ public record SprintInfoData(
     int DurationDays,
     DateTime SyncedAt);
 
-public record HealthScoreData(
+public sealed record HealthScoreData(
     decimal CompositeScore,
     string CompositeRag,
     decimal CompletionSubScore,
@@ -27,9 +27,9 @@ public record HealthScoreData(
     public QaBreakdownData? QualityBreakdown { get; init; }
 }
 
-public record SprintSparklinePoint(string SprintName, decimal Value);
+public sealed record SprintSparklinePoint(string SprintName, decimal Value);
 
-public record SprintMetricCardData(
+public sealed record SprintMetricCardData(
     string Name,
     decimal Value,
     string DisplayValue,
@@ -41,7 +41,7 @@ public record SprintMetricCardData(
     public string? Rag { get; init; }
 }
 
-public record SprintMetricsData(
+public sealed record SprintMetricsData(
     SprintMetricCardData SpCompleted,
     SprintMetricCardData CompletionRate,
     SprintMetricCardData ScopeDisruptionRate,
@@ -49,14 +49,14 @@ public record SprintMetricsData(
     SprintMetricCardData CarryOverRate,
     decimal BugSpCompleted);
 
-public record EpicProgressData(
+public sealed record EpicProgressData(
     string EpicName,
     decimal SpCompletedThisSprint,
     decimal TotalSp,
     decimal DoneSp,
     decimal CompletionPercentage);
 
-public record DeveloperSummaryData(
+public sealed record DeveloperSummaryData(
     string DisplayName,
     string? AvatarUrl,
     string? SubTeam,
@@ -67,11 +67,11 @@ public record DeveloperSummaryData(
     int BugTickets,
     int CapacityPercent);
 
-public record ZombieTicketData(string TicketKey, string Summary, int SprintCount, string? AssigneeName);
+public sealed record ZombieTicketData(string TicketKey, string Summary, int SprintCount, string? AssigneeName);
 
-public record MidSprintDisruptionData(decimal TotalSp, int TicketCount);
+public sealed record MidSprintDisruptionData(decimal TotalSp, int TicketCount);
 
-public record SprintFlagsData(
+public sealed record SprintFlagsData(
     List<ZombieTicketData> ZombieTickets,
     MidSprintDisruptionData? MidSprintDisruption,
     List<string> ZeroSpDevelopers,
@@ -80,7 +80,7 @@ public record SprintFlagsData(
     public TestingCrunchFlag? TestingCrunch { get; init; }
 }
 
-public record SprintSummaryData(
+public sealed record SprintSummaryData(
     SprintInfoData? Sprint,
     HealthScoreData? HealthScore,
     SprintMetricsData? Metrics,

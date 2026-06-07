@@ -11,11 +11,15 @@ Order is dependency-driven (skills before the domain work that applies them; mec
 | 2 | adhoc-Pass2-SliceHygiene | Endpoint split + naming + Mapster | **Done** | Pass 1 ✓ (+ add Mapster to CPM ✓) |
 | 3a | adhoc-Pass3-DomainEnrichment | No-DTO-in-domain (ADR-006) — relocate 8 Jira/Xray factories to boundary mappers | **Done** | Pass 1 ✓, Pass 2 ✓ |
 | 3b | adhoc-Pass3b-AppSettingsVOs | AppSettings scalars → config VOs + Identity Person/User encapsulation (ADR-007) | **Done** | Pass 3a ✓ |
-| 3c | adhoc-Pass3c-ComputationToDomain | Migrate all 15 analytics services to Fokus.Domain calculators + endpoint-owned DTOs (ADR-005) | Ready | Pass 3b ✓ |
+| 3c-A | adhoc-Pass3c-ComputationToDomain | ComputationToDomain — Sprint core: SprintSummary/QaMetrics/TestTimeline calculators + 4 static helpers + gRPC adaptation (ADR-005/010) | **Done** | Pass 3b ✓ |
+| 3c-B | adhoc-Pass3c-B-DeliveryMetrics | CarryOver, ScopeChange, CycleTime, BugRatio, Leaderboard calculators (ADR-005/010) | Ready | Pass 3c-A ✓ |
+| 3c-C | adhoc-Pass3c-C-DevEpicAnalytics | 7 dev/epic/QA calculators: DeveloperThroughput, DeveloperProgress, DeveloperDetail, DeveloperQuality, EpicProgress, QaWorkload, QaTrends (ADR-005/010) | Ready | Pass 3c-A ✓ |
 | 4 | adhoc-Pass4-IdentityExtraction | Finish Fokus→Identity cut | Blocked | needs user scope (A2) |
-| 5 | adhoc-Pass5-EventCorrectness | Domain-event dispatch fixes | Blocked | Pass 3c |
+| 5 | adhoc-Pass5-EventCorrectness | Domain-event dispatch fixes | Blocked | Pass 3c-B + 3c-C |
 
 **Pass 3 split (decided at the Pass 3a launch):** Pass 3 was ~3–4× Pass 2, so it was split into 3a/3b/3c, each its own pipeline run. 3a delivered (no-DTO-in-domain). Decisions for 3b/3c are locked in `docs/specs/adhoc-Pass3-DomainEnrichment/delivery/communication-log.md` + `summary.md` — those runs should not re-litigate scope (Q2=full ADR-005 migration; Q3=AppSettings VOs + Identity now; Fokus sync aggregates stay anemic per B3).
+
+**Pass 3c sub-split (decided at the 3c launch):** Pass 3c (all 15 analytics services) was further split into three sequential runs — **3c-A** (Sprint core: SprintSummary, QaMetrics, TestTimeline + 4 static helpers + gRPC adaptation) **✓ Done**; **3c-B** (5 delivery metrics) and **3c-C** (7 dev/epic/QA) both unblocked by 3c-A. Clean-break decision locked (domain calculators return new `*Result`/`*Data` records; endpoints + gRPC map from them; no wire-flavored names in the domain — ADR-010). 3c-B/3c-C reuse 3c-A's shared wire types (`MetricCard`, `SparklinePoint`, `TestingCrunchResult`) now consolidated in the `GetSprintSummary` slice. The 4 MEDIUM critic-review gaps on the 3c-A plan were accepted unresolved (detail lost to an agent malfunction) but independently re-derived and cleared by the reviewer + Codex — see 3c-A communication-log Malfunctions Log.
 
 ---
 

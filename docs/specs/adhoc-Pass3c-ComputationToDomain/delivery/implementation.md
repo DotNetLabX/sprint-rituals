@@ -138,6 +138,20 @@ Build: green.
 
 ---
 
+## Post-review cleanup (cycle 1)
+
+Review approved with 4 LOW findings. Applied:
+
+1. **CS9113 warning removed** — `TestTimelineCalculator testTimelineCalculator` constructor parameter removed from `GetSprintSummaryEndpoint`; `ComputeCrunchFlag` is a static method so no instance is needed. DI registration unchanged (still used by `GetTestTimelineEndpoint`).
+
+2. **`sealed` added to domain result records** — all records in `QaMetricsResult.cs` and `SprintSummaryResult.cs` now `sealed record`. `TestTimelineResult.cs` was already sealed.
+
+3. **`List<T>` accepted as convention** — recorded in `docs/conventions/known-deviations.md` as accepted deviation for wire DTOs and domain result records; no code change.
+
+Build after cleanup: **0 errors, 0 project-level warnings** (NU1903 and CS9107 are pre-existing, not introduced by this pass).
+
+---
+
 ## Key Decisions
 
 - `QaBreakdownData` defined once in `QaMetricsResult.cs`, used by both `QaMetricsCalculator` and `SprintSummaryCalculator` — no redefinition in `SprintSummaryResult.cs`

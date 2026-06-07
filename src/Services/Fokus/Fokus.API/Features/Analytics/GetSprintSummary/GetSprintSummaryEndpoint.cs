@@ -11,8 +11,7 @@ public class GetSprintSummaryEndpoint(
     TicketRepository ticketRepository,
     SprintSummaryCalculator sprintSummaryCalculator,
     TestExecutionRepository testExecutionRepository,
-    QaMetricsCalculator qaMetricsCalculator,
-    TestTimelineCalculator testTimelineCalculator)
+    QaMetricsCalculator qaMetricsCalculator)
     : Endpoint<GetSprintSummaryQuery, SprintSummaryResponse>
 {
     public override async Task HandleAsync(GetSprintSummaryQuery req, CancellationToken ct)
