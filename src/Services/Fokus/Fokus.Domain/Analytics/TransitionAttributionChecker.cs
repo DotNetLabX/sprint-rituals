@@ -1,4 +1,4 @@
-namespace Fokus.API.Features.Analytics;
+namespace Fokus.Domain.Analytics;
 
 /// <summary>
 /// Utility that encapsulates transition-timestamp-based sprint scope attribution.

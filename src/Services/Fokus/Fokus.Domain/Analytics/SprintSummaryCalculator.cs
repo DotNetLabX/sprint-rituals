@@ -1,102 +1,8 @@
-namespace Fokus.API.Features.Analytics;
+namespace Fokus.Domain.Analytics;
 
-// --- Response record hierarchy ---
-
-public record SprintInfo(
-    int Id,
-    string Name,
-    DateTime StartDate,
-    DateTime EndDate,
-    int DurationDays,
-    DateTime SyncedAt);
-
-public record QualityBreakdownResult(
-    decimal CoverageScore,
-    int CoverageWeight,
-    decimal PassRateScore,
-    int PassRateWeight);
-
-public record HealthScoreResult(
-    decimal CompositeScore,
-    string CompositeRag,
-    decimal CompletionSubScore,
-    string CompletionRag,
-    decimal DisruptionSubScore,
-    string DisruptionRag,
-    decimal CarryOverSubScore,
-    string CarryOverRag)
+public class SprintSummaryCalculator
 {
-    public decimal? QualitySubScore { get; init; }
-    public string? QualityRag { get; init; }
-    public QualityBreakdownResult? QualityBreakdown { get; init; }
-}
-
-public record SparklinePoint(string SprintName, decimal Value);
-
-public record MetricCard(
-    string Name,
-    decimal Value,
-    string DisplayValue,
-    decimal? Delta,
-    string? DeltaDirection,
-    string? DeltaPolarity,
-    List<SparklinePoint> Sparkline)
-{
-    public string? Rag { get; init; }
-}
-
-public record MetricsResult(
-    MetricCard SpCompleted,
-    MetricCard CompletionRate,
-    MetricCard ScopeDisruptionRate,
-    MetricCard BugDisruptionRate,
-    MetricCard CarryOverRate,
-    decimal BugSpCompleted);
-
-public record EpicProgress(
-    string EpicName,
-    decimal SpCompletedThisSprint,
-    decimal TotalSp,
-    decimal DoneSp,
-    decimal CompletionPercentage);
-
-public record DeveloperSummary(
-    string DisplayName,
-    string? AvatarUrl,
-    string? SubTeam,
-    decimal SpCompleted,
-    decimal FeatureSp,
-    decimal BugSp,
-    int FeatureTickets,
-    int BugTickets,
-    int CapacityPercent);
-
-public record ZombieTicket(string TicketKey, string Summary, int SprintCount, string? AssigneeName);
-
-public record MidSprintDisruption(decimal TotalSp, int TicketCount);
-
-public record FlagsResult(
-    List<ZombieTicket> ZombieTickets,
-    MidSprintDisruption? MidSprintDisruption,
-    List<string> ZeroSpDevelopers,
-    bool HasAnyFlags)
-{
-    public TestingCrunchFlag? TestingCrunch { get; init; }
-}
-
-public record SprintSummaryResponse(
-    SprintInfo? Sprint,
-    HealthScoreResult? HealthScore,
-    MetricsResult? Metrics,
-    List<EpicProgress> TopEpics,
-    List<DeveloperSummary> Leaderboard,
-    FlagsResult Flags);
-
-// --- Service ---
-
-public class SprintSummaryService
-{
-    public SprintSummaryResponse ComputeSummary(
+    public SprintSummaryData ComputeSummary(
         Sprint selectedSprint,
         List<Sprint> windowSprints,
         List<Developer> activeDevelopers,
@@ -108,7 +14,7 @@ public class SprintSummaryService
         List<StatusTransition> statusTransitions,
         HashSet<string>? excludedDeveloperIds = null,
         decimal? qualitySubScore = null,
-        QualityBreakdownResult? qualityBreakdown = null,
+        QaBreakdownData? qualityBreakdown = null,
         bool hasQaData = false,
         TestingCrunchFlag? testingCrunch = null)
     {
@@ -174,7 +80,7 @@ public class SprintSummaryService
             (m, t, s, cfg) => ComputeCarryOverRate(m, t, s, cfg), excludedDeveloperIds);
 
         // Build metric cards
-        var metrics = new MetricsResult(
+        var metrics = new SprintMetricsData(
             SpCompleted: BuildMetricCard(
                 "SP Completed",
                 selected.FeatureCompleted,
@@ -234,7 +140,7 @@ public class SprintSummaryService
             settings.ExcludedFromScopeStatuses, defaultSpPerBug, settings.Sync.PlanningWindowDays, excludedDeveloperIds,
             testingCrunch);
 
-        var sprintInfo = new SprintInfo(
+        var sprintInfo = new SprintInfoData(
             selectedSprint.Id,
             selectedSprint.Name,
             selectedSprint.StartDate,
@@ -242,7 +148,7 @@ public class SprintSummaryService
             (int)(selectedSprint.EndDate - selectedSprint.StartDate).TotalDays,
             selectedSprint.SyncedAt);
 
-        return new SprintSummaryResponse(sprintInfo, healthScore, metrics, topEpics, leaderboard, flags);
+        return new SprintSummaryData(sprintInfo, healthScore, metrics, topEpics, leaderboard, flags);
     }
 
     // --- Sub-team filtering (C2) ---
@@ -306,7 +212,6 @@ public class SprintSummaryService
     {
         var planningCutoff = sprintStart.AddDays(planningWindowDays);
 
-        // Pre-group transitions by ticketId once — O(M) — so per-ticket checks are O(1) lookup + O(k) scan
         var transitionsByTicket = allTransitions
             .GroupBy(t => t.TicketId, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
@@ -346,7 +251,6 @@ public class SprintSummaryService
             }
         }
 
-        // Spec BR21 formulas
         var completionRate = activeSp > 0 ? completedSp / activeSp * 100 : 0;
         var scopeDisruptionRate = activeSp > 0 ? addedSp / activeSp * 100 : 0;
         var bugDisruptionRate = activeSp > 0 ? bugAddedSp / activeSp * 100 : 0;
@@ -356,7 +260,7 @@ public class SprintSummaryService
         return new SprintMetrics(activeSp, completedSp, addedSp, carryOverSp, completionRate, disruptionRate, scopeDisruptionRate, bugDisruptionRate, carryOverRate, completedSp, bugSpCompleted);
     }
 
-    // --- Sparkline helpers (new signature: memberships, transitions, sprint, settings) ---
+    // --- Sparkline helpers ---
 
     private static decimal ComputeSpCompleted(
         List<SprintMembership> memberships,
@@ -470,7 +374,6 @@ public class SprintSummaryService
             .GroupBy(t => t.TicketId, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
 
-        // activeSp = feature active (denominator per spec BR21)
         var activeSp = 0m;
         foreach (var m in memberships)
         {
@@ -539,25 +442,21 @@ public class SprintSummaryService
 
     // --- Health score computation (BR2, BR3, BR4, BR16-BR19) ---
 
-    private static HealthScoreResult ComputeHealthScore(
+    private static HealthScoreData ComputeHealthScore(
         SprintMetrics metrics,
         HealthThresholdConfig thresholds,
         HealthWeightConfig weights,
         decimal? qualitySubScore = null,
-        QualityBreakdownResult? qualityBreakdown = null,
+        QaBreakdownData? qualityBreakdown = null,
         int qualityWeight = 0,
         bool hasQaData = false)
     {
-        var completionScore = ScoreHigherIsBetter(metrics.CompletionRate, thresholds.CompletionGreen, thresholds.CompletionAmber);
-        var disruptionScore = ScoreLowerIsBetter(metrics.DisruptionRate, thresholds.DisruptionGreen, thresholds.DisruptionAmber);
-        var carryOverScore = ScoreLowerIsBetter(metrics.CarryOverRate, thresholds.CarryOverGreen, thresholds.CarryOverAmber);
+        var completionScore = HealthScoreCalculator.ScoreHigherIsBetter(metrics.CompletionRate, thresholds.CompletionGreen, thresholds.CompletionAmber);
+        var disruptionScore = HealthScoreCalculator.ScoreLowerIsBetter(metrics.DisruptionRate, thresholds.DisruptionGreen, thresholds.DisruptionAmber);
+        var carryOverScore = HealthScoreCalculator.ScoreLowerIsBetter(metrics.CarryOverRate, thresholds.CarryOverGreen, thresholds.CarryOverAmber);
 
         var deliverySum = weights.Completion + weights.Disruption + weights.CarryOver;
 
-        // BR18 three-way branching:
-        // - hasQaData && qualityWeight > 0: include quality in composite
-        // - hasQaData && qualityWeight == 0 (observation mode): quality computed but not in composite
-        // - !hasQaData: quality null, delivery-only composite
         decimal totalWeight;
         decimal compositeNumerator;
 
@@ -584,7 +483,6 @@ public class SprintSummaryService
         disruptionScore = Math.Round(disruptionScore, 1);
         carryOverScore = Math.Round(carryOverScore, 1);
 
-        // Quality fields: non-null whenever hasQaData (even observation mode), null when !hasQaData
         decimal? roundedQualitySubScore = null;
         string? qualityRag = null;
         if (hasQaData && qualitySubScore.HasValue)
@@ -593,11 +491,11 @@ public class SprintSummaryService
             qualityRag = HealthScoreCalculator.CompositeRag(qualitySubScore.Value);
         }
 
-        return new HealthScoreResult(
-            composite, CompositeRag(composite),
-            completionScore, MetricRag(metrics.CompletionRate, thresholds.CompletionGreen, thresholds.CompletionAmber, higherIsBetter: true),
-            disruptionScore, MetricRag(metrics.DisruptionRate, thresholds.DisruptionGreen, thresholds.DisruptionAmber, higherIsBetter: false),
-            carryOverScore, MetricRag(metrics.CarryOverRate, thresholds.CarryOverGreen, thresholds.CarryOverAmber, higherIsBetter: false))
+        return new HealthScoreData(
+            composite, HealthScoreCalculator.CompositeRag(composite),
+            completionScore, HealthScoreCalculator.MetricRag(metrics.CompletionRate, thresholds.CompletionGreen, thresholds.CompletionAmber, higherIsBetter: true),
+            disruptionScore, HealthScoreCalculator.MetricRag(metrics.DisruptionRate, thresholds.DisruptionGreen, thresholds.DisruptionAmber, higherIsBetter: false),
+            carryOverScore, HealthScoreCalculator.MetricRag(metrics.CarryOverRate, thresholds.CarryOverGreen, thresholds.CarryOverAmber, higherIsBetter: false))
         {
             QualitySubScore = roundedQualitySubScore,
             QualityRag = qualityRag,
@@ -605,21 +503,9 @@ public class SprintSummaryService
         };
     }
 
-    private static decimal ScoreHigherIsBetter(decimal value, decimal green, decimal amber) =>
-        HealthScoreCalculator.ScoreHigherIsBetter(value, green, amber);
+    // --- Sparkline ---
 
-    private static decimal ScoreLowerIsBetter(decimal value, decimal green, decimal amber) =>
-        HealthScoreCalculator.ScoreLowerIsBetter(value, green, amber);
-
-    private static string CompositeRag(decimal score) =>
-        HealthScoreCalculator.CompositeRag(score);
-
-    private static string MetricRag(decimal value, decimal green, decimal amber, bool higherIsBetter) =>
-        HealthScoreCalculator.MetricRag(value, green, amber, higherIsBetter);
-
-    // --- Sparkline (refactored: carries transitions, sprint object, and settings) ---
-
-    private static List<SparklinePoint> BuildSparkline(
+    private static List<SprintSparklinePoint> BuildSparkline(
         List<Sprint> window,
         List<Sprint> allWindowSprints,
         string? subTeam,
@@ -632,19 +518,19 @@ public class SprintSummaryService
         {
             var sprintData = allWindowSprints.First(ws => ws.Id == s.Id);
             var memberships = FilterMemberships(sprintData.Memberships, subTeam, excludedDeveloperIds);
-            return new SparklinePoint(s.Name, Math.Round(valueSelector(memberships, statusTransitions, sprintData, settings), 1));
+            return new SprintSparklinePoint(s.Name, Math.Round(valueSelector(memberships, statusTransitions, sprintData, settings), 1));
         }).ToList();
     }
 
     // --- Metric card builder ---
 
-    private static MetricCard BuildMetricCard(
+    private static SprintMetricCardData BuildMetricCard(
         string name,
         decimal value,
         string displayValue,
         decimal? delta,
         string polarity,
-        List<SparklinePoint> sparkline)
+        List<SprintSparklinePoint> sparkline)
     {
         string? direction = null;
         string? deltaPolarity = null;
@@ -661,10 +547,10 @@ public class SprintSummaryService
             };
         }
 
-        return new MetricCard(name, Math.Round(value, 1), displayValue, delta.HasValue ? Math.Round(delta.Value, 1) : null, direction, deltaPolarity, sparkline);
+        return new SprintMetricCardData(name, Math.Round(value, 1), displayValue, delta.HasValue ? Math.Round(delta.Value, 1) : null, direction, deltaPolarity, sparkline);
     }
 
-    // --- Effective SP for Ticket entities (mirrors EpicProgressService.GetEffectiveTicketSp) ---
+    // --- Effective SP for Ticket entities ---
 
     private static decimal? GetEffectiveTicketSp(Ticket t, int defaultSpPerBug)
     {
@@ -675,9 +561,9 @@ public class SprintSummaryService
         return null;
     }
 
-    // --- Top epics (dual mode per spec BR16: sprint attribution = transition-based, epic progress = position-based) ---
+    // --- Top epics ---
 
-    private static List<EpicProgress> ComputeTopEpics(
+    private static List<EpicProgressData> ComputeTopEpics(
         List<SprintMembership> selectedMemberships,
         List<StatusTransition> statusTransitions,
         DateTime sprintStart,
@@ -690,15 +576,10 @@ public class SprintSummaryService
         List<string> orderedStages,
         int endIndex)
     {
-        // Sprint attribution: transition-based (endIndex boundary check)
-        // Epic progress: position-based CurrentStatus (completedStatuses) — spec BR16 dual mode
-
-        // Step 1: Group by EpicKey, sum SP for tickets with a qualifying completion transition during this sprint
         var thisSprintByEpic = selectedMemberships
             .Where(m => m.Ticket?.EpicKey != null && m.RemovedAt == null && m.GetEffectiveSp(defaultSpPerBug).HasValue)
             .Where(m =>
             {
-                // Transition-based: first transition to endStage (or beyond) within sprint window
                 var hasCompletion = statusTransitions
                     .Any(t => t.TicketId == m.TicketId
                               && t.Timestamp >= sprintStart
@@ -717,8 +598,6 @@ public class SprintSummaryService
             .Take(3)
             .ToList();
 
-        // Step 2 (BR16): for each top epic, compute overall completion from ALL tickets with that epic key
-        // using ticket current status — position-based, not sprint attribution
         var filteredEpicTickets = string.IsNullOrWhiteSpace(subTeam)
             ? allEpicTickets
             : allEpicTickets.Where(t => t.Assignee?.SubTeam == subTeam).ToList();
@@ -736,7 +615,7 @@ public class SprintSummaryService
             var totalSp = epicTickets.Sum(t => GetEffectiveTicketSp(t, defaultSpPerBug) ?? 0m);
             var completionPct = totalSp > 0 ? Math.Round(doneSp / totalSp * 100, 1) : 0;
 
-            return new EpicProgress(
+            return new EpicProgressData(
                 e.EpicName,
                 Math.Round(e.SpCompletedThisSprint, 1),
                 Math.Round(totalSp, 1),
@@ -745,9 +624,9 @@ public class SprintSummaryService
         }).ToList();
     }
 
-    // --- Leaderboard (transition-based completion) ---
+    // --- Leaderboard ---
 
-    private static List<DeveloperSummary> ComputeLeaderboard(
+    private static List<DeveloperSummaryData> ComputeLeaderboard(
         List<Developer> developers,
         List<SprintMembership> memberships,
         List<StatusTransition> statusTransitions,
@@ -761,7 +640,6 @@ public class SprintSummaryService
         List<Developer> allDevelopers,
         int sprintId)
     {
-        // Transition-based completed memberships
         var completed = memberships
             .Where(m => m.RemovedAt == null
                         && !excludedStatuses.Contains(m.FinalStatus, StringComparer.OrdinalIgnoreCase)
@@ -787,7 +665,7 @@ public class SprintSummaryService
                     sprintMap.TryGetValue(sprintId, out var pct)
                     ? pct
                     : allDevelopers.FirstOrDefault(dev => dev.Id == d.Id)?.DefaultCapacityPercent ?? 100;
-                return new DeveloperSummary(
+                return new DeveloperSummaryData(
                     d.DisplayName,
                     d.AvatarUrl,
                     d.SubTeam,
@@ -805,7 +683,7 @@ public class SprintSummaryService
 
     // --- Flags ---
 
-    private static FlagsResult ComputeFlags(
+    private static SprintFlagsData ComputeFlags(
         Sprint selectedSprint,
         List<SprintMembership> selectedMemberships,
         List<StatusTransition> statusTransitions,
@@ -820,7 +698,6 @@ public class SprintSummaryService
         HashSet<string>? excludedDeveloperIds = null,
         TestingCrunchFlag? testingCrunch = null)
     {
-        // Zombie tickets (BR16): tickets appearing in 3+ sprints
         var allMembershipsFlat = allSprints
             .SelectMany(s => FilterMemberships(s.Memberships, subTeam, excludedDeveloperIds))
             .ToList();
@@ -831,7 +708,7 @@ public class SprintSummaryService
             .Select(g =>
             {
                 var first = g.First();
-                return new ZombieTicket(
+                return new ZombieTicketData(
                     first.TicketId,
                     first.Ticket?.Summary ?? first.TicketId,
                     g.Select(m => m.SprintId).Distinct().Count(),
@@ -840,19 +717,17 @@ public class SprintSummaryService
             .OrderByDescending(z => z.SprintCount)
             .ToList();
 
-        // Mid-sprint disruption: added after planning window closes, not removed (uses planningWindowDays per spec)
         var disruptionCutoff = selectedSprint.StartDate.AddDays(planningWindowDays);
         var disruptedMemberships = selectedMemberships
             .Where(m => m.AddedAt > disruptionCutoff && m.RemovedAt == null)
             .ToList();
 
-        MidSprintDisruption? midSprintDisruption = disruptedMemberships.Count > 0
-            ? new MidSprintDisruption(
+        MidSprintDisruptionData? midSprintDisruption = disruptedMemberships.Count > 0
+            ? new MidSprintDisruptionData(
                 Math.Round(disruptedMemberships.Where(m => m.GetEffectiveSp(defaultSpPerBug).HasValue).Sum(m => m.GetEffectiveSp(defaultSpPerBug)!.Value), 1),
                 disruptedMemberships.Count)
             : null;
 
-        // Zero-SP developers (BR18): active devs who had work assigned but completed 0 SP (transition-based)
         var completedByDev = selectedMemberships
             .Where(m => m.RemovedAt == null
                         && m.GetEffectiveSp(defaultSpPerBug).HasValue
@@ -878,7 +753,7 @@ public class SprintSummaryService
 
         var hasFlags = zombies.Count > 0 || midSprintDisruption is not null || zeroSpDevs.Count > 0 || testingCrunch is not null;
 
-        return new FlagsResult(zombies, midSprintDisruption, zeroSpDevs, hasFlags)
+        return new SprintFlagsData(zombies, midSprintDisruption, zeroSpDevs, hasFlags)
         {
             TestingCrunch = testingCrunch
         };

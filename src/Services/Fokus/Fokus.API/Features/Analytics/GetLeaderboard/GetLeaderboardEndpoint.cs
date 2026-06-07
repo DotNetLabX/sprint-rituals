@@ -1,3 +1,4 @@
+using Fokus.Domain.Analytics;
 namespace Fokus.API.Features.Analytics.GetLeaderboard;
 
 [HttpGet("/api/analytics/leaderboard")]

@@ -1,3 +1,4 @@
+using Fokus.Domain.Analytics;
 namespace Fokus.API.Features.Analytics.GetCycleTime;
 
 [HttpGet("/api/analytics/cycle-time")]

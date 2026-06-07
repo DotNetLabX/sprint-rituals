@@ -1,4 +1,4 @@
-namespace Fokus.API.Features.Analytics;
+namespace Fokus.Domain.Analytics;
 
 /// <summary>
 /// Shared health score interpolation and RAG classification helpers.

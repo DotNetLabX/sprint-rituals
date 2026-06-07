@@ -1,3 +1,4 @@
+using Fokus.Domain.Analytics;
 using Jira.RestApi;
 using Microsoft.Extensions.Options;
 

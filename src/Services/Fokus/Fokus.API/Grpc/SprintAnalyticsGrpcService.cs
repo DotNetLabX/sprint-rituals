@@ -3,11 +3,12 @@ using Blocks.Contracts.Grpc.DataContracts;
 using Fokus.API.Features.Analytics;
 using Fokus.API.Features.Analytics.GetCarryOver;
 using Fokus.API.Features.Analytics.GetSprintSummary;
+using Fokus.Domain.Analytics;
 using Fokus.Persistence;
 using ProtoBuf.Grpc;
 
 // Alias to avoid name collision with Blocks.Contracts.Grpc.DataContracts.SprintInfo
-using FokusSprintInfo = Fokus.API.Features.Analytics.SprintInfo;
+using FokusSprintInfo = Fokus.API.Features.Analytics.GetSprintSummary.SprintInfo;
 
 namespace Fokus.API.Grpc;
 
@@ -21,10 +22,10 @@ public class SprintAnalyticsGrpcService(
     DeveloperRepository developerRepository,
     TicketRepository ticketRepository,
     TestExecutionRepository testExecutionRepository,
-    SprintSummaryService sprintSummaryService,
+    SprintSummaryCalculator sprintSummaryCalculator,
     ScopeChangeService scopeChangeService,
     CarryOverService carryOverService,
-    QaMetricsService qaMetricsService) : ISprintAnalyticsService
+    QaMetricsCalculator qaMetricsCalculator) : ISprintAnalyticsService
 {
     public async Task<AnonymizedSprintSummary> GetSprintSummaryAsync(SprintQuery request, CancellationToken ct = default)
     {
@@ -34,7 +35,7 @@ public class SprintAnalyticsGrpcService(
 
         // QA sub-score — only when Xray is enabled
         decimal? qualitySubScore = null;
-        QualityBreakdownResult? qualityBreakdown = null;
+        QaBreakdownData? qualityBreakdown = null;
         var hasQaData = false;
 
         if (settings.Xray.Enabled)
@@ -43,7 +44,7 @@ public class SprintAnalyticsGrpcService(
                 await LoadQaDataAsync(selectedSprint, statusTransitions, settings, null, ct);
         }
 
-        var result = sprintSummaryService.ComputeSummary(
+        var result = sprintSummaryCalculator.ComputeSummary(
             selectedSprint, windowSprints, activeDevelopers, settings,
             subTeam: null, allEpicTickets, capacityLookup, allDevelopers,
             statusTransitions, excludedIds, qualitySubScore, qualityBreakdown, hasQaData);
@@ -69,7 +70,7 @@ public class SprintAnalyticsGrpcService(
         var targetSprint = loadedSprints.First(s => s.Id == target.Id);
 
         var statusTransitions = await ticketRepository.GetStatusTransitionsForSprintTicketsAsync(sprintIdsToLoad, ct);
-        var excludedIds = ExcludedDeveloperFilter.GetExcludedDeveloperIds(
+        var excludedIds = Fokus.Domain.Analytics.ExcludedDeveloperFilter.GetExcludedDeveloperIds(
             targetSprint, allDevelopers, capacityRecords, statusTransitions, settings);
 
         var priorSprint = loadedSprints.FirstOrDefault(s => s.Id != target.Id);
@@ -97,7 +98,6 @@ public class SprintAnalyticsGrpcService(
         var allSprints = allLoadedSprints.OrderBy(s => s.StartDate).ToList();
         var statusTransitions = await ticketRepository.GetStatusTransitionsForSprintTicketsAsync(allClosedIds, ct);
 
-        // Use last 5 sprints for multi-sprint metrics
         var selectedSprints = allSprints.TakeLast(5).ToList();
         var excludedInAll = BuildCrossSprintExclusions(selectedSprints, allDevelopers, capacityRecords, statusTransitions, settings);
 
@@ -145,7 +145,7 @@ public class SprintAnalyticsGrpcService(
 
         var statusTransitions = await ticketRepository.GetStatusTransitionsForSprintTicketsAsync(windowIds, ct);
         var selectedSprint = windowSprints.First(s => s.Id == target.Id);
-        var excludedIds = ExcludedDeveloperFilter.GetExcludedDeveloperIds(
+        var excludedIds = Fokus.Domain.Analytics.ExcludedDeveloperFilter.GetExcludedDeveloperIds(
             selectedSprint, allDevelopers, capacityRecords, statusTransitions, settings);
         var filteredActive = activeDevelopers.Where(d => !excludedIds.Contains(d.Id)).ToList();
 
@@ -155,24 +155,18 @@ public class SprintAnalyticsGrpcService(
             capacityLookup, statusTransitions, allEpicTickets, excludedIds);
     }
 
-    private async Task<(decimal? qualitySubScore, QualityBreakdownResult? qualityBreakdown, bool hasQaData)>
+    private async Task<(decimal? qualitySubScore, QaBreakdownData? qualityBreakdown, bool hasQaData)>
         LoadQaDataAsync(Sprint selectedSprint, List<StatusTransition> statusTransitions,
             AppSettings settings, string? subTeam, CancellationToken ct)
     {
         var sprintTEs = await testExecutionRepository.GetTestExecutionsForSprintAsync(selectedSprint.Id, ct);
-        var qaResult = qaMetricsService.ComputeQaMetrics(
+        var qaResult = qaMetricsCalculator.ComputeQaMetrics(
             sprintTEs, selectedSprint.Memberships.ToList(), statusTransitions,
             selectedSprint, priorSprint: null, priorSprintTEs: null, priorMemberships: null,
             sparklineWindow: [], sparklineTEsBySprintId: [], sparklineMembershipsBySprintId: [],
             settings, subTeam);
 
-        var qualityBreakdown = new QualityBreakdownResult(
-            qaResult.QualityBreakdown.CoverageScore,
-            qaResult.QualityBreakdown.CoverageWeight,
-            qaResult.QualityBreakdown.PassRateScore,
-            qaResult.QualityBreakdown.PassRateWeight);
-
-        return (qaResult.QualitySubScore, qualityBreakdown, hasQaData: true);
+        return (qaResult.QualitySubScore, qaResult.QualityBreakdown, hasQaData: true);
     }
 
     private static List<int> BuildSingleSprintLoadIds(Sprint target, IReadOnlyList<Sprint> analyticsSprints)
@@ -195,7 +189,7 @@ public class SprintAnalyticsGrpcService(
         List<DeveloperSprintCapacity> capacityRecords, List<StatusTransition> statusTransitions,
         AppSettings settings) =>
         sprints
-            .SelectMany(s => ExcludedDeveloperFilter.GetExcludedDeveloperIds(
+            .SelectMany(s => Fokus.Domain.Analytics.ExcludedDeveloperFilter.GetExcludedDeveloperIds(
                 s, allDevelopers, capacityRecords, statusTransitions, settings))
             .GroupBy(id => id)
             .Where(g => g.Count() == sprints.Count)
@@ -205,7 +199,7 @@ public class SprintAnalyticsGrpcService(
     // --- Mapping helpers (anonymization boundary) ---
 
     private static AnonymizedSprintSummary MapToAnonymizedSummary(
-        SprintSummaryResponse result,
+        SprintSummaryData result,
         Sprint selectedSprint,
         List<StatusTransition> statusTransitions,
         AppSettings settings)
@@ -213,8 +207,6 @@ public class SprintAnalyticsGrpcService(
         var metrics = result.Metrics;
         var health = result.HealthScore;
 
-        // Derive scope additions from ScopeChangeService events — use memberships directly
-        // TopScopeAdditions: mid-sprint added tickets, by SP desc, top 5, no assignee data
         var topScopeAdditions = BuildTopScopeAdditions(selectedSprint, settings);
 
         return new AnonymizedSprintSummary
@@ -235,7 +227,6 @@ public class SprintAnalyticsGrpcService(
 
     private static List<ScopeAdditionEntry> BuildTopScopeAdditions(Sprint sprint, AppSettings settings)
     {
-        // Mid-sprint additions: memberships added after planning window, not bugs, not removed
         var planningCutoff = sprint.StartDate.AddDays(settings.Sync.PlanningWindowDays);
         return sprint.Memberships
             .Where(m => m.AddedAt > planningCutoff && m.RemovedAt == null && m.Ticket?.IssueType != "Bug")
@@ -256,7 +247,7 @@ public class SprintAnalyticsGrpcService(
         return new DisruptionMetrics
         {
             ScopeDisruptionRate = metrics.DisruptionRate.Value,
-            BugDisruptionRate = 0m, // single-sprint scope change service does not separate bug disruption rate
+            BugDisruptionRate = 0m,
             AddedSp = metrics.AddedSp.Value,
             BugAddedSp = 0m,
             MidSprintAdditionCount = result.Events.Count(e => e.Action == "Added" && !e.IsExcluded),
@@ -268,7 +259,6 @@ public class SprintAnalyticsGrpcService(
         List<Sprint> selectedSprints,
         List<Sprint> allSprints)
     {
-        // Current sprint = last in selected
         var currentSprintData = result.PerSprintData.LastOrDefault();
 
         var history = result.PerSprintData

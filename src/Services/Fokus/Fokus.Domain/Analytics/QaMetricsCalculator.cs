@@ -1,29 +1,8 @@
-namespace Fokus.API.Features.Analytics;
+namespace Fokus.Domain.Analytics;
 
-// --- QA metrics records ---
-
-public record QaMetricsResult(
-    bool HasQaData,
-    MetricCard CoverageRate,
-    MetricCard ExecutionRate,
-    MetricCard PassRate,
-    int BugsFound,
-    decimal QualitySubScore,
-    QualityBreakdownInfo QualityBreakdown,
-    int UntestedCount,
-    int FailingCount);
-
-public record QualityBreakdownInfo(
-    decimal CoverageScore,
-    int CoverageWeight,
-    decimal PassRateScore,
-    int PassRateWeight);
-
-// --- Service ---
-
-public class QaMetricsService
+public class QaMetricsCalculator
 {
-    public QaMetricsResult ComputeQaMetrics(
+    public QaMetricsData ComputeQaMetrics(
         List<TestExecution> sprintTEs,
         List<SprintMembership> activeMemberships,
         List<StatusTransition> statusTransitions,
@@ -92,7 +71,7 @@ public class QaMetricsService
         coverageScore = Math.Round(coverageScore, 1);
         passRateScore = Math.Round(passRateScore, 1);
 
-        var qualityBreakdown = new QualityBreakdownInfo(
+        var qualityBreakdown = new QaBreakdownData(
             coverageScore, subScoreWeights.CoverageWeight,
             passRateScore, subScoreWeights.PassRateWeight);
 
@@ -152,7 +131,7 @@ public class QaMetricsService
         var executionRag = HealthScoreCalculator.MetricRag(executionRate, thresholds.ExecutionGreen, thresholds.ExecutionAmber, higherIsBetter: true);
         var passRateRag = HealthScoreCalculator.MetricRag(passRate, thresholds.PassRateGreen, thresholds.PassRateAmber, higherIsBetter: true);
 
-        return new QaMetricsResult(
+        return new QaMetricsData(
             HasQaData: true,
             CoverageRate: BuildQaMetricCard("Coverage Rate", coverageRate, priorCoverageRate, coverageSparkline, coverageRag),
             ExecutionRate: BuildQaMetricCard("Execution Rate", executionRate, priorExecutionRate, executionSparkline, executionRag),
@@ -338,8 +317,6 @@ public class QaMetricsService
         {
             foreach (var link in te.Links.Where(l => l.LinkType == TestExecutionLinkType.Blocks))
             {
-                // The plan says: where linked ticket's IssueType = "Bug"
-                // TestExecutionLink.Ticket is a nav property — check if it's loaded
                 if (link.Ticket?.IssueType == "Bug")
                     bugKeys.Add(link.TicketKey);
             }
@@ -380,7 +357,7 @@ public class QaMetricsService
 
     // --- Sparkline (BR22) ---
 
-    private static List<SparklinePoint> BuildQaSparkline(
+    private static List<QaSparklinePoint> BuildQaSparkline(
         List<Sprint> window,
         Dictionary<int, List<TestExecution>> tesBySprintId,
         Dictionary<int, List<SprintMembership>> membershipsBySprintId,
@@ -391,10 +368,9 @@ public class QaMetricsService
         string? subTeam,
         Func<List<TestExecution>, HashSet<string>, List<SprintMembership>, decimal> valueSelector)
     {
-        var points = new List<SparklinePoint>();
+        var points = new List<QaSparklinePoint>();
         foreach (var sprint in window)
         {
-            // sprintTEs is pre-filtered by the repository (non-cancelled only).
             var sprintTEs = tesBySprintId.GetValueOrDefault(sprint.Id, []);
             var sprintMemberships = membershipsBySprintId.GetValueOrDefault(sprint.Id, []);
             var filteredMemberships = FilterMemberships(sprintMemberships, subTeam);
@@ -407,7 +383,7 @@ public class QaMetricsService
                 settings.ExcludedFromScopeStatuses, settings.BugRatio.DefaultSpPerBug);
 
             var value = valueSelector(nonCancelled, activeKeys, sprintMemberships);
-            points.Add(new SparklinePoint(sprint.Name, Math.Round(value, 1)));
+            points.Add(new QaSparklinePoint(sprint.Name, Math.Round(value, 1)));
         }
         return points;
     }
@@ -434,11 +410,11 @@ public class QaMetricsService
 
     // --- Metric card builder ---
 
-    private static MetricCard BuildQaMetricCard(
+    private static QaMetricCardData BuildQaMetricCard(
         string name,
         decimal value,
         decimal? priorValue,
-        List<SparklinePoint> sparkline,
+        List<QaSparklinePoint> sparkline,
         string rag)
     {
         decimal? delta = priorValue.HasValue ? value - priorValue.Value : null;
@@ -452,7 +428,7 @@ public class QaMetricsService
             deltaPolarity = delta.Value > 0 ? "positive" : delta.Value < 0 ? "negative" : "neutral";
         }
 
-        return new MetricCard(
+        return new QaMetricCardData(
             name,
             Math.Round(value, 1),
             $"{value:0.#}%",

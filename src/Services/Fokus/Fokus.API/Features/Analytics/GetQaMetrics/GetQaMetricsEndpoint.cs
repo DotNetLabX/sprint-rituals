@@ -1,3 +1,6 @@
+using Fokus.API.Features.Analytics.GetSprintSummary;
+using Fokus.Domain.Analytics;
+
 namespace Fokus.API.Features.Analytics.GetQaMetrics;
 
 [HttpGet("/api/sprints/{sprintId}/qa-metrics")]
@@ -7,7 +10,7 @@ public class GetQaMetricsEndpoint(
     AppSettingsRepository appSettingsRepository,
     TestExecutionRepository testExecutionRepository,
     TicketRepository ticketRepository,
-    QaMetricsService qaMetricsService)
+    QaMetricsCalculator qaMetricsCalculator)
     : Endpoint<GetQaMetricsQuery, QaMetricsResponse>
 {
     public override async Task HandleAsync(GetQaMetricsQuery req, CancellationToken ct)
@@ -88,8 +91,6 @@ public class GetQaMetricsEndpoint(
         }
 
         // 11. Build sparkline TE and membership lookups for the window (closed sprints only)
-        // For active sprint selectedWindowIndex == -1, so Take(-1 + 1) = Take(0) would be empty.
-        // Use the full sortedWindow (all closed window sprints) as the sparkline base instead.
         var sparklineBase = closedIndex >= 0
             ? sortedWindow.Take(selectedWindowIndex + 1).TakeLast(4).ToList()
             : sortedWindow.TakeLast(4).ToList();
@@ -105,7 +106,7 @@ public class GetQaMetricsEndpoint(
             .ToDictionary(s => s.Id, s => s.Memberships.ToList());
 
         // 12. Compute QA metrics
-        var result = qaMetricsService.ComputeQaMetrics(
+        var result = qaMetricsCalculator.ComputeQaMetrics(
             sprintTEs,
             selectedSprint.Memberships.ToList(),
             statusTransitions,
@@ -135,12 +136,12 @@ public class GetQaMetricsEndpoint(
         FailingCount = 0
     };
 
-    private static QaMetricsResponse MapResponse(QaMetricsResult result) => new()
+    private static QaMetricsResponse MapResponse(QaMetricsData result) => new()
     {
         HasQaData = result.HasQaData,
-        CoverageRate = result.CoverageRate,
-        ExecutionRate = result.ExecutionRate,
-        PassRate = result.PassRate,
+        CoverageRate = MapMetricCard(result.CoverageRate),
+        ExecutionRate = MapMetricCard(result.ExecutionRate),
+        PassRate = MapMetricCard(result.PassRate),
         BugsFound = result.BugsFound,
         QualitySubScore = result.QualitySubScore,
         QualityBreakdown = result.QualityBreakdown is null ? null : new QualityBreakdownResponse
@@ -153,4 +154,11 @@ public class GetQaMetricsEndpoint(
         UntestedCount = result.UntestedCount,
         FailingCount = result.FailingCount
     };
+
+    private static MetricCard MapMetricCard(QaMetricCardData card) =>
+        new(card.Name, card.Value, card.DisplayValue, card.Delta, card.DeltaDirection, card.DeltaPolarity,
+            card.Sparkline.Select(p => new SparklinePoint(p.SprintName, p.Value)).ToList())
+        {
+            Rag = card.Rag
+        };
 }

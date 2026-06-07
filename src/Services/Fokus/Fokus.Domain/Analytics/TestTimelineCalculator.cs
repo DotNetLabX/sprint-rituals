@@ -1,101 +1,8 @@
-namespace Fokus.API.Features.Analytics;
+namespace Fokus.Domain.Analytics;
 
-// --- TestTimeline response records ---
-
-public sealed record TestTimelineResponse(
-    bool HasQaData,
-    bool IsXrayEnabled,
-    DateTime SprintStartDate,
-    DateTime SprintEndDate,
-    int PlanningWindowDays,
-    IReadOnlyList<BurnupDayEntry> BurnupData,
-    IReadOnlyList<ScopeChangeDayEntry> ScopeChangeOverlay,
-    TestingCrunchResult TestingCrunch,
-    PostSprintTestingResult PostSprintTesting,
-    UntestedAtCloseResult UntestedAtClose,
-    DevToTestGapResult DevToTestGap);
-
-public sealed record BurnupDayEntry(
-    int DayNumber,
-    DateTime CalendarDate,
-    bool IsWithinSprint,
-    int CumulativePass,
-    int CumulativeFail,
-    int CumulativeTotal,
-    int DailyPass,
-    int DailyFail);
-
-public sealed record ScopeChangeDayEntry(
-    int DayNumber,
-    DateTime CalendarDate,
-    decimal AddedSp,
-    decimal RemovedSp,
-    decimal NetSp);
-
-public sealed record TestingCrunchResult(
-    bool IsCrunchFlagged,
-    decimal? CrunchPercentage,
-    int CrunchRunCount,
-    int TotalRunCount,
-    IReadOnlyList<CrunchTicketEntry> CrunchTickets);
-
-public sealed record CrunchTicketEntry(
-    string TicketKey,
-    string Summary,
-    string? AssigneeName,
-    decimal? StoryPoints,
-    int LateRunCount);
-
-public sealed record PostSprintTestingResult(
-    bool HasPostSprintTesting,
-    decimal? PostSprintPercentage,
-    int PostSprintRunCount,
-    int TotalRunCount,
-    IReadOnlyList<PostSprintTicketEntry> PostSprintTickets);
-
-public sealed record PostSprintTicketEntry(
-    string TicketKey,
-    string Summary,
-    string? AssigneeName,
-    decimal? StoryPoints,
-    int PostSprintRunCount);
-
-public sealed record UntestedAtCloseResult(
-    bool HasUntestedAtClose,
-    int UntestedAtCloseCount,
-    IReadOnlyList<UntestedTicketEntry> UntestedAtCloseTickets);
-
-public sealed record UntestedTicketEntry(
-    string TicketKey,
-    string Summary,
-    string? AssigneeName,
-    decimal? StoryPoints,
-    DateTime DevDoneDate);
-
-public sealed record DevToTestGapResult(
-    decimal? MedianGapDays,
-    decimal? MedianGapDelta,
-    string? MedianGapDirection,
-    IReadOnlyList<GapTicketEntry> GapTickets);
-
-public sealed record GapTicketEntry(
-    string TicketKey,
-    string Summary,
-    string? AssigneeName,
-    DateTime DevDoneDate,
-    DateTime FirstTestDate,
-    decimal GapDays);
-
-public sealed record TestingCrunchFlag(
-    decimal CrunchPercentage,
-    int CrunchRunCount,
-    int TotalRunCount);
-
-// --- Service ---
-
-public class TestTimelineService
+public class TestTimelineCalculator
 {
-    public TestTimelineResponse ComputeTimeline(
+    public TestTimelineData ComputeTimeline(
         List<TestExecution> sprintTEs,
         List<SprintMembership> memberships,
         List<StatusTransition> statusTransitions,
@@ -142,7 +49,7 @@ public class TestTimelineService
         var gapResult = ComputeDevToTestGap(sprintTEs, filteredMemberships, transitionsByTicket, sprint, orderedStages, endIndex,
             priorSprint, priorSprintTEs, priorMemberships, priorTransitionsByTicket, settings, subTeam);
 
-        return new TestTimelineResponse(
+        return new TestTimelineData(
             HasQaData: true,
             IsXrayEnabled: true,
             SprintStartDate: sprint.StartDate,
@@ -157,7 +64,7 @@ public class TestTimelineService
     }
 
     /// <summary>
-    /// Computes testing crunch flag data as a standalone method for reuse by SprintSummaryService.
+    /// Computes testing crunch flag data as a standalone method for reuse by SprintSummaryCalculator.
     /// </summary>
     public static TestingCrunchFlag? ComputeCrunchFlag(
         List<TestExecution> sprintTEs,
@@ -178,7 +85,7 @@ public class TestTimelineService
 
     // --- Burnup computation ---
 
-    private static List<BurnupDayEntry> ComputeBurnupData(List<TerminalRunEntry> terminalRuns, Sprint sprint)
+    private static List<BurnupDayData> ComputeBurnupData(List<TerminalRunEntry> terminalRuns, Sprint sprint)
     {
         if (terminalRuns.Count == 0)
             return [];
@@ -190,7 +97,7 @@ public class TestTimelineService
 
         // Determine range: sprint start through last run date
         var lastRunDate = terminalRuns.Max(r => r.EffectiveDate.Date);
-        var days = new List<BurnupDayEntry>();
+        var days = new List<BurnupDayData>();
 
         var cumulativePass = 0;
         var cumulativeFail = 0;
@@ -205,7 +112,7 @@ public class TestTimelineService
             cumulativePass += dailyPass;
             cumulativeFail += dailyFail;
 
-            days.Add(new BurnupDayEntry(
+            days.Add(new BurnupDayData(
                 DayNumber: dayNumber,
                 CalendarDate: current,
                 IsWithinSprint: current <= sprint.EndDate.Date,
@@ -224,7 +131,7 @@ public class TestTimelineService
 
     // --- Scope change overlay ---
 
-    private static List<ScopeChangeDayEntry> ComputeScopeChangeOverlay(
+    private static List<ScopeChangeDayData> ComputeScopeChangeOverlay(
         List<SprintMembership> memberships,
         Sprint sprint)
     {
@@ -259,7 +166,7 @@ public class TestTimelineService
             .Select(kvp =>
             {
                 var dayNumber = (kvp.Key - sprint.StartDate.Date).Days + 1;
-                return new ScopeChangeDayEntry(
+                return new ScopeChangeDayData(
                     DayNumber: dayNumber,
                     CalendarDate: kvp.Key,
                     AddedSp: kvp.Value.Added,
@@ -271,7 +178,7 @@ public class TestTimelineService
 
     // --- Testing crunch ---
 
-    private static TestingCrunchResult ComputeTestingCrunch(
+    private static TestingCrunchData ComputeTestingCrunch(
         List<TerminalRunEntry> withinSprintRuns,
         List<TestExecution> sprintTEs,
         List<SprintMembership> filteredMemberships,
@@ -286,19 +193,19 @@ public class TestTimelineService
 
         if (totalRunCount == 0)
         {
-            return new TestingCrunchResult(false, null, 0, 0, []);
+            return new TestingCrunchData(false, null, 0, 0, []);
         }
 
         var crunchPercentage = (decimal)crunchRunCount / totalRunCount * 100;
         var isCrunchFlagged = crunchPercentage > 50;
 
-        var crunchTickets = new List<CrunchTicketEntry>();
+        var crunchTickets = new List<CrunchTicketData>();
         if (isCrunchFlagged)
         {
             crunchTickets = BuildCrunchTickets(crunchRuns, sprintTEs, filteredMemberships);
         }
 
-        return new TestingCrunchResult(
+        return new TestingCrunchData(
             IsCrunchFlagged: isCrunchFlagged,
             CrunchPercentage: Math.Round(crunchPercentage, 1),
             CrunchRunCount: crunchRunCount,
@@ -306,7 +213,7 @@ public class TestTimelineService
             CrunchTickets: crunchTickets);
     }
 
-    private static List<CrunchTicketEntry> BuildCrunchTickets(
+    private static List<CrunchTicketData> BuildCrunchTickets(
         List<TerminalRunEntry> crunchRuns,
         List<TestExecution> sprintTEs,
         List<SprintMembership> filteredMemberships)
@@ -343,7 +250,7 @@ public class TestTimelineService
             .Select(kvp =>
             {
                 var m = membershipByTicket.GetValueOrDefault(kvp.Key);
-                return new CrunchTicketEntry(
+                return new CrunchTicketData(
                     TicketKey: kvp.Key,
                     Summary: m?.Ticket?.Summary ?? kvp.Key,
                     AssigneeName: m?.Ticket?.Assignee?.DisplayName,
@@ -355,7 +262,7 @@ public class TestTimelineService
 
     // --- Post-sprint testing ---
 
-    private static PostSprintTestingResult ComputePostSprintTesting(
+    private static PostSprintTestingData ComputePostSprintTesting(
         List<TerminalRunEntry> withinSprintRuns,
         List<TerminalRunEntry> postSprintRuns,
         List<TestExecution> sprintTEs,
@@ -365,7 +272,7 @@ public class TestTimelineService
 
         if (postSprintRunCount == 0)
         {
-            return new PostSprintTestingResult(false, null, 0, withinSprintRuns.Count + postSprintRunCount, []);
+            return new PostSprintTestingData(false, null, 0, withinSprintRuns.Count + postSprintRunCount, []);
         }
 
         var totalRunCount = withinSprintRuns.Count + postSprintRunCount;
@@ -375,7 +282,7 @@ public class TestTimelineService
 
         var tickets = BuildPostSprintTickets(postSprintRuns, sprintTEs, filteredMemberships);
 
-        return new PostSprintTestingResult(
+        return new PostSprintTestingData(
             HasPostSprintTesting: true,
             PostSprintPercentage: postSprintPercentage,
             PostSprintRunCount: postSprintRunCount,
@@ -383,7 +290,7 @@ public class TestTimelineService
             PostSprintTickets: tickets);
     }
 
-    private static List<PostSprintTicketEntry> BuildPostSprintTickets(
+    private static List<PostSprintTicketData> BuildPostSprintTickets(
         List<TerminalRunEntry> postSprintRuns,
         List<TestExecution> sprintTEs,
         List<SprintMembership> filteredMemberships)
@@ -417,7 +324,7 @@ public class TestTimelineService
             .Select(kvp =>
             {
                 var m = membershipByTicket.GetValueOrDefault(kvp.Key);
-                return new PostSprintTicketEntry(
+                return new PostSprintTicketData(
                     TicketKey: kvp.Key,
                     Summary: m?.Ticket?.Summary ?? kvp.Key,
                     AssigneeName: m?.Ticket?.Assignee?.DisplayName,
@@ -429,7 +336,7 @@ public class TestTimelineService
 
     // --- Completed but untested at close ---
 
-    private static UntestedAtCloseResult ComputeUntestedAtClose(
+    private static UntestedAtCloseData ComputeUntestedAtClose(
         List<TestExecution> sprintTEs,
         List<SprintMembership> filteredMemberships,
         Dictionary<string, List<StatusTransition>> transitionsByTicket,
@@ -438,7 +345,7 @@ public class TestTimelineService
         int endIndex)
     {
         if (endIndex < 0)
-            return new UntestedAtCloseResult(false, 0, []);
+            return new UntestedAtCloseData(false, 0, []);
 
         // Find tickets that reached CycleTimeEndStage before sprint.EndDate
         var devDoneByTicket = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
@@ -456,12 +363,12 @@ public class TestTimelineService
         }
 
         if (devDoneByTicket.Count == 0)
-            return new UntestedAtCloseResult(false, 0, []);
+            return new UntestedAtCloseData(false, 0, []);
 
         // Find tickets that have NO terminal-status test runs with effective date <= sprint.EndDate
         var testedByEndDate = BuildTestedTicketsByDate(sprintTEs, sprint.EndDate.Date);
 
-        var untestedTickets = new List<UntestedTicketEntry>();
+        var untestedTickets = new List<UntestedTicketData>();
         foreach (var (ticketKey, devDoneDate) in devDoneByTicket)
         {
             if (testedByEndDate.Contains(ticketKey))
@@ -470,7 +377,7 @@ public class TestTimelineService
             var m = filteredMemberships.FirstOrDefault(mb =>
                 string.Equals(mb.TicketId, ticketKey, StringComparison.OrdinalIgnoreCase) && mb.RemovedAt == null);
 
-            untestedTickets.Add(new UntestedTicketEntry(
+            untestedTickets.Add(new UntestedTicketData(
                 TicketKey: ticketKey,
                 Summary: m?.Ticket?.Summary ?? ticketKey,
                 AssigneeName: m?.Ticket?.Assignee?.DisplayName,
@@ -479,7 +386,7 @@ public class TestTimelineService
         }
 
         var sorted = untestedTickets.OrderBy(t => t.DevDoneDate).ToList();
-        return new UntestedAtCloseResult(sorted.Count > 0, sorted.Count, sorted);
+        return new UntestedAtCloseData(sorted.Count > 0, sorted.Count, sorted);
     }
 
     private static HashSet<string> BuildTestedTicketsByDate(List<TestExecution> sprintTEs, DateTime endDate)
@@ -502,7 +409,7 @@ public class TestTimelineService
 
     // --- Dev-to-test gap ---
 
-    private static DevToTestGapResult ComputeDevToTestGap(
+    private static DevToTestGapData ComputeDevToTestGap(
         List<TestExecution> sprintTEs,
         List<SprintMembership> filteredMemberships,
         Dictionary<string, List<StatusTransition>> transitionsByTicket,
@@ -538,14 +445,14 @@ public class TestTimelineService
             }
         }
 
-        return new DevToTestGapResult(
+        return new DevToTestGapData(
             MedianGapDays: medianGapDays.HasValue ? Math.Round(medianGapDays.Value, 1) : null,
             MedianGapDelta: medianGapDelta,
             MedianGapDirection: medianGapDirection,
             GapTickets: gapTickets.OrderByDescending(g => g.GapDays).ToList());
     }
 
-    private static List<GapTicketEntry> ComputeGapTickets(
+    private static List<GapTicketData> ComputeGapTickets(
         List<TestExecution> sprintTEs,
         List<SprintMembership> memberships,
         Dictionary<string, List<StatusTransition>> transitionsByTicket,
@@ -581,7 +488,7 @@ public class TestTimelineService
             .Where(m => m.RemovedAt == null)
             .ToDictionary(m => m.TicketId, m => m, StringComparer.OrdinalIgnoreCase);
 
-        var gapTickets = new List<GapTicketEntry>();
+        var gapTickets = new List<GapTicketData>();
         foreach (var (ticketKey, firstTestDate) in firstTestByTicket)
         {
             var transitions = transitionsByTicket.GetValueOrDefault(ticketKey, []);
@@ -595,7 +502,7 @@ public class TestTimelineService
             var gapDays = (decimal)(firstTestDate - devDone.Timestamp).TotalDays;
             var m = membershipByTicket.GetValueOrDefault(ticketKey);
 
-            gapTickets.Add(new GapTicketEntry(
+            gapTickets.Add(new GapTicketData(
                 TicketKey: ticketKey,
                 Summary: m?.Ticket?.Summary ?? ticketKey,
                 AssigneeName: m?.Ticket?.Assignee?.DisplayName,

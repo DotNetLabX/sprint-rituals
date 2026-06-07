@@ -1,3 +1,4 @@
+using Fokus.Domain.Analytics;
 namespace Fokus.API.Features.Analytics.GetUntestedTickets;
 
 [HttpGet("/api/sprints/{sprintId}/qa-metrics/untested")]

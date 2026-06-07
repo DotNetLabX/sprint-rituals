@@ -1,3 +1,5 @@
+using Fokus.API.Features.Analytics.GetSprintSummary;
+
 namespace Fokus.API.Features.Analytics.GetQaMetrics;
 
 public class GetQaMetricsQuery

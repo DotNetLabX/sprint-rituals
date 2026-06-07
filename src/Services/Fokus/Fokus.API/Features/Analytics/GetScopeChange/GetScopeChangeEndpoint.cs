@@ -1,3 +1,4 @@
+using Fokus.Domain.Analytics;
 namespace Fokus.API.Features.Analytics.GetScopeChange;
 
 [HttpGet("/api/analytics/scope-change")]

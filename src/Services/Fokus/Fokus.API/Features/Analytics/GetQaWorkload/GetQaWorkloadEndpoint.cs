@@ -1,3 +1,5 @@
+using Fokus.API.Features.Analytics.GetSprintSummary;
+
 namespace Fokus.API.Features.Analytics.GetQaWorkload;
 
 [HttpGet("/api/analytics/qa-workload")]

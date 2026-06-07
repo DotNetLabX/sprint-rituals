@@ -1,3 +1,6 @@
+using Fokus.API.Features.Analytics.GetSprintSummary;
+using Fokus.Domain.Analytics;
+
 namespace Fokus.API.Features.Analytics;
 
 // --- Result records ---

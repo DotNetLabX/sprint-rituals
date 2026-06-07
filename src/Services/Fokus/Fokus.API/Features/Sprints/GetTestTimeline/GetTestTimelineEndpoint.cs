@@ -1,4 +1,5 @@
-using Fokus.API.Features.Analytics;
+using Fokus.Domain.Analytics;
+using Mapster;
 
 namespace Fokus.API.Features.Sprints.GetTestTimeline;
 
@@ -9,7 +10,7 @@ public class GetTestTimelineEndpoint(
     AppSettingsRepository appSettingsRepository,
     TestExecutionRepository testExecutionRepository,
     TicketRepository ticketRepository,
-    TestTimelineService testTimelineService)
+    TestTimelineCalculator testTimelineCalculator)
     : Endpoint<GetTestTimelineQuery, TestTimelineResponse>
 {
     public override async Task HandleAsync(GetTestTimelineQuery req, CancellationToken ct)
@@ -87,7 +88,7 @@ public class GetTestTimelineEndpoint(
         }
 
         // 11. Compute and return
-        var result = testTimelineService.ComputeTimeline(
+        var result = testTimelineCalculator.ComputeTimeline(
             sprintTEs,
             sprint.Memberships.ToList(),
             statusTransitions,
@@ -99,7 +100,7 @@ public class GetTestTimelineEndpoint(
             settings,
             subTeam);
 
-        await Send.OkAsync(result, ct);
+        await Send.OkAsync(result.Adapt<TestTimelineResponse>(), ct);
     }
 
     private static TestTimelineResponse BuildEmptyResponse(Sprint sprint, AppSettings settings, bool isXrayEnabled) =>

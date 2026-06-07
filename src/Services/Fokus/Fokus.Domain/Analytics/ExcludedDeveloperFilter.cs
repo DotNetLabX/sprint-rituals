@@ -1,4 +1,4 @@
-namespace Fokus.API.Features.Analytics;
+namespace Fokus.Domain.Analytics;
 
 public static class ExcludedDeveloperFilter
 {

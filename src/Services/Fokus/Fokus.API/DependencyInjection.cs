@@ -4,6 +4,7 @@ using Fokus.API.Features.Sync;
 using Fokus.API.Features.Xray;
 using Fokus.API.Grpc;
 using Fokus.API.Hubs;
+using Fokus.Domain.Analytics;
 using Fokus.Persistence;
 using Jira.RestApi;
 using Mapster;
@@ -38,8 +39,9 @@ public static class DependencyInjection
         services.AddScoped<SprintIssueSyncService>();
         services.AddScoped<XrayIssueSyncService>();
         services.AddScoped<WorkflowDetectionService>();
-        services.AddScoped<SprintSummaryService>();
-        services.AddScoped<QaMetricsService>();
+        services.AddScoped<SprintSummaryCalculator>();
+        services.AddScoped<QaMetricsCalculator>();
+        services.AddScoped<TestTimelineCalculator>();
         services.AddScoped<DeveloperThroughputService>();
         services.AddScoped<ScopeChangeService>();
         services.AddScoped<CarryOverService>();
@@ -49,7 +51,6 @@ public static class DependencyInjection
         services.AddScoped<LeaderboardService>();
         services.AddScoped<DeveloperQualityService>();
         services.AddScoped<QaWorkloadService>();
-        services.AddScoped<TestTimelineService>();
         services.AddScoped<QaTrendsService>();
         services.AddScoped<DeveloperProgressService>();
         services.AddScoped<DeveloperDetailService>();
