@@ -114,7 +114,7 @@ public class GetDeveloperDetailEndpoint(
             settings,
             statusTransitions,
             last,
-            settings.BugRatioTarget,
+            settings.BugRatio.Target,
             jiraOptions.Value.InstanceUrl);
 
         await Send.OkAsync(result, ct);

@@ -39,10 +39,10 @@ public class SaveCycleTimeBoundariesEndpoint(AppSettingsRepository repository)
             return;
         }
 
-        settings.CycleTimeStartStage = req.CycleTimeStartStage;
-        settings.CycleTimeEndStage = req.CycleTimeEndStage;
+        settings.CycleTime.StartStage = req.CycleTimeStartStage;
+        settings.CycleTime.EndStage = req.CycleTimeEndStage;
         await repository.SaveAsync(settings, ct);
 
-        await Send.OkAsync(new SaveCycleTimeBoundariesResponse(StartStage: settings.CycleTimeStartStage, EndStage: settings.CycleTimeEndStage), ct);
+        await Send.OkAsync(new SaveCycleTimeBoundariesResponse(StartStage: settings.CycleTime.StartStage, EndStage: settings.CycleTime.EndStage), ct);
     }
 }

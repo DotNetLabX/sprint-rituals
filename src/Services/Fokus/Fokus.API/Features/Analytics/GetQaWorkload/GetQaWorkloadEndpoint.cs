@@ -16,7 +16,7 @@ public class GetQaWorkloadEndpoint(
         var settings = await appSettingsRepository.GetAsync(ct);
 
         // 2. If Xray disabled, return hasQaData = false
-        if (!settings.XrayEnabled)
+        if (!settings.Xray.Enabled)
         {
             await Send.OkAsync(new QaWorkloadResponseDto { HasQaData = false, Mode = "multi" }, ct);
             return;

@@ -17,7 +17,7 @@ public class GetDeveloperQualityEndpoint(
         var settings = await appSettingsRepository.GetAsync(ct);
 
         // 2. If Xray disabled, return empty response
-        if (!settings.XrayEnabled)
+        if (!settings.Xray.Enabled)
         {
             await Send.OkAsync(new DeveloperQualityResponse { HasQaData = false, Sprints = [], Developers = [] }, ct);
             return;

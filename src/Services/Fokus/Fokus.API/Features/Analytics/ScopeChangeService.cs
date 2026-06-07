@@ -108,7 +108,7 @@ public class ScopeChangeService
     {
         var sortedSprints = sprints.OrderBy(s => s.StartDate).ToList();
         var excludedStatuses = settings.ExcludedFromScopeStatuses;
-        var defaultSpPerBug = settings.DefaultSpPerBug;
+        var defaultSpPerBug = settings.BugRatio.DefaultSpPerBug;
 
         // Resolve transition boundaries once
         var (orderedStages, startIndex) = TransitionAttributionChecker.ResolveStartIndex(settings);
@@ -124,12 +124,12 @@ public class ScopeChangeService
                 FilterMemberships(s.Memberships, subTeam, excludedDeveloperIds),
                 statusTransitions,
                 orderedStages, startIndex, endIndex,
-                excludedStatuses, defaultSpPerBug, settings.PlanningWindowDays))
+                excludedStatuses, defaultSpPerBug, settings.Sync.PlanningWindowDays))
             .ToList();
 
         var allClassificationEntries = sortedSprints
             .SelectMany(s => GetMidSprintAdditions(
-                FilterMemberships(s.Memberships, subTeam, excludedDeveloperIds), s, settings.PlanningWindowDays,
+                FilterMemberships(s.Memberships, subTeam, excludedDeveloperIds), s, settings.Sync.PlanningWindowDays,
                 statusTransitions, orderedStages, startIndex, excludedStatuses))
             .ToList();
 
@@ -165,7 +165,7 @@ public class ScopeChangeService
     {
         var excludedStatuses = settings.ExcludedFromScopeStatuses;
         var workflowStages = settings.WorkflowStages;
-        var defaultSpPerBug = settings.DefaultSpPerBug;
+        var defaultSpPerBug = settings.BugRatio.DefaultSpPerBug;
 
         // Resolve transition boundaries once
         var (orderedStages, startIndex) = TransitionAttributionChecker.ResolveStartIndex(settings);
@@ -183,12 +183,12 @@ public class ScopeChangeService
         var current = ComputeSprintMetrics(
             memberships, statusTransitions, targetSprint,
             orderedStages, startIndex, endIndex,
-            excludedStatuses, defaultSpPerBug, settings.PlanningWindowDays);
+            excludedStatuses, defaultSpPerBug, settings.Sync.PlanningWindowDays);
         ScopeSprintMetrics? prior = priorMemberships is not null && priorSprint is not null
             ? ComputeSprintMetrics(
                 priorMemberships, statusTransitions, priorSprint,
                 orderedStages, startIndex, endIndex,
-                excludedStatuses, defaultSpPerBug, settings.PlanningWindowDays)
+                excludedStatuses, defaultSpPerBug, settings.Sync.PlanningWindowDays)
             : null;
 
         // Build metric cards with deltas
@@ -209,19 +209,19 @@ public class ScopeChangeService
                 $"{current.BugCount}", prior is not null ? (decimal)(current.BugCount - prior.BugCount) : null, "positive-down"));
 
         // Classification breakdown for this sprint
-        var midSprintAdditions = GetMidSprintAdditions(memberships, targetSprint, settings.PlanningWindowDays,
+        var midSprintAdditions = GetMidSprintAdditions(memberships, targetSprint, settings.Sync.PlanningWindowDays,
             statusTransitions, orderedStages, startIndex, excludedStatuses);
         var classificationBreakdown = BuildClassificationBreakdown(midSprintAdditions, defaultSpPerBug);
 
         // Event table
-        var events = BuildEventTable(memberships, targetSprint, excludedStatuses, settings.PlanningWindowDays, defaultSpPerBug,
+        var events = BuildEventTable(memberships, targetSprint, excludedStatuses, settings.Sync.PlanningWindowDays, defaultSpPerBug,
             statusTransitions, orderedStages, startIndex);
 
         // Burnup chart (transition-based cumulative scope and completed lines — spec BR11)
         var burnupData = BuildBurnupData(
             memberships, targetSprint, statusTransitions,
             orderedStages, startIndex, endIndex,
-            excludedStatuses, settings.PlanningWindowDays, defaultSpPerBug);
+            excludedStatuses, settings.Sync.PlanningWindowDays, defaultSpPerBug);
 
         // Bug time-in-progress
         var bugTimeInProgress = ComputeBugTimeInProgress(memberships, statusTransitions, targetSprint, workflowStages);

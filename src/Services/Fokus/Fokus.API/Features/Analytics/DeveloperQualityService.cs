@@ -206,7 +206,7 @@ public class DeveloperQualityService
             devMemberships, transitionsByTicket,
             sprint.StartDate, sprint.EndDate,
             orderedStages, startIndex,
-            settings.ExcludedFromScopeStatuses, settings.DefaultSpPerBug);
+            settings.ExcludedFromScopeStatuses, settings.BugRatio.DefaultSpPerBug);
 
         if (activeTicketKeys.Count == 0)
             return (0, 0, 0m, 0m, 0, 0);
@@ -489,7 +489,7 @@ public class DeveloperQualityService
         orderedStages.AddRange(settings.WorkflowStages);
         orderedStages.AddRange(settings.DoneStatuses);
 
-        var startStage = settings.CycleTimeStartStage
+        var startStage = settings.CycleTime.StartStage
             ?? (orderedStages.Count > 0 ? orderedStages[0] : null);
 
         if (startStage is null)

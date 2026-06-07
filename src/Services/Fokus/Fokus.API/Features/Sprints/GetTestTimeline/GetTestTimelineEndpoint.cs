@@ -30,7 +30,7 @@ public class GetTestTimelineEndpoint(
         }
 
         // 4. Xray disabled — return hasQaData=false, isXrayEnabled=false
-        if (!settings.XrayEnabled)
+        if (!settings.Xray.Enabled)
         {
             await Send.OkAsync(BuildEmptyResponse(sprintInfo, settings, isXrayEnabled: false), ct);
             return;
@@ -108,7 +108,7 @@ public class GetTestTimelineEndpoint(
             IsXrayEnabled: isXrayEnabled,
             SprintStartDate: sprint.StartDate,
             SprintEndDate: sprint.EndDate,
-            PlanningWindowDays: settings.PlanningWindowDays,
+            PlanningWindowDays: settings.Sync.PlanningWindowDays,
             BurnupData: [],
             ScopeChangeOverlay: [],
             TestingCrunch: new TestingCrunchResult(false, null, 0, 0, []),

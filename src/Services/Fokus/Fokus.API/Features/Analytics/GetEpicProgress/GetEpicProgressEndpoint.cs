@@ -50,7 +50,7 @@ public class GetEpicProgressEndpoint(
 
         // 9. Load QA data when Xray is enabled (no extra DB round-trips when disabled)
         EpicQaData? qaData = null;
-        if (settings.XrayEnabled)
+        if (settings.Xray.Enabled)
         {
             var ticketKeys = epicTickets.Select(t => t.Id).ToList();
             var (testsLinks, blocksLinks, runsByTeId) =

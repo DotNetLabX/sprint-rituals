@@ -25,7 +25,7 @@ public static class CompletionChecker
         orderedStages.AddRange(settings.DoneStatuses);
 
         // Resolve end stage: CycleTimeEndStage ?? DoneStatuses[0]
-        var endStage = settings.CycleTimeEndStage
+        var endStage = settings.CycleTime.EndStage
             ?? (settings.DoneStatuses.Count > 0 ? settings.DoneStatuses[0] : null);
 
         if (endStage == null)

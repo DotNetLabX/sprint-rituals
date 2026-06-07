@@ -86,7 +86,7 @@ public class LeaderboardService
         HashSet<string>? excludedDeveloperIds = null)
     {
         var excludedStatuses = settings.ExcludedFromScopeStatuses;
-        var defaultSpPerBug = settings.DefaultSpPerBug;
+        var defaultSpPerBug = settings.BugRatio.DefaultSpPerBug;
 
         var (orderedStages, _) = TransitionAttributionChecker.ResolveStartIndex(settings);
         var endIndex = TransitionAttributionChecker.ResolveEndIndex(settings, orderedStages);
@@ -165,7 +165,7 @@ public class LeaderboardService
         HashSet<string>? excludedDeveloperIds = null)
     {
         var excludedStatuses = settings.ExcludedFromScopeStatuses;
-        var defaultSpPerBug = settings.DefaultSpPerBug;
+        var defaultSpPerBug = settings.BugRatio.DefaultSpPerBug;
         var filteredDevelopers = FilterDevelopers(activeDevelopers, subTeam);
 
         var (orderedStages, _) = TransitionAttributionChecker.ResolveStartIndex(settings);

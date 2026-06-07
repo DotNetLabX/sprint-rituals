@@ -14,10 +14,10 @@ public class GetCycleTimeBoundariesEndpoint(AppSettingsRepository repository)
         availableStages.AddRange(settings.DoneStatuses);
 
         // BR13: start = second workflow stage (index 1), end = first done status
-        var startStage = settings.CycleTimeStartStage
+        var startStage = settings.CycleTime.StartStage
             ?? (settings.WorkflowStages.Count >= 2 ? settings.WorkflowStages[1] : settings.WorkflowStages.FirstOrDefault() ?? string.Empty);
 
-        var endStage = settings.CycleTimeEndStage
+        var endStage = settings.CycleTime.EndStage
             ?? (settings.DoneStatuses.Count > 0 ? settings.DoneStatuses[0] : string.Empty);
 
         await Send.OkAsync(new GetCycleTimeBoundariesResponse(startStage, endStage, availableStages, settings.WorkflowStages.Count), ct);

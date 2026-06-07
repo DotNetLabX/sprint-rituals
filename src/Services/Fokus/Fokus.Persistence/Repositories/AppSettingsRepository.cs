@@ -30,6 +30,12 @@ public class AppSettingsRepository(FokusDbContext db)
             existing.DoneStatuses = settings.DoneStatuses;
             existing.WorkflowStages = settings.WorkflowStages;
             existing.ExcludedFromScopeStatuses = settings.ExcludedFromScopeStatuses;
+            // ComplexProperty VOs are not deep-copied by SetValues — must be manually re-assigned
+            // to ensure EF change-tracking picks up the new values (same pattern as HealthThresholds above).
+            existing.BugRatio = settings.BugRatio;
+            existing.Xray = settings.Xray;
+            existing.CycleTime = settings.CycleTime;
+            existing.Sync = settings.Sync;
         }
         await db.SaveChangesAsync(ct);
     }

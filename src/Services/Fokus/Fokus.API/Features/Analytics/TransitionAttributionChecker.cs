@@ -31,7 +31,7 @@ public static class TransitionAttributionChecker
         orderedStages.AddRange(settings.DoneStatuses);
 
         // BR19 fallback: first stage (index 0), not second stage like cycle time measurement
-        var startStage = settings.CycleTimeStartStage
+        var startStage = settings.CycleTime.StartStage
             ?? (orderedStages.Count > 0 ? orderedStages[0] : null);
 
         if (startStage is null)
@@ -57,7 +57,7 @@ public static class TransitionAttributionChecker
     /// </remarks>
     public static int ResolveEndIndex(AppSettings settings, List<string> orderedStages)
     {
-        var endStage = settings.CycleTimeEndStage
+        var endStage = settings.CycleTime.EndStage
             ?? (settings.DoneStatuses.Count > 0 ? settings.DoneStatuses[0] : null);
 
         if (endStage is null)

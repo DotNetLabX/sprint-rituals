@@ -23,7 +23,7 @@ public class GetUntestedTicketsEndpoint(
         }
 
         // 3. If Xray disabled, return empty list
-        if (!settings.XrayEnabled)
+        if (!settings.Xray.Enabled)
         {
             await Send.OkAsync(new UntestedTicketsResponse(), ct);
             return;
@@ -51,7 +51,7 @@ public class GetUntestedTicketsEndpoint(
             startIndex,
             sprint.StartDate,
             sprint.EndDate,
-            settings.DefaultSpPerBug,
+            settings.BugRatio.DefaultSpPerBug,
             ct);
 
         // 8. Filter to untested tickets, apply sub-team filter, sort by SP descending (BR25)

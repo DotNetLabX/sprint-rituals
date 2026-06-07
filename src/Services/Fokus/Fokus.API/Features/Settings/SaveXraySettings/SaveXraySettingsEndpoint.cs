@@ -10,12 +10,12 @@ public class SaveXraySettingsEndpoint(AppSettingsRepository repository)
     {
         var existing = await repository.GetAsync(ct);
 
-        existing.XrayEnabled = req.XrayEnabled;
-        existing.XrayClientId = req.XrayClientId;
+        existing.Xray.Enabled = req.XrayEnabled;
+        existing.Xray.ClientId = req.XrayClientId;
 
         // Secret preservation: only overwrite if a non-empty value is provided
         if (!string.IsNullOrEmpty(req.XrayClientSecret))
-            existing.XrayClientSecret = req.XrayClientSecret;
+            existing.Xray.ClientSecret = req.XrayClientSecret;
 
         await repository.SaveAsync(existing, ct);
 

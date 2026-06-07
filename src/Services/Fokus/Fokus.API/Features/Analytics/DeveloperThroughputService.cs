@@ -54,7 +54,7 @@ public class DeveloperThroughputService
         List<Developer> allDevelopers,
         List<StatusTransition> statusTransitions)
     {
-        var defaultSpPerBug = settings.DefaultSpPerBug;
+        var defaultSpPerBug = settings.BugRatio.DefaultSpPerBug;
 
         var (orderedStages, startIndex) = TransitionAttributionChecker.ResolveStartIndex(settings);
         var endIndex = TransitionAttributionChecker.ResolveEndIndex(settings, orderedStages);

@@ -84,7 +84,7 @@ public class QaTrendsService
                 filteredMemberships, transitionsByTicket,
                 sprint.StartDate, sprint.EndDate,
                 orderedStages, startIndex,
-                settings.ExcludedFromScopeStatuses, settings.DefaultSpPerBug);
+                settings.ExcludedFromScopeStatuses, settings.BugRatio.DefaultSpPerBug);
 
             var testsTesByTicket = BuildTestsTesByTicket(sprintTEs);
             var runsByTe = BuildRunsByTe(sprintTEs);
@@ -357,7 +357,7 @@ public class QaTrendsService
         orderedStages.AddRange(settings.WorkflowStages);
         orderedStages.AddRange(settings.DoneStatuses);
 
-        var startStage = settings.CycleTimeStartStage
+        var startStage = settings.CycleTime.StartStage
             ?? (orderedStages.Count > 0 ? orderedStages[0] : null);
 
         if (startStage is null)

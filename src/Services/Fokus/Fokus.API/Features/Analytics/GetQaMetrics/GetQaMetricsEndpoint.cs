@@ -27,7 +27,7 @@ public class GetQaMetricsEndpoint(
         }
 
         // 4. If Xray disabled, return hasQaData=false with empty metrics
-        if (!settings.XrayEnabled)
+        if (!settings.Xray.Enabled)
         {
             await Send.OkAsync(BuildEmptyResponse(), ct);
             return;

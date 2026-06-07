@@ -12,7 +12,7 @@ Fokus is a sprint analytics service that syncs data from Jira (sprints, tickets,
 
 - **Aggregates:** Sprint (int PK, owns SprintMemberships), Ticket (string PK, owns StatusTransitions)
 - **Key entities:** Developer (Entity<string>), StatusTransition (Entity<int>), SprintMembership (composite key child, plain class)
-- **Value objects:** HealthThresholdConfig, HealthWeightConfig (owned by AppSettings, stored as JSON columns)
+- **Value objects:** `HealthThresholdConfig`, `HealthWeightConfig`, `QaHealthThresholdConfig`, `QualitySubScoreWeightConfig` (owned by AppSettings, stored as JSON columns via `OwnsOne().ToJson()`); `BugRatioConfig`, `XrayConfig`, `CycleTimeConfig`, `SyncConfig` (owned by AppSettings, stored as flat columns via `ComplexProperty`). Wire contract stays flat — the 4 new VOs are domain-internal, mapped to/from flat DTOs at the Settings endpoint boundary (ADR-007, Q1=A).
 - **Application layer:** None — handler logic in endpoints
 
 ## Endpoint pattern
@@ -36,7 +36,7 @@ N/A — FastEndpoints native, no MediatR.
 - **Natural keys:** Ticket.Id = Jira issue key (e.g. "FOK-123"), Developer.Id = Jira accountId. Sprint.Id = Jira sprint ID. These are never auto-generated (`ValueGeneratedNever`).
 - **Computed metrics:** Health scores are computed on-the-fly in endpoints — never stored in the DB.
 - **Thin domain (v1):** Entities are data containers. No behavior methods in v1. Behaviors folder will be added when domain logic is needed.
-- **AppSettings singleton:** Single row (Id=1), seeded on startup if missing. Holds board config, done-status list, workflow stages, health thresholds, health weights.
+- **AppSettings singleton:** Single row (Id=1), seeded on startup if missing. Holds board config, done-status list, workflow stages (`BoardId`, `DoneStatuses`, `WorkflowStages`, `ExcludedFromScopeStatuses`, `CompanyDomain` — top-level), health config VOs (`HealthThresholds`, `HealthWeights`, `QaHealthThresholds`, `QualitySubScoreWeights`, `QualityHealthWeight`), and 4 domain-internal config VOs (`BugRatio`, `Xray`, `CycleTime`, `Sync`) persisted as flat columns via `ComplexProperty`. API wire stays flat.
 - **Focused operation services:** When handler logic is shared across endpoints in the same feature area, extract into a service class named after the operation (not the entity). Lives in the feature area root (e.g., `Features/Sync/SprintIssueSyncService.cs`). Must stay single-purpose — if it grows beyond one operation, split it.
 
 ## Existing features

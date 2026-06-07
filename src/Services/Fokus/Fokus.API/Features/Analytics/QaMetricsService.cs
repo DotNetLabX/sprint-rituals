@@ -51,7 +51,7 @@ public class QaMetricsService
             filteredMemberships, transitionsByTicket,
             selectedSprint.StartDate, selectedSprint.EndDate,
             orderedStages, startIndex,
-            settings.ExcludedFromScopeStatuses, settings.DefaultSpPerBug);
+            settings.ExcludedFromScopeStatuses, settings.BugRatio.DefaultSpPerBug);
 
         // sprintTEs is pre-filtered by the repository (Status != "Cancelled" excluded at the DB level).
         var nonCancelledTEs = sprintTEs;
@@ -110,7 +110,7 @@ public class QaMetricsService
                 priorFiltered, transitionsByTicket,
                 priorSprint.StartDate, priorSprint.EndDate,
                 orderedStages, startIndex,
-                settings.ExcludedFromScopeStatuses, settings.DefaultSpPerBug);
+                settings.ExcludedFromScopeStatuses, settings.BugRatio.DefaultSpPerBug);
             var priorTestsTesByTicket = BuildTestsTesByTicket(priorNonCancelled);
             var (priorCovered, priorCov) = ComputeCoverageRate(priorActiveKeys, priorTestsTesByTicket, priorMemberships);
             priorCoverageRate = priorCov;
@@ -404,7 +404,7 @@ public class QaMetricsService
                 filteredMemberships, transitionsByTicket,
                 sprint.StartDate, sprint.EndDate,
                 orderedStages, startIndex,
-                settings.ExcludedFromScopeStatuses, settings.DefaultSpPerBug);
+                settings.ExcludedFromScopeStatuses, settings.BugRatio.DefaultSpPerBug);
 
             var value = valueSelector(nonCancelled, activeKeys, sprintMemberships);
             points.Add(new SparklinePoint(sprint.Name, Math.Round(value, 1)));
@@ -420,7 +420,7 @@ public class QaMetricsService
         orderedStages.AddRange(settings.WorkflowStages);
         orderedStages.AddRange(settings.DoneStatuses);
 
-        var startStage = settings.CycleTimeStartStage
+        var startStage = settings.CycleTime.StartStage
             ?? (orderedStages.Count > 0 ? orderedStages[0] : null);
 
         if (startStage is null)

@@ -4,9 +4,11 @@ namespace Identity.Domain.Users;
 
 public partial class User : Entity<int>
 {
-    public int PersonId { get; set; }
+    public int PersonId { get; private set; }
     public string Role { get; private set; } = "Manager";
-    public bool IsActive { get; set; } = true;
-    public DateTime RegistrationDate { get; set; }
-    public DateTime? LastLogin { get; set; }
+    public bool IsActive { get; private set; } = true;
+    public DateTime RegistrationDate { get; private set; }
+    public DateTime? LastLogin { get; private set; }
+
+    private User() { }
 }

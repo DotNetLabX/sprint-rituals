@@ -147,7 +147,7 @@ public class TestTimelineService
             IsXrayEnabled: true,
             SprintStartDate: sprint.StartDate,
             SprintEndDate: sprint.EndDate,
-            PlanningWindowDays: settings.PlanningWindowDays,
+            PlanningWindowDays: settings.Sync.PlanningWindowDays,
             BurnupData: burnupData,
             ScopeChangeOverlay: scopeChangeOverlay,
             TestingCrunch: crunchResult,

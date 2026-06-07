@@ -5,13 +5,16 @@ namespace Identity.Domain.Persons;
 
 public partial class Person : AggregateRoot<int>
 {
-    public required string FirstName { get; set; }
-    public required string LastName { get; set; }
+    public string FirstName { get; private set; } = string.Empty;
+    public string LastName { get; private set; } = string.Empty;
     public string FullName => $"{FirstName} {LastName}".Trim();
-    public required string Email { get; set; }
-    public string? PictureUrl { get; set; }
-    public PersonSource Source { get; set; }
-    public string? ExternalId { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public int? UserId { get; set; }
+    public string Email { get; private set; } = string.Empty;
+    public string? PictureUrl { get; private set; }
+    public PersonSource Source { get; private set; }
+    public string? ExternalId { get; private set; }
+    public DateTime CreatedAt { get; private set; }
+    public int? UserId { get; private set; }
+
+    // Parameterless ctor for EF Core materialization.
+    private Person() { }
 }

@@ -9,7 +9,10 @@ public class SaveSyncConfigEndpoint(AppSettingsRepository repository)
     public override async Task HandleAsync(SaveSyncConfigCommand req, CancellationToken ct)
     {
         var existing = await repository.GetAsync(ct);
-        req.Adapt(existing);
+
+        existing.Sync.BackSprintCount = req.SyncBackSprintCount;
+        existing.Sync.PlanningWindowDays = req.PlanningWindowDays;
+
         await repository.SaveAsync(existing, ct);
         await Send.OkAsync(new SaveSyncConfigResponse { Success = true }, ct);
     }

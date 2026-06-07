@@ -59,7 +59,7 @@ public class SprintIssueSyncService(
                 await sprintRepository.UpsertAsync(sprint, ct);
                 await sprintRepository.SaveChangesAsync(ct);
 
-                var result = await SyncAsync(sprint, issues, forcedNotCommitted, settings.PlanningWindowDays, ct);
+                var result = await SyncAsync(sprint, issues, forcedNotCommitted, settings.Sync.PlanningWindowDays, ct);
 
                 sprintsSynced++;
                 totalTickets += result.TicketsUpserted;
@@ -176,7 +176,7 @@ public class SprintIssueSyncService(
         // Piggyback Xray TestSet sync if enabled — TE discovery is project-wide via dedicated endpoint
         XraySyncResult? xrayResult = null;
         var settings2 = await appSettingsRepository.GetAsync(ct);
-        if (settings2.XrayEnabled)
+        if (settings2.Xray.Enabled)
         {
             try
             {

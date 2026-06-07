@@ -129,7 +129,7 @@ public class BugRatioService
         HashSet<string>? excludedDeveloperIds = null)
     {
         var excludedStatuses = settings.ExcludedFromScopeStatuses;
-        var defaultSpPerBug = settings.DefaultSpPerBug;
+        var defaultSpPerBug = settings.BugRatio.DefaultSpPerBug;
 
         var (orderedStages, startIndex) = TransitionAttributionChecker.ResolveStartIndex(settings);
         var endIndex = TransitionAttributionChecker.ResolveEndIndex(settings, orderedStages);
@@ -215,8 +215,8 @@ public class BugRatioService
 
             var alert = EvaluateAlert(
                 dev.Id, allClosedSprints, statusTransitions, orderedStages, endIndex,
-                excludedStatuses, settings.BugRatioAlertThreshold,
-                settings.BugRatioConsecutiveSprintCount, subTeam, defaultSpPerBug);
+                excludedStatuses, settings.BugRatio.AlertThreshold,
+                settings.BugRatio.ConsecutiveSprintCount, subTeam, defaultSpPerBug);
 
             return new BugRatioDeveloperEntry(
                 dev.Id, dev.DisplayName, dev.SubTeam, dev.AvatarUrl,
@@ -244,7 +244,7 @@ public class BugRatioService
         HashSet<string>? excludedDeveloperIds = null)
     {
         var excludedStatuses = settings.ExcludedFromScopeStatuses;
-        var defaultSpPerBug = settings.DefaultSpPerBug;
+        var defaultSpPerBug = settings.BugRatio.DefaultSpPerBug;
         var filteredDevelopers = FilterDevelopers(activeDevelopers, subTeam);
 
         var (orderedStages, startIndex) = TransitionAttributionChecker.ResolveStartIndex(settings);
@@ -338,8 +338,8 @@ public class BugRatioService
 
             var alert = EvaluateAlert(
                 dev.Id, allClosedSprints, statusTransitions, orderedStages, endIndex,
-                excludedStatuses, settings.BugRatioAlertThreshold,
-                settings.BugRatioConsecutiveSprintCount, subTeam, defaultSpPerBug);
+                excludedStatuses, settings.BugRatio.AlertThreshold,
+                settings.BugRatio.ConsecutiveSprintCount, subTeam, defaultSpPerBug);
 
             return new BugRatioDeveloperSingleEntry(
                 dev.Id, dev.DisplayName, dev.SubTeam, dev.AvatarUrl,

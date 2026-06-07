@@ -18,7 +18,7 @@ public class SyncXrayEndpoint(
     public override async Task HandleAsync(SyncXrayCommand req, CancellationToken ct)
     {
         var settings = await settingsRepository.GetAsync(ct);
-        if (!settings.XrayEnabled)
+        if (!settings.Xray.Enabled)
             throw new BadRequestException("Xray is not enabled.");
 
         var projectKey = jiraOptions.Value.ProjectKey;

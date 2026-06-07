@@ -90,7 +90,7 @@ public class EpicProgressService
         EpicQaData? qaData = null)
     {
         var completedStatuses = CompletionChecker.ResolveCompletedStatuses(settings);
-        var defaultSpPerBug = settings.DefaultSpPerBug;
+        var defaultSpPerBug = settings.BugRatio.DefaultSpPerBug;
 
         var (orderedStages, startIndex) = TransitionAttributionChecker.ResolveStartIndex(settings);
         var endIndex = TransitionAttributionChecker.ResolveEndIndex(settings, orderedStages);

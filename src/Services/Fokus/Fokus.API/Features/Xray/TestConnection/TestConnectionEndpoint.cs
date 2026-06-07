@@ -12,11 +12,11 @@ public class TestConnectionEndpoint(AppSettingsRepository settingsRepository, IX
     {
         var settings = await settingsRepository.GetAsync(ct);
 
-        if (!settings.XrayEnabled || string.IsNullOrEmpty(settings.XrayClientId) || string.IsNullOrEmpty(settings.XrayClientSecret))
+        if (!settings.Xray.Enabled || string.IsNullOrEmpty(settings.Xray.ClientId) || string.IsNullOrEmpty(settings.Xray.ClientSecret))
             throw new BadRequestException("Xray is not enabled or credentials are not configured.");
 
         // AuthenticateAsync throws UnauthorizedException (401) or BadGatewayException (502) on failure
-        var token = await xrayClient.AuthenticateAsync(settings.XrayClientId, settings.XrayClientSecret, ct);
+        var token = await xrayClient.AuthenticateAsync(settings.Xray.ClientId, settings.Xray.ClientSecret, ct);
 
         // ProbeAsync sends a minimal GraphQL query (limit 1, no JQL) to verify data-access permissions
         await xrayClient.ProbeAsync(token, ct);

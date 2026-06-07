@@ -97,7 +97,7 @@ public class GetSprintSummaryEndpoint(
         TestingCrunchFlag? testingCrunch = null;
         var hasQaData = false;
 
-        if (settings.XrayEnabled)
+        if (settings.Xray.Enabled)
         {
             var sprintTEs = await testExecutionRepository.GetTestExecutionsForSprintAsync(selectedSprint.Id, ct);
             hasQaData = true;

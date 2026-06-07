@@ -23,7 +23,7 @@ public class GetFailingTicketsEndpoint(
         }
 
         // 3. If Xray disabled, return empty list
-        if (!settings.XrayEnabled)
+        if (!settings.Xray.Enabled)
         {
             await Send.OkAsync(new FailingTicketsResponse(), ct);
             return;
@@ -51,7 +51,7 @@ public class GetFailingTicketsEndpoint(
             startIndex,
             sprint.StartDate,
             sprint.EndDate,
-            settings.DefaultSpPerBug,
+            settings.BugRatio.DefaultSpPerBug,
             ct);
 
         // 8. Filter to failing tickets, apply sub-team filter, sort by failed run count descending (BR26)

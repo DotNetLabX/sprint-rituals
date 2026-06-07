@@ -9,7 +9,11 @@ public class SaveBugRatioAlertsEndpoint(AppSettingsRepository repository)
     public override async Task HandleAsync(SaveBugRatioAlertsCommand req, CancellationToken ct)
     {
         var existing = await repository.GetAsync(ct);
-        req.Adapt(existing);
+
+        existing.BugRatio.AlertThreshold = req.BugRatioAlertThreshold;
+        existing.BugRatio.ConsecutiveSprintCount = req.BugRatioConsecutiveSprintCount;
+        existing.BugRatio.DefaultSpPerBug = req.DefaultSpPerBug;
+
         await repository.SaveAsync(existing, ct);
         await Send.OkAsync(new SaveBugRatioAlertsResponse { Success = true }, ct);
     }

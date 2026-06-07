@@ -118,7 +118,7 @@ public class CarryOverService
         var sortedSelected = selectedSprints.OrderBy(s => s.StartDate).ToList();
         var excludedStatuses = settings.ExcludedFromScopeStatuses;
         var workflowStages = settings.WorkflowStages;
-        var defaultSpPerBug = settings.DefaultSpPerBug;
+        var defaultSpPerBug = settings.BugRatio.DefaultSpPerBug;
 
         // Resolve transition boundaries once
         var (orderedStages, startIndex) = TransitionAttributionChecker.ResolveStartIndex(settings);
@@ -228,7 +228,7 @@ public class CarryOverService
     {
         var excludedStatuses = settings.ExcludedFromScopeStatuses;
         var workflowStages = settings.WorkflowStages;
-        var defaultSpPerBug = settings.DefaultSpPerBug;
+        var defaultSpPerBug = settings.BugRatio.DefaultSpPerBug;
 
         // Resolve transition boundaries once
         var (orderedStages, startIndex) = TransitionAttributionChecker.ResolveStartIndex(settings);

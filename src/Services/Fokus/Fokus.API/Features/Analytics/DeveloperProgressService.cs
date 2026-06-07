@@ -104,7 +104,7 @@ public class DeveloperProgressService
 
             // Assigned SP: sum of effective SP (null excluded from sum per plan)
             var assignedSp = memberships
-                .Select(m => m.GetEffectiveSp(settings.DefaultSpPerBug))
+                .Select(m => m.GetEffectiveSp(settings.BugRatio.DefaultSpPerBug))
                 .Where(sp => sp.HasValue)
                 .Sum(sp => sp!.Value);
 
@@ -129,7 +129,7 @@ public class DeveloperProgressService
 
                 if (!isCompleted || completedAt is null) continue;
 
-                var effectiveSp = m.GetEffectiveSp(settings.DefaultSpPerBug);
+                var effectiveSp = m.GetEffectiveSp(settings.BugRatio.DefaultSpPerBug);
                 if (effectiveSp.HasValue)
                 {
                     completedSp += effectiveSp.Value;

@@ -12,6 +12,33 @@ public class AppSettingsConfiguration : IEntityTypeConfiguration<AppSettings>
         builder.OwnsOne(s => s.QaHealthThresholds, b => b.ToJson());
         builder.OwnsOne(s => s.QualitySubScoreWeights, b => b.ToJson());
 
+        builder.ComplexProperty(s => s.BugRatio, b =>
+        {
+            b.Property(v => v.AlertThreshold).HasDefaultValue(50);
+            b.Property(v => v.ConsecutiveSprintCount).HasDefaultValue(2);
+            b.Property(v => v.Target).HasDefaultValue(30m);
+            b.Property(v => v.DefaultSpPerBug).HasDefaultValue(3);
+        });
+
+        builder.ComplexProperty(s => s.Xray, b =>
+        {
+            b.Property(v => v.Enabled).HasDefaultValue(false);
+            b.Property(v => v.ClientId).HasMaxLength(512);
+            b.Property(v => v.ClientSecret).HasMaxLength(512);
+        });
+
+        builder.ComplexProperty(s => s.CycleTime, b =>
+        {
+            b.Property(v => v.StartStage);
+            b.Property(v => v.EndStage);
+        });
+
+        builder.ComplexProperty(s => s.Sync, b =>
+        {
+            b.Property(v => v.BackSprintCount).HasDefaultValue(20);
+            b.Property(v => v.PlanningWindowDays).HasDefaultValue(2);
+        });
+
         var stringListComparer = new ValueComparer<List<string>>(
             (c1, c2) => c1!.SequenceEqual(c2!),
             c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
@@ -33,7 +60,5 @@ public class AppSettingsConfiguration : IEntityTypeConfiguration<AppSettings>
             .Metadata.SetValueComparer(stringListComparer);
 
         builder.Property(s => s.CompanyDomain).HasMaxLength(256);
-        builder.Property(s => s.XrayClientId).HasMaxLength(512);
-        builder.Property(s => s.XrayClientSecret).HasMaxLength(512);
     }
 }

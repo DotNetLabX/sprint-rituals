@@ -25,7 +25,7 @@ public class XrayIssueSyncService(
         var warnings = new List<string>();
 
         var settings = await appSettingsRepository.GetAsync(ct);
-        if (!settings.XrayEnabled || string.IsNullOrEmpty(settings.XrayClientId) || string.IsNullOrEmpty(settings.XrayClientSecret))
+        if (!settings.Xray.Enabled || string.IsNullOrEmpty(settings.Xray.ClientId) || string.IsNullOrEmpty(settings.Xray.ClientSecret))
             return new XraySyncResult(0, 0, 0, warnings);
 
         var bearerToken = await AuthenticateAsync(settings, warnings, ct);
@@ -80,7 +80,7 @@ public class XrayIssueSyncService(
         var warnings = new List<string>();
 
         var settings = await appSettingsRepository.GetAsync(ct);
-        if (!settings.XrayEnabled)
+        if (!settings.Xray.Enabled)
             return 0;
 
         var testSets = new Dictionary<string, (string Id, string Key, string Summary, string? AssigneeId, string Status)>();
@@ -167,7 +167,7 @@ public class XrayIssueSyncService(
     {
         try
         {
-            return await xrayClient.AuthenticateAsync(settings.XrayClientId!, settings.XrayClientSecret!, ct);
+            return await xrayClient.AuthenticateAsync(settings.Xray.ClientId!, settings.Xray.ClientSecret!, ct);
         }
         catch (Exception ex)
         {

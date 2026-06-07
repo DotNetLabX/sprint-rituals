@@ -37,7 +37,7 @@ public class SprintAnalyticsGrpcService(
         QualityBreakdownResult? qualityBreakdown = null;
         var hasQaData = false;
 
-        if (settings.XrayEnabled)
+        if (settings.Xray.Enabled)
         {
             (qualitySubScore, qualityBreakdown, hasQaData) =
                 await LoadQaDataAsync(selectedSprint, statusTransitions, settings, null, ct);
@@ -228,7 +228,7 @@ public class SprintAnalyticsGrpcService(
             ActiveSp = result.Sprint is not null
                 ? selectedSprint.Memberships
                     .Where(m => m.RemovedAt == null)
-                    .Sum(m => m.StoryPoints ?? settings.DefaultSpPerBug) : 0m,
+                    .Sum(m => m.StoryPoints ?? settings.BugRatio.DefaultSpPerBug) : 0m,
             TopScopeAdditions = topScopeAdditions,
         };
     }
@@ -236,7 +236,7 @@ public class SprintAnalyticsGrpcService(
     private static List<ScopeAdditionEntry> BuildTopScopeAdditions(Sprint sprint, AppSettings settings)
     {
         // Mid-sprint additions: memberships added after planning window, not bugs, not removed
-        var planningCutoff = sprint.StartDate.AddDays(settings.PlanningWindowDays);
+        var planningCutoff = sprint.StartDate.AddDays(settings.Sync.PlanningWindowDays);
         return sprint.Memberships
             .Where(m => m.AddedAt > planningCutoff && m.RemovedAt == null && m.Ticket?.IssueType != "Bug")
             .OrderByDescending(m => m.StoryPoints ?? 0m)

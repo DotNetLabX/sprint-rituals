@@ -80,9 +80,9 @@ public static class DependencyInjection
         {
             var settings = await fokusDb.AppSettings.FirstOrDefaultAsync();
             if (settings is null) return;   // row was not seeded — skip Xray wiring
-            settings.XrayEnabled = true;
-            settings.XrayClientId = xrayOptions.ClientId;
-            settings.XrayClientSecret = xrayOptions.ClientSecret;
+            settings.Xray.Enabled = true;
+            settings.Xray.ClientId = xrayOptions.ClientId;
+            settings.Xray.ClientSecret = xrayOptions.ClientSecret;
             await fokusDb.SaveChangesAsync();
         }
     }

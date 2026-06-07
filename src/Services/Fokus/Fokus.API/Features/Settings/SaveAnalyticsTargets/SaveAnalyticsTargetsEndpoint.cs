@@ -9,7 +9,9 @@ public class SaveAnalyticsTargetsEndpoint(AppSettingsRepository repository)
     public override async Task HandleAsync(SaveAnalyticsTargetsCommand req, CancellationToken ct)
     {
         var existing = await repository.GetAsync(ct);
-        req.Adapt(existing);
+
+        existing.BugRatio.Target = req.BugRatioTarget;
+
         await repository.SaveAsync(existing, ct);
         await Send.OkAsync(new SaveAnalyticsTargetsResponse { Success = true }, ct);
     }

@@ -119,7 +119,7 @@ public class SprintSummaryService
         var completedStatuses = CompletionChecker.ResolveCompletedStatuses(settings);
         var thresholds = settings.HealthThresholds;
         var weights = settings.HealthWeights;
-        var defaultSpPerBug = settings.DefaultSpPerBug;
+        var defaultSpPerBug = settings.BugRatio.DefaultSpPerBug;
 
         // Resolve transition-based boundaries once for this request
         var (orderedStages, startIndex) = TransitionAttributionChecker.ResolveStartIndex(settings);
@@ -141,7 +141,7 @@ public class SprintSummaryService
             selectedMemberships, statusTransitions,
             selectedSprint.StartDate, selectedSprint.EndDate,
             orderedStages, startIndex, endIndex,
-            settings.ExcludedFromScopeStatuses, defaultSpPerBug, settings.PlanningWindowDays);
+            settings.ExcludedFromScopeStatuses, defaultSpPerBug, settings.Sync.PlanningWindowDays);
 
         // Delta metrics (C1 pattern)
         SprintMetrics? prior = priorMemberships is not null && priorSprint is not null
@@ -149,7 +149,7 @@ public class SprintSummaryService
                 priorMemberships, statusTransitions,
                 priorSprint.StartDate, priorSprint.EndDate,
                 orderedStages, startIndex, endIndex,
-                settings.ExcludedFromScopeStatuses, defaultSpPerBug, settings.PlanningWindowDays)
+                settings.ExcludedFromScopeStatuses, defaultSpPerBug, settings.Sync.PlanningWindowDays)
             : null;
 
         // Health score — uses combined DisruptionRate (scope + bug) for continuity
@@ -231,7 +231,7 @@ public class SprintSummaryService
             selectedSprint, selectedMemberships, statusTransitions,
             windowSprints, subTeam, filteredDevelopers,
             orderedStages, endIndex,
-            settings.ExcludedFromScopeStatuses, defaultSpPerBug, settings.PlanningWindowDays, excludedDeveloperIds,
+            settings.ExcludedFromScopeStatuses, defaultSpPerBug, settings.Sync.PlanningWindowDays, excludedDeveloperIds,
             testingCrunch);
 
         var sprintInfo = new SprintInfo(
@@ -367,7 +367,7 @@ public class SprintSummaryService
         var (orderedStages, _) = TransitionAttributionChecker.ResolveStartIndex(settings);
         var endIndex = TransitionAttributionChecker.ResolveEndIndex(settings, orderedStages);
         var excludedStatuses = settings.ExcludedFromScopeStatuses;
-        var defaultSpPerBug = settings.DefaultSpPerBug;
+        var defaultSpPerBug = settings.BugRatio.DefaultSpPerBug;
 
         var transitionsByTicket = transitions
             .GroupBy(t => t.TicketId, StringComparer.OrdinalIgnoreCase)
@@ -393,7 +393,7 @@ public class SprintSummaryService
         var (orderedStages, startIndex) = TransitionAttributionChecker.ResolveStartIndex(settings);
         var endIndex = TransitionAttributionChecker.ResolveEndIndex(settings, orderedStages);
         var excludedStatuses = settings.ExcludedFromScopeStatuses;
-        var defaultSpPerBug = settings.DefaultSpPerBug;
+        var defaultSpPerBug = settings.BugRatio.DefaultSpPerBug;
 
         var transitionsByTicket = transitions
             .GroupBy(t => t.TicketId, StringComparer.OrdinalIgnoreCase)
@@ -428,8 +428,8 @@ public class SprintSummaryService
     {
         var (orderedStages, startIndex) = TransitionAttributionChecker.ResolveStartIndex(settings);
         var excludedStatuses = settings.ExcludedFromScopeStatuses;
-        var defaultSpPerBug = settings.DefaultSpPerBug;
-        var planningCutoff = sprint.StartDate.AddDays(settings.PlanningWindowDays);
+        var defaultSpPerBug = settings.BugRatio.DefaultSpPerBug;
+        var planningCutoff = sprint.StartDate.AddDays(settings.Sync.PlanningWindowDays);
 
         var transitionsByTicket = transitions
             .GroupBy(t => t.TicketId, StringComparer.OrdinalIgnoreCase)
@@ -463,8 +463,8 @@ public class SprintSummaryService
     {
         var (orderedStages, startIndex) = TransitionAttributionChecker.ResolveStartIndex(settings);
         var excludedStatuses = settings.ExcludedFromScopeStatuses;
-        var defaultSpPerBug = settings.DefaultSpPerBug;
-        var planningCutoff = sprint.StartDate.AddDays(settings.PlanningWindowDays);
+        var defaultSpPerBug = settings.BugRatio.DefaultSpPerBug;
+        var planningCutoff = sprint.StartDate.AddDays(settings.Sync.PlanningWindowDays);
 
         var transitionsByTicket = transitions
             .GroupBy(t => t.TicketId, StringComparer.OrdinalIgnoreCase)
@@ -510,7 +510,7 @@ public class SprintSummaryService
         var (orderedStages, startIndex) = TransitionAttributionChecker.ResolveStartIndex(settings);
         var endIndex = TransitionAttributionChecker.ResolveEndIndex(settings, orderedStages);
         var excludedStatuses = settings.ExcludedFromScopeStatuses;
-        var defaultSpPerBug = settings.DefaultSpPerBug;
+        var defaultSpPerBug = settings.BugRatio.DefaultSpPerBug;
 
         var transitionsByTicket = transitions
             .GroupBy(t => t.TicketId, StringComparer.OrdinalIgnoreCase)

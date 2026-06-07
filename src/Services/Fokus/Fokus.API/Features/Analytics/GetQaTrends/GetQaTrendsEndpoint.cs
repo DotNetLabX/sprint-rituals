@@ -16,7 +16,7 @@ public class GetQaTrendsEndpoint(
     {
         // 1. Load settings. If Xray is disabled, return empty.
         var settings = await appSettingsRepository.GetAsync(ct);
-        if (!settings.XrayEnabled)
+        if (!settings.Xray.Enabled)
         {
             await Send.OkAsync(new QaTrendsResponse(
                 HasQaData: false,

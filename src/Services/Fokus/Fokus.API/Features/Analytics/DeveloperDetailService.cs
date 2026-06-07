@@ -81,7 +81,7 @@ public class DeveloperDetailService
     {
         var (orderedStages, startIndex) = TransitionAttributionChecker.ResolveStartIndex(settings);
         var endIndex = TransitionAttributionChecker.ResolveEndIndex(settings, orderedStages);
-        var defaultSpPerBug = settings.DefaultSpPerBug;
+        var defaultSpPerBug = settings.BugRatio.DefaultSpPerBug;
         var excludedStatuses = settings.ExcludedFromScopeStatuses;
 
         // Build all developers list for capacity resolution (single dev here)
@@ -222,7 +222,7 @@ public class DeveloperDetailService
             .ToList();
 
         var assignedSp = memberships
-            .Select(m => m.GetEffectiveSp(settings.DefaultSpPerBug))
+            .Select(m => m.GetEffectiveSp(settings.BugRatio.DefaultSpPerBug))
             .Where(sp => sp.HasValue)
             .Sum(sp => sp!.Value);
 
@@ -244,7 +244,7 @@ public class DeveloperDetailService
 
             if (!isCompleted || completedAt is null) continue;
 
-            var effectiveSp = m.GetEffectiveSp(settings.DefaultSpPerBug);
+            var effectiveSp = m.GetEffectiveSp(settings.BugRatio.DefaultSpPerBug);
             if (effectiveSp.HasValue)
             {
                 completedSp += effectiveSp.Value;
