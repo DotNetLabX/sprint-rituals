@@ -36,6 +36,7 @@ No unexpected files. All created/modified files map to a plan step. `global usin
 ## Notes for Step 2 (reviewer)
 This done check is conformance only (no code reading beyond the targeted accept-greps). The reviewer should still confirm at code level:
 - Mapster `IgnoreNonMapped(true)` in the 5 `IRegister` classes actually prevents `.Adapt(existing)` from nulling untouched `AppSettings` fields (impl.md:134 claims this — the data-loss risk if wrong is real, since `AppSettings` is one flat row with ~20 fields and the commands map only a subset).
+  > **⚠️ ERRATUM (2026-06-07):** This framing pointed the reviewer at the wrong risk. The danger was never "`.Adapt` nulls the other fields" (it doesn't — default Mapster leaves unmatched destination members untouched). The real bug is that `IgnoreNonMapped(true)` with no `.Map()` calls maps **nothing**, so `.Adapt(existing)` was a no-op and the 4 settings endpoints silently failed to persist. Verified against Mapster 7.4.0; the 4 `*Mappings.cs` were deleted. See `adhoc-SettingsMapsterNoOp`.
 - The two-source `UserResponse` (UpdateRole/UpdateStatus) was left hand-assembled (correct per plan) and still compiles/behaves.
 - gRPC server still starts (h2c) and Jira sprint-update still round-trips — the wire-safety claim is structurally verified (Order numbers preserved) but a runtime smoke is the reviewer's/user's call.
 

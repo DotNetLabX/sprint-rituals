@@ -19,6 +19,8 @@
 | 7 | Apply Mapster to trivial maps (ADR-010, Q3) | `req.Adapt(existing)` + `IRegister` w/ `IgnoreNonMapped(true)` on the trivial `Save*` settings handlers |
 | 8 | Verification sweep | `dotnet build SprintRituals.slnx` green (0 err); `npm run build` green (0 err) |
 
+> **⚠️ ERRATUM (2026-06-07):** Step 7 shipped a latent bug. The `IRegister` maps used `IgnoreNonMapped(true)` with no `.Map()` calls, which disables name-convention mapping and made `req.Adapt(existing)` a **no-op** — `SaveSyncConfig`, `SaveBoard`, `SaveBugRatioAlerts`, `SaveAnalyticsTargets` silently did not persist. The build-green + grep-based verification could not catch a no-op write. Fixed post-pass: the 4 `*Mappings.cs` were deleted (default `.Adapt` maps correctly). Verified against Mapster 7.4.0. See `adhoc-SettingsMapsterNoOp` and the errata in `implementation.md` / `review.md` / `done-check.md` / `lessons.md`.
+
 ## Key decisions (this pass)
 
 - **MAXIMAL scope (Q1–Q5):** rename gRPC/Jira contracts too; Path-A request-field renames + Vue client updates; Mapster on `Save*` settings now (against today's flat `AppSettings`, Pass-3 VO rework acknowledged); core Mapster only + per-module manual `Scan`; `record` conversion opportunistic.
