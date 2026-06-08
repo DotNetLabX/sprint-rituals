@@ -22,3 +22,39 @@ Team mode: **Standard+Codex**. Branch: `main`. Launch: ad-hoc, no spec → start
 | 16 | Codex → TeamLead | **Verdict: GO.** No behavior-preservation regressions. MetricCardBuilder/Mapster/gRPC parity all OK vs deleted helpers; `"neutral"` literal preserved. 1 INFO: wire names in domain provenance comments (textual only). | No HIGH/CRITICAL. Read from `codex-crosscheck.md`. Awaiting reviewer Step 2. |
 | 17 | Reviewer → TeamLead | **APPROVED.** Findings: 2 LOW only (CycleTimeCalculator wrapper naming; List<T> vs IReadOnlyList<T> pre-existing pattern). Build PASS 0 err. MetricCardBuilder byte-parity confirmed; Mapster field parity confirmed (positional records enforce compile-time); gRPC wire output unchanged. `"neutral"` literal preserved. 2x ScopeMetricCard namespaces safe (distinct CLR types). | Verdict validated: no CRITICAL/HIGH open. State: `reviewer:review`. |
 | 18 | TeamLead → close | Pipeline complete. summary.md written. Backlog 3c-B → Done. Commit: `feat(adhoc-Pass3c-B-DeliveryMetrics): finalize after review`. | |
+
+---
+
+## Issues & Malfunctions Log (3c-B run)
+
+Issues observed with the nexus plugin / OMC hook chain / communications during this run. None corrupted the deliverable (build green, both verifications passed), but several degraded the pipeline's communication channel and cost extra round-trips. Severity = operational nuisance, not code risk.
+
+### M1 — Subagent inline completion messages arrive empty (OMC duplicate-hook loop) — **HIGH nuisance**
+- **Symptom:** every nexus subagent *and* Codex returned a bare/empty inline completion instead of its verdict:
+  - architect: `"Still here whenever you're ready."` / `"Idle. Complete. No action."`
+  - critic: `"(Duplicate hook — no action.)"` then `"Done."`
+  - developer: `"Duplicate hook still firing... You may want to run /oh-my-claudecode:cancel to break the cycle."`
+  - reviewer: `"Stale hook, no action."`
+  - Codex: `"Noted."`
+  - `TaskOutput` returned the same empty text — not just the notification preview.
+- **Root cause (self-reported by the agents):** a hook in the OMC chain loops on the session emitting spurious `SubagentStop` signals, which clobbers the agent's final relay message.
+- **Impact:** the team-lead Relay Contract ("read the verdict from the agent's message") was unusable end-to-end. Every verdict had to be recovered from the durable artifact instead. The critic had to be re-prompted **twice** (resend → then write-to-file) before its findings were recoverable.
+- **Workaround applied:** read all verdicts from artifacts (`questions.md`, `plan.md ## Plan Review`, `review.md ## Step 1`/`## Step 2`, `codex-crosscheck.md`); directed the critic to WRITE `critic-review.md`.
+- **Recommendation:** fix the OMC hook chain so it does not re-emit `SubagentStop`. Until then, treat artifacts as the sole verdict channel and tell every spawned agent its verdict must land in its artifact.
+
+### M2 — Critic has no default verdict artifact — **MEDIUM**
+- The critic returns its verdict inline only and writes no file by default. Combined with M1, its findings were initially unrecoverable; it had to be explicitly instructed to write `critic-review.md`. (The critic itself noted in that file: *"Written to a file only because inline message delivery was reported failing."*)
+- **Recommendation:** critic should always persist findings to a file (`critic-review.md` or `review.md ## Plan Review`), not rely on the inline channel.
+
+### M3 — Stale task-notification labels across phases — **LOW** (known caveat, observed live)
+- Every completion notice for agentId `a183f0efecc53decf` kept its original spawn label *"Architect Phase 1 analyze 3c-B"* across the plan-write, critic-fix, and done-check phases. Phase identity had to be tracked by agentId, never by the notification label — exactly as the protocol warns.
+
+### M4 — `.pipeline-state` sole-writer invariant bypassed by the framework — **LOW / INFO**
+- The team-lead is documented as the sole writer of `.claude/.pipeline-state`. During the developer's analyze→implement self-transition, the framework auto-advanced the token from `developer:analyze` to `developer:implement` (confirmed via a system reminder), which is what permitted the source writes. Consistent with the documented self-transition behavior, but it means the "sole writer" invariant is not actually enforced against the framework itself. No harm here; noting for awareness.
+
+### M5 — Git LF→CRLF normalization warnings on every staged file — **LOW** (environmental)
+- Every `git add` on this Windows checkout warned `"LF will be replaced by CRLF"`. Cosmetic, but there is no `.gitattributes` line-ending policy. Consider adding `.gitattributes` (`* text=auto eol=lf`) to standardize and silence.
+
+### M6 — Close-out done by the user in parallel with team-lead validation — **INFO** (process note)
+- The finalize commit `0e4b871` (backlog → Done, `summary.md`, comm-log rows 17–18) was authored by the user *while* the team-lead was still validating the reviewer's Step 2 verdict. Both paths reached the same conclusion (reviewer APPROVED, Codex GO), so no divergence — but the close was briefly double-driven. Noting for audit completeness.
+
