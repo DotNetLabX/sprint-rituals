@@ -41,3 +41,56 @@ Done-check performed by the architect against the source on disk (not a code rev
 - These naming deltas are flagged for the **reviewer (Step 2)** only as a consistency observation — they do not affect the done-check verdict.
 
 **Verdict: PASS**
+
+---
+
+## Step 2 — Code Review
+
+## Reviewed By
+Reviewer agent (nexus:reviewer), reading source files directly. Build evidence from implementation.md Step 11.
+
+## Verdict: APPROVED
+
+## Pre-commitment Predictions
+- Expected: 5 Mapster IRegister configs with field-for-field coverage of all nested types. Found: All 5 present and complete.
+- Expected: 2 hand-written mappers (DeveloperQuality, QaWorkload) re-pointed at domain types, wire DTOs untouched. Found: Confirmed.
+- Expected: 5 DO-NOT-TOUCH literal "neutral" assignments preserved verbatim. Found: All 5 confirmed.
+- Expected: Private BuildMetricCard in QaWorkload deleted, replaced by MetricCardBuilder.ComputeDelta calls. Found: Private BuildMetricCard retained with an inlined switch — behaviorally identical but a structural deviation.
+
+## Findings
+
+### [LOW] QaWorkloadAnalyzer retains private BuildMetricCard with inlined polarity switch instead of MetricCardBuilder.ComputeDelta
+**File:** `src/Services/Fokus/Fokus.Domain/Analytics/QaWorkloadAnalyzer.cs:573-606`
+**Issue:** Plan Step 7 states: "Delete the private `BuildMetricCard` (676-707) → build the domain sparkline card via `MetricCardBuilder.ComputeDelta(delta, polarity)`." The implementation retains the private helper with its own inlined switch expression (`polarity switch { "positive-up" => ..., _ => "neutral" }`). Semantically identical to `MetricCardBuilder.ComputeDelta` — wire output byte-identical. Code-structure deviation only; no behavioral impact.
+**Fix:** Replace inlined switch with `var (direction, deltaPolarity) = MetricCardBuilder.ComputeDelta(delta, polarity);` to eliminate duplication. Can be a follow-up if desired.
+
+## Positive Observations
+- Wire-stability held across all 7 routes. Mapster IRegister configs for the 5 auto-mapped endpoints are field-for-field identical. The 2 hand-written mappers project every field with no omissions.
+- All 5 DO-NOT-TOUCH carve-out literals preserved as string literals, not routed through MetricCardBuilder.Polarity.
+- ADR-006 clean. No domain file under `Fokus.Domain/Analytics/` references `Fokus.API`, the wire MetricCard type, or the wire SparklinePoint type. Grep hits are comments and private method names only.
+- Per-calculator local sparkline types correctly isolated. `DeveloperQualitySparklinePointData` in DeveloperQualityResult.cs; `QaWorkloadSparklinePointData`/`QaWorkloadMetricCardData` in QaWorkloadResult.cs only. Zero references to 3c-A types.
+- Domain-record name deviations (architect-flagged) are internal only. Mapster config type-pairs and wire-layer names are correct; no wire surface affected.
+- Local helpers moved verbatim. `ResolveStartIndex`/`IsStartedInSprint`/`GetStageIndex` are private copies in both DeveloperQualityScorer and QaTrendsAnalyzer, explicitly not merged with TransitionAttributionChecker.
+- BugRatioCalculator injection preserved in GetQaTrendsEndpoint. Both calculators injected; bugRatioBySprintId wiring at lines 142-143 is intact.
+- DI registration complete. All 7 calculators registered with Q2 binding names; zero old Service registrations remain.
+- Option-B single-ownership enforced. 5 shared wire records declared exactly once in SharedAnalyticsWire.cs; per-endpoint files consume without re-declaring.
+- QaWorkload BuildSingleTeamMetrics "neutral" polarity strings are legitimate string-polarity path inputs (arguments to BuildMetricCard's polarity param, not DO-NOT-TOUCH field assignments). The three carve-out literals (lines 504/508/528) are the separate per-developer delta field assignments — distinct from the card-builder calls.
+
+## Gaps
+- Smoke test (Step 11 check 10) not run by the reviewer. Live round-trip comparison was not performed. Structural analysis gives strong confidence but empirical byte-identical verification is not reviewer-sourced.
+
+## Open Questions
+- None.
+
+## Evidence
+| Check | Result | Command | Output |
+|-------|--------|---------|--------|
+| Build | pass | `dotnet build SprintRituals.slnx` (implementation.md Step 11) | Build succeeded, 0 errors |
+| ADR-006: no API types in domain | pass | grep `Fokus\.API\|MetricCard\b\|SparklinePoint\b` in `Fokus.Domain/Analytics/*.cs` | Hits are comments and private method names only; zero type references |
+| Shared wire single-ownership | pass | grep `record SprintSummaryItem`, `record DeveloperProgressSprintInfo`, etc. | 5 records, 1 declaration each, all in SharedAnalyticsWire.cs |
+| DO-NOT-TOUCH literals | pass | grep `"neutral"` in Throughput/Quality/Workload calculators | Lines 110/90/504/508/528 are literal `= "neutral"` assignments |
+| DI: 7 calculators registered, 0 old services | pass | Read DependencyInjection.cs | 7 calculators with Q2 names; no old Service registrations |
+| Cross-calculator sparkline reuse | pass | grep 3c-A type names in DeveloperQualityResult/QaWorkloadResult | zero hits |
+| BugRatioCalculator in QaTrends endpoint | pass | Read GetQaTrendsEndpoint.cs | Injected line 14; used lines 137-143 |
+| 5 Mapster IRegister configs present | pass | Read each Response.cs | DeveloperThroughputMappingConfig, DeveloperProgressMappingConfig, DeveloperDetailMappingConfig, EpicProgressMappingConfig, QaTrendsMappingConfig |
+| Q3: no IRegister in Quality/Workload folders | pass | grep `IRegister` in GetDeveloperQuality/ and GetQaWorkload/ | zero hits |

@@ -13,9 +13,9 @@ Order is dependency-driven (skills before the domain work that applies them; mec
 | 3b | adhoc-Pass3b-AppSettingsVOs | AppSettings scalars → config VOs + Identity Person/User encapsulation (ADR-007) | **Done** | Pass 3a ✓ |
 | 3c-A | adhoc-Pass3c-ComputationToDomain | ComputationToDomain — Sprint core: SprintSummary/QaMetrics/TestTimeline calculators + 4 static helpers + gRPC adaptation (ADR-005/010) | **Done** | Pass 3b ✓ |
 | 3c-B | adhoc-Pass3c-B-DeliveryMetrics | CarryOver, ScopeChange, CycleTime, BugRatio, Leaderboard calculators (ADR-005/010) | **Done** | Pass 3c-A ✓ |
-| 3c-C | adhoc-Pass3c-C-DevEpicAnalytics | 7 dev/epic/QA calculators: DeveloperThroughput, DeveloperProgress, DeveloperDetail, DeveloperQuality, EpicProgress, QaWorkload, QaTrends (ADR-005/010) | Ready | Pass 3c-A ✓ |
+| 3c-C | adhoc-Pass3c-C-DevEpicAnalytics | 7 dev/epic/QA calculators: DeveloperThroughput, DeveloperProgress, DeveloperDetail, DeveloperQuality, EpicProgress, QaWorkload, QaTrends (ADR-005/010) | **Done** | Pass 3c-A ✓ |
 | 4 | adhoc-Pass4-IdentityExtraction | Finish Fokus→Identity cut | Blocked | needs user scope (A2) |
-| 5 | adhoc-Pass5-EventCorrectness | Domain-event dispatch fixes | Blocked | Pass 3c-B + 3c-C |
+| 5 | adhoc-Pass5-EventCorrectness | Domain-event dispatch fixes | Ready | Pass 3c-B ✓ + 3c-C ✓ |
 
 **Pass 3 split (decided at the Pass 3a launch):** Pass 3 was ~3–4× Pass 2, so it was split into 3a/3b/3c, each its own pipeline run. 3a delivered (no-DTO-in-domain). Decisions for 3b/3c are locked in `docs/specs/adhoc-Pass3-DomainEnrichment/delivery/communication-log.md` + `summary.md` — those runs should not re-litigate scope (Q2=full ADR-005 migration; Q3=AppSettings VOs + Identity now; Fokus sync aggregates stay anemic per B3).
 
