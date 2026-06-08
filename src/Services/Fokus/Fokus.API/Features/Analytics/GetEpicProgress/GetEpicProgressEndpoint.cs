@@ -1,3 +1,6 @@
+using Fokus.Domain.Analytics;
+using Mapster;
+
 namespace Fokus.API.Features.Analytics.GetEpicProgress;
 
 [HttpGet("/api/analytics/epic-progress")]
@@ -7,7 +10,7 @@ public class GetEpicProgressEndpoint(
     TicketRepository ticketRepository,
     SprintRepository sprintRepository,
     TestExecutionRepository testExecutionRepository,
-    EpicProgressService epicProgressService)
+    EpicProgressAnalyzer epicProgressAnalyzer)
     : Endpoint<GetEpicProgressQuery, EpicProgressResponse>
 {
     public override async Task HandleAsync(GetEpicProgressQuery req, CancellationToken ct)
@@ -59,9 +62,9 @@ public class GetEpicProgressEndpoint(
         }
 
         // 10. Compute epic progress
-        var result = epicProgressService.ComputeEpicProgress(
+        var result = epicProgressAnalyzer.ComputeEpicProgress(
             epicTickets, analyticsMemberships, unlinkedTickets, settings, statusTransitions, analyticsSprints, subTeam, qaData);
 
-        await Send.OkAsync(result, ct);
+        await Send.OkAsync(result.Adapt<EpicProgressResponse>(), ct);
     }
 }

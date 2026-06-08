@@ -1,108 +1,6 @@
-using Fokus.API.Features.Analytics.GetSprintSummary;
-using Fokus.Domain.Analytics;
+namespace Fokus.Domain.Analytics;
 
-namespace Fokus.API.Features.Analytics;
-
-// --- Multi-sprint records ---
-
-public record QaWorkloadTeamMetrics(
-    int TotalTes,
-    int TotalRunsCompleted,
-    int PassCount,
-    int FailCount,
-    decimal TeamPassRate);
-
-public record QaWorkloadSprintBreakdown(
-    int SprintId,
-    string SprintName,
-    int TesOwned,
-    int RunsCompleted,
-    int PassCount,
-    int FailCount,
-    decimal PassRate,
-    int StoriesCovered,
-    int BugsFound);
-
-public record WorkloadAlert(bool IsActive, int ConsecutiveSprintCount, int ThresholdPercent);
-
-public record QaWorkloadEntry(
-    string? AccountId,
-    string DisplayName,
-    string? SubTeam,
-    string? AvatarUrl,
-    int TesOwned,
-    int RunsCompleted,
-    int PassCount,
-    int FailCount,
-    decimal PassRate,
-    int StoriesCovered,
-    int BugsFound,
-    List<QaWorkloadSprintBreakdown> SprintBreakdowns,
-    WorkloadAlert WorkloadAlert);
-
-public record QaWorkloadMultiSprintResponse(
-    List<SprintSummaryItem> Sprints,
-    QaWorkloadTeamMetrics TeamMetrics,
-    List<QaWorkloadEntry> Developers);
-
-// --- Single-sprint records ---
-
-public record QaWorkloadSingleTeamMetrics(
-    MetricCard TotalTes,
-    MetricCard TotalRunsCompleted,
-    MetricCard TeamPassRate);
-
-public record QaWorkloadSingleEntry(
-    string? AccountId,
-    string DisplayName,
-    string? SubTeam,
-    string? AvatarUrl,
-    int TesOwned,
-    int RunsCompleted,
-    int PassCount,
-    int FailCount,
-    decimal PassRate,
-    int StoriesCovered,
-    int BugsFound,
-    decimal? TesOwnedDelta,
-    string? TesOwnedDirection,
-    string? TesOwnedPolarity,
-    decimal? RunsCompletedDelta,
-    string? RunsCompletedDirection,
-    string? RunsCompletedPolarity,
-    decimal? PassCountDelta,
-    string? PassCountDirection,
-    string? PassCountPolarity,
-    decimal? FailCountDelta,
-    string? FailCountDirection,
-    string? FailCountPolarity,
-    decimal? PassRateDelta,
-    string? PassRateDirection,
-    string? PassRatePolarity,
-    decimal? StoriesCoveredDelta,
-    string? StoriesCoveredDirection,
-    string? StoriesCoveredPolarity,
-    decimal? BugsFoundDelta,
-    string? BugsFoundDirection,
-    string? BugsFoundPolarity,
-    WorkloadAlert WorkloadAlert);
-
-public record QaWorkloadSingleSprintResponse(
-    SprintSummaryItem Sprint,
-    QaWorkloadSingleTeamMetrics TeamMetrics,
-    List<QaWorkloadSingleEntry> Developers);
-
-// --- Response wrapper ---
-
-public record QaWorkloadResponse(
-    bool HasQaData,
-    string Mode,
-    QaWorkloadMultiSprintResponse? MultiSprint,
-    QaWorkloadSingleSprintResponse? SingleSprint);
-
-// --- Service ---
-
-public class QaWorkloadService
+public class QaWorkloadAnalyzer
 {
     private const string UnassignedKey = "";
 
@@ -127,7 +25,7 @@ public class QaWorkloadService
 
     // --- Public API ---
 
-    public QaWorkloadMultiSprintResponse ComputeMultiSprint(
+    public QaWorkloadMultiSprintResultData ComputeMultiSprint(
         List<Sprint> targetSprints,
         Dictionary<int, List<TestExecution>> tesBySprintId,
         List<Developer> allDevelopers,
@@ -139,13 +37,13 @@ public class QaWorkloadService
         var sortedTarget = targetSprints.OrderBy(s => s.StartDate).ToList();
 
         var sprintInfos = sortedTarget
-            .Select(s => new SprintSummaryItem(s.Id, s.Name, s.StartDate, s.EndDate))
+            .Select(s => new SprintSummaryItemData(s.Id, s.Name, s.StartDate, s.EndDate))
             .ToList();
 
         // Aggregate person metrics across all target sprints
         var personMap = new Dictionary<string, PersonMetrics>(StringComparer.OrdinalIgnoreCase);
 
-        var sprintBreakdownsByPerson = new Dictionary<string, List<QaWorkloadSprintBreakdown>>(StringComparer.OrdinalIgnoreCase);
+        var sprintBreakdownsByPerson = new Dictionary<string, List<QaWorkloadSprintBreakdownData>>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var sprint in sortedTarget)
         {
@@ -172,7 +70,7 @@ public class QaWorkloadService
                     breakdowns = [];
                     sprintBreakdownsByPerson[accountId] = breakdowns;
                 }
-                breakdowns.Add(new QaWorkloadSprintBreakdown(
+                breakdowns.Add(new QaWorkloadSprintBreakdownData(
                     sprint.Id, sprint.Name,
                     metrics.TesOwned,
                     metrics.RunsCompleted,
@@ -199,10 +97,10 @@ public class QaWorkloadService
             allClosedTesBySprintId,
             allDevelopers);
 
-        return new QaWorkloadMultiSprintResponse(sprintInfos, teamMetrics, developerEntries);
+        return new QaWorkloadMultiSprintResultData(sprintInfos, teamMetrics, developerEntries);
     }
 
-    public QaWorkloadSingleSprintResponse ComputeSingleSprint(
+    public QaWorkloadSingleSprintResultData ComputeSingleSprint(
         Sprint targetSprint,
         List<TestExecution> targetTEs,
         Sprint? priorSprint,
@@ -215,7 +113,7 @@ public class QaWorkloadService
         AppSettings settings,
         string? subTeam)
     {
-        var sprintInfo = new SprintSummaryItem(
+        var sprintInfo = new SprintSummaryItemData(
             targetSprint.Id, targetSprint.Name, targetSprint.StartDate, targetSprint.EndDate);
 
         // Current sprint person metrics
@@ -243,7 +141,7 @@ public class QaWorkloadService
             allClosedTesBySprintId,
             allDevelopers);
 
-        return new QaWorkloadSingleSprintResponse(sprintInfo, teamMetrics, developerEntries);
+        return new QaWorkloadSingleSprintResultData(sprintInfo, teamMetrics, developerEntries);
     }
 
     // --- Attribution ---
@@ -396,7 +294,7 @@ public class QaWorkloadService
 
     // --- Team metrics ---
 
-    private static QaWorkloadTeamMetrics BuildTeamMetrics(List<TestExecution> allTEs)
+    private static QaWorkloadTeamMetricsData BuildTeamMetrics(List<TestExecution> allTEs)
     {
         var totalTes = allTEs.Count; // Already non-cancelled (filtered by GetTestExecutionsForSprintAsync)
 
@@ -416,10 +314,10 @@ public class QaWorkloadService
             ? Math.Round((decimal)passCount / totalRunsCompleted * 100, 1)
             : 0m;
 
-        return new QaWorkloadTeamMetrics(totalTes, totalRunsCompleted, passCount, failCount, teamPassRate);
+        return new QaWorkloadTeamMetricsData(totalTes, totalRunsCompleted, passCount, failCount, teamPassRate);
     }
 
-    private QaWorkloadSingleTeamMetrics BuildSingleTeamMetrics(
+    private QaWorkloadSingleTeamMetricsData BuildSingleTeamMetrics(
         List<TestExecution> targetTEs,
         List<TestExecution>? priorTEs,
         List<Sprint> sparklineWindow,
@@ -430,7 +328,7 @@ public class QaWorkloadService
         var currentMetrics = BuildTeamMetrics(targetTEs);
 
         // Prior metrics for deltas
-        QaWorkloadTeamMetrics? priorMetrics = null;
+        QaWorkloadTeamMetricsData? priorMetrics = null;
         if (priorTEs is { Count: > 0 })
             priorMetrics = BuildTeamMetrics(priorTEs);
 
@@ -450,6 +348,7 @@ public class QaWorkloadService
             thresholds.PassRateAmber,
             higherIsBetter: true);
 
+        // DO-NOT-TOUCH: "neutral" polarity for TotalTes and TotalRunsCompleted (lines 605/609 of original)
         var totalTesCard = BuildMetricCard(
             "Total TEs",
             currentMetrics.TotalTes,
@@ -474,10 +373,10 @@ public class QaWorkloadService
             "positive-up",
             passRateSparkline) with { Rag = passRateRag };
 
-        return new QaWorkloadSingleTeamMetrics(totalTesCard, runsCard, passRateCard);
+        return new QaWorkloadSingleTeamMetricsData(totalTesCard, runsCard, passRateCard);
     }
 
-    private static List<SparklinePoint> BuildTeamSparkline(
+    private static List<QaWorkloadSparklinePointData> BuildTeamSparkline(
         List<Sprint> window,
         Dictionary<int, List<TestExecution>> tesBySprintId,
         Func<List<TestExecution>, decimal> valueSelector)
@@ -485,13 +384,13 @@ public class QaWorkloadService
         return window.Select(s =>
         {
             var tes = tesBySprintId.GetValueOrDefault(s.Id, []);
-            return new SparklinePoint(s.Name, Math.Round(valueSelector(tes), 1));
+            return new QaWorkloadSparklinePointData(s.Name, Math.Round(valueSelector(tes), 1));
         }).ToList();
     }
 
     // --- Workload balance alert (BR16-19) ---
 
-    private static WorkloadAlert EvaluateWorkloadAlert(
+    private static WorkloadAlertData EvaluateWorkloadAlert(
         string? accountId,
         List<Sprint> allClosedSprints,
         Dictionary<int, List<TestExecution>> allClosedTesBySprintId)
@@ -533,7 +432,7 @@ public class QaWorkloadService
                 break;
         }
 
-        return new WorkloadAlert(consecutive >= minConsecutive, consecutive, thresholdPercent);
+        return new WorkloadAlertData(consecutive >= minConsecutive, consecutive, thresholdPercent);
     }
 
     // Static version of attribution for use in static methods
@@ -546,21 +445,21 @@ public class QaWorkloadService
 
     // --- Developer entries builder ---
 
-    private static List<QaWorkloadEntry> BuildDeveloperEntries(
+    private static List<QaWorkloadEntryData> BuildDeveloperEntries(
         Dictionary<string, PersonMetrics> personMap,
-        Dictionary<string, List<QaWorkloadSprintBreakdown>> sprintBreakdownsByPerson,
+        Dictionary<string, List<QaWorkloadSprintBreakdownData>> sprintBreakdownsByPerson,
         List<Sprint> allClosedSprints,
         Dictionary<int, List<TestExecution>> allClosedTesBySprintId,
         List<Developer> allDevelopers)
     {
-        var entries = new List<QaWorkloadEntry>();
+        var entries = new List<QaWorkloadEntryData>();
 
         foreach (var metrics in personMap.Values)
         {
             var breakdowns = sprintBreakdownsByPerson.GetValueOrDefault(metrics.AccountId ?? UnassignedKey, []);
             var alert = EvaluateWorkloadAlert(metrics.AccountId, allClosedSprints, allClosedTesBySprintId);
 
-            entries.Add(new QaWorkloadEntry(
+            entries.Add(new QaWorkloadEntryData(
                 metrics.AccountId,
                 metrics.DisplayName,
                 metrics.SubTeam,
@@ -583,14 +482,14 @@ public class QaWorkloadService
             .ToList();
     }
 
-    private static List<QaWorkloadSingleEntry> BuildSingleDeveloperEntries(
+    private static List<QaWorkloadSingleEntryData> BuildSingleDeveloperEntries(
         Dictionary<string, PersonMetrics> currentPersonMap,
         Dictionary<string, PersonMetrics>? priorPersonMap,
         List<Sprint> allClosedSprints,
         Dictionary<int, List<TestExecution>> allClosedTesBySprintId,
         List<Developer> allDevelopers)
     {
-        var entries = new List<QaWorkloadSingleEntry>();
+        var entries = new List<QaWorkloadSingleEntryData>();
 
         foreach (var current in currentPersonMap.Values)
         {
@@ -601,34 +500,34 @@ public class QaWorkloadService
 
             // Compute deltas and polarities
             decimal? tesDelta = prior is not null ? current.TesOwned - prior.TesOwned : null;
-            string? tesDir = tesDelta.HasValue ? DeltaDirection(tesDelta.Value) : null;
-            string? tesPol = tesDelta.HasValue ? "neutral" : null;
+            string? tesDir = tesDelta.HasValue ? MetricCardBuilder.Direction(tesDelta.Value) : null;
+            string? tesPol = tesDelta.HasValue ? "neutral" : null;  // DO-NOT-TOUCH carve-out
 
             decimal? runsDelta = prior is not null ? current.RunsCompleted - prior.RunsCompleted : null;
-            string? runsDir = runsDelta.HasValue ? DeltaDirection(runsDelta.Value) : null;
-            string? runsPol = runsDelta.HasValue ? "neutral" : null;
+            string? runsDir = runsDelta.HasValue ? MetricCardBuilder.Direction(runsDelta.Value) : null;
+            string? runsPol = runsDelta.HasValue ? "neutral" : null;  // DO-NOT-TOUCH carve-out
 
             decimal? passDelta = prior is not null ? current.PassCount - prior.PassCount : null;
-            string? passDir = passDelta.HasValue ? DeltaDirection(passDelta.Value) : null;
-            string? passPol = passDelta.HasValue ? DeltaPolarity(passDelta.Value, positiveUp: true) : null;
+            string? passDir = passDelta.HasValue ? MetricCardBuilder.Direction(passDelta.Value) : null;
+            string? passPol = passDelta.HasValue ? MetricCardBuilder.Polarity(passDelta.Value, positiveUp: true) : null;
 
             decimal? failDelta = prior is not null ? current.FailCount - prior.FailCount : null;
-            string? failDir = failDelta.HasValue ? DeltaDirection(failDelta.Value) : null;
-            string? failPol = failDelta.HasValue ? DeltaPolarity(failDelta.Value, positiveUp: false) : null;
+            string? failDir = failDelta.HasValue ? MetricCardBuilder.Direction(failDelta.Value) : null;
+            string? failPol = failDelta.HasValue ? MetricCardBuilder.Polarity(failDelta.Value, positiveUp: false) : null;
 
             decimal? passRateDelta = prior is not null ? current.PassRate - prior.PassRate : null;
-            string? passRateDir = passRateDelta.HasValue ? DeltaDirection(passRateDelta.Value) : null;
-            string? passRatePol = passRateDelta.HasValue ? DeltaPolarity(passRateDelta.Value, positiveUp: true) : null;
+            string? passRateDir = passRateDelta.HasValue ? MetricCardBuilder.Direction(passRateDelta.Value) : null;
+            string? passRatePol = passRateDelta.HasValue ? MetricCardBuilder.Polarity(passRateDelta.Value, positiveUp: true) : null;
 
             decimal? storiesDelta = prior is not null ? current.StoriesCovered - prior.StoriesCovered : null;
-            string? storiesDir = storiesDelta.HasValue ? DeltaDirection(storiesDelta.Value) : null;
-            string? storiesPol = storiesDelta.HasValue ? DeltaPolarity(storiesDelta.Value, positiveUp: true) : null;
+            string? storiesDir = storiesDelta.HasValue ? MetricCardBuilder.Direction(storiesDelta.Value) : null;
+            string? storiesPol = storiesDelta.HasValue ? MetricCardBuilder.Polarity(storiesDelta.Value, positiveUp: true) : null;
 
             decimal? bugsDelta = prior is not null ? current.BugsFound - prior.BugsFound : null;
-            string? bugsDir = bugsDelta.HasValue ? DeltaDirection(bugsDelta.Value) : null;
-            string? bugsPol = bugsDelta.HasValue ? "neutral" : null;
+            string? bugsDir = bugsDelta.HasValue ? MetricCardBuilder.Direction(bugsDelta.Value) : null;
+            string? bugsPol = bugsDelta.HasValue ? "neutral" : null;  // DO-NOT-TOUCH carve-out
 
-            entries.Add(new QaWorkloadSingleEntry(
+            entries.Add(new QaWorkloadSingleEntryData(
                 current.AccountId,
                 current.DisplayName,
                 current.SubTeam,
@@ -673,13 +572,13 @@ public class QaWorkloadService
 
     // --- Metric card builder ---
 
-    private static MetricCard BuildMetricCard(
+    private static QaWorkloadMetricCardData BuildMetricCard(
         string name,
         decimal value,
         string displayValue,
         decimal? delta,
         string polarity,
-        List<SparklinePoint> sparkline)
+        List<QaWorkloadSparklinePointData> sparkline)
     {
         string? direction = null;
         string? deltaPolarity = null;
@@ -696,7 +595,7 @@ public class QaWorkloadService
             };
         }
 
-        return new MetricCard(
+        return new QaWorkloadMetricCardData(
             name,
             Math.Round(value, 1),
             displayValue,
@@ -705,16 +604,6 @@ public class QaWorkloadService
             deltaPolarity,
             sparkline);
     }
-
-    // --- Delta helpers ---
-
-    private static string DeltaDirection(decimal delta) =>
-        delta > 0 ? "up" : delta < 0 ? "down" : "flat";
-
-    private static string DeltaPolarity(decimal delta, bool positiveUp) =>
-        positiveUp
-            ? (delta > 0 ? "positive" : delta < 0 ? "negative" : "neutral")
-            : (delta < 0 ? "positive" : delta > 0 ? "negative" : "neutral");
 }
 
 // --- Nullable string key comparer for person dictionaries ---

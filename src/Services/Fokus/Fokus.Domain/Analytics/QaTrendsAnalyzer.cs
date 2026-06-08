@@ -1,46 +1,8 @@
-using Fokus.Domain.Analytics;
-namespace Fokus.API.Features.Analytics;
+namespace Fokus.Domain.Analytics;
 
-// --- Records ---
-
-public record QaTrendsSprintInfo(int Id, string Name, DateTime StartDate, DateTime EndDate);
-
-public record QualityTrendEntry(
-    int SprintId,
-    string SprintName,
-    decimal CoverageRate,
-    decimal PassRate,
-    decimal ExecutionRate,
-    string CoverageRag,
-    string PassRateRag,
-    string ExecutionRag);
-
-public record TestingVolumeEntry(int SprintId, string SprintName, int TeCount, int BugsFound);
-
-public record DefectCorrelationDataPoint(
-    int SprintId,
-    string SprintName,
-    decimal CoverageRate,
-    decimal? NextSprintBugRatio,
-    string? NextSprintName);
-
-public record DefectCorrelationResult(
-    List<DefectCorrelationDataPoint> DataPoints,
-    decimal? PearsonR,
-    int DataPointCount);
-
-public record QaTrendsResponse(
-    bool HasQaData,
-    List<QaTrendsSprintInfo> Sprints,
-    List<QualityTrendEntry> QualityTrends,
-    List<TestingVolumeEntry> TestingVolume,
-    DefectCorrelationResult? DefectCorrelation);
-
-// --- Service ---
-
-public class QaTrendsService
+public class QaTrendsAnalyzer
 {
-    public QaTrendsResponse ComputeTrends(
+    public QaTrendsResultData ComputeTrends(
         List<Sprint> qaSprints,
         Dictionary<int, List<TestExecution>> tesBySprintId,
         Dictionary<int, List<SprintMembership>> membershipsBySprintId,
@@ -53,7 +15,7 @@ public class QaTrendsService
 
         if (sortedSprints.Count < 2)
         {
-            return new QaTrendsResponse(
+            return new QaTrendsResultData(
                 HasQaData: false,
                 Sprints: [],
                 QualityTrends: [],
@@ -69,11 +31,11 @@ public class QaTrendsService
             .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
 
         var sprintInfos = sortedSprints
-            .Select(s => new QaTrendsSprintInfo(s.Id, s.Name, s.StartDate, s.EndDate))
+            .Select(s => new QaTrendsSprintInfoData(s.Id, s.Name, s.StartDate, s.EndDate))
             .ToList();
 
-        var qualityTrends = new List<QualityTrendEntry>();
-        var testingVolume = new List<TestingVolumeEntry>();
+        var qualityTrends = new List<QualityTrendEntryData>();
+        var testingVolume = new List<TestingVolumeEntryData>();
 
         foreach (var sprint in sortedSprints)
         {
@@ -98,7 +60,7 @@ public class QaTrendsService
             var executionRag = HealthScoreCalculator.MetricRag(executionRate, thresholds.ExecutionGreen, thresholds.ExecutionAmber, higherIsBetter: true);
             var passRateRag = HealthScoreCalculator.MetricRag(passRate, thresholds.PassRateGreen, thresholds.PassRateAmber, higherIsBetter: true);
 
-            qualityTrends.Add(new QualityTrendEntry(
+            qualityTrends.Add(new QualityTrendEntryData(
                 sprint.Id, sprint.Name,
                 coverageRate, passRate, executionRate,
                 coverageRag, passRateRag, executionRag));
@@ -117,12 +79,12 @@ public class QaTrendsService
                 }
             }
 
-            testingVolume.Add(new TestingVolumeEntry(sprint.Id, sprint.Name, teCount, bugKeys.Count));
+            testingVolume.Add(new TestingVolumeEntryData(sprint.Id, sprint.Name, teCount, bugKeys.Count));
         }
 
         var defectCorrelation = ComputeDefectCorrelation(sortedSprints, qualityTrends, bugRatioBySprintId);
 
-        return new QaTrendsResponse(
+        return new QaTrendsResultData(
             HasQaData: true,
             Sprints: sprintInfos,
             QualityTrends: qualityTrends,
@@ -132,12 +94,12 @@ public class QaTrendsService
 
     // --- Defect correlation ---
 
-    private static DefectCorrelationResult ComputeDefectCorrelation(
+    private static DefectCorrelationResultData ComputeDefectCorrelation(
         List<Sprint> sortedSprints,
-        List<QualityTrendEntry> qualityTrends,
+        List<QualityTrendEntryData> qualityTrends,
         Dictionary<int, decimal> bugRatioBySprintId)
     {
-        var dataPoints = new List<DefectCorrelationDataPoint>();
+        var dataPoints = new List<DefectCorrelationDataPointData>();
 
         for (var i = 0; i < sortedSprints.Count; i++)
         {
@@ -157,7 +119,7 @@ public class QaTrendsService
                 }
             }
 
-            dataPoints.Add(new DefectCorrelationDataPoint(
+            dataPoints.Add(new DefectCorrelationDataPointData(
                 sprint.Id, sprint.Name, trend.CoverageRate, nextBugRatio, nextSprintName));
         }
 
@@ -168,10 +130,10 @@ public class QaTrendsService
 
         var pearsonR = ComputePearsonR(completePairs);
 
-        return new DefectCorrelationResult(dataPoints, pearsonR, completePairs.Count);
+        return new DefectCorrelationResultData(dataPoints, pearsonR, completePairs.Count);
     }
 
-    private static decimal? ComputePearsonR(List<DefectCorrelationDataPoint> completePairs)
+    private static decimal? ComputePearsonR(List<DefectCorrelationDataPointData> completePairs)
     {
         var n = completePairs.Count;
         if (n < 6) return null;
@@ -350,7 +312,7 @@ public class QaTrendsService
         return memberships.Where(m => m.Ticket?.Assignee?.SubTeam == subTeam).ToList();
     }
 
-    // --- Settings helpers ---
+    // --- Settings helpers (moved verbatim from QaTrendsService — NOT merged with TransitionAttributionChecker) ---
 
     private static (List<string> OrderedStages, int StartIndex) ResolveStartIndex(AppSettings settings)
     {

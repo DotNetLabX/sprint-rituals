@@ -1,4 +1,6 @@
 using Fokus.Domain.Analytics;
+using Mapster;
+
 namespace Fokus.API.Features.Analytics.GetDeveloperProgress;
 
 [HttpGet("/api/analytics/developer-progress")]
@@ -8,7 +10,7 @@ public class GetDeveloperProgressEndpoint(
     DeveloperRepository developerRepository,
     AppSettingsRepository appSettingsRepository,
     TicketRepository ticketRepository,
-    DeveloperProgressService developerProgressService)
+    DeveloperProgressAnalyzer developerProgressAnalyzer)
     : Endpoint<GetDeveloperProgressQuery, DeveloperProgressResponse>
 {
     public override async Task HandleAsync(GetDeveloperProgressQuery req, CancellationToken ct)
@@ -34,6 +36,7 @@ public class GetDeveloperProgressEndpoint(
             return;
         }
 
+
         // 5. Bulk load supporting data
         var activeDevelopers = await developerRepository.GetActiveDevelopersAsync(ct);
         var allDevelopers = await developerRepository.GetAllAsync(ct);
@@ -49,7 +52,7 @@ public class GetDeveloperProgressEndpoint(
         var subTeam = string.IsNullOrWhiteSpace(req.SubTeam) ? null : req.SubTeam;
 
         // 8. Compute and return
-        var result = developerProgressService.ComputeProgress(
+        var result = developerProgressAnalyzer.ComputeProgress(
             sprintWithMemberships,
             activeDevelopers,
             capacityRecords,
@@ -59,6 +62,6 @@ public class GetDeveloperProgressEndpoint(
             statusTransitions,
             excludedDeveloperIds);
 
-        await Send.OkAsync(result, ct);
+        await Send.OkAsync(result.Adapt<DeveloperProgressResponse>(), ct);
     }
 }

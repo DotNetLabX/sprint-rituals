@@ -1,4 +1,5 @@
 using Fokus.Domain.Analytics;
+using Mapster;
 
 namespace Fokus.API.Features.Analytics.GetQaTrends;
 
@@ -11,7 +12,7 @@ public class GetQaTrendsEndpoint(
     TicketRepository ticketRepository,
     DeveloperRepository developerRepository,
     BugRatioCalculator bugRatioCalculator,
-    QaTrendsService qaTrendsService)
+    QaTrendsAnalyzer qaTrendsAnalyzer)
     : Endpoint<GetQaTrendsQuery, QaTrendsResponse>
 {
     public override async Task HandleAsync(GetQaTrendsQuery req, CancellationToken ct)
@@ -141,8 +142,8 @@ public class GetQaTrendsEndpoint(
         var bugRatioBySprintId = bugRatioResult.TeamMetrics.PerSprintTrend
             .ToDictionary(t => t.SprintId, t => t.BugRatioPercent);
 
-        // 11. Call QaTrendsService
-        var result = qaTrendsService.ComputeTrends(
+        // 11. Call QaTrendsAnalyzer
+        var result = qaTrendsAnalyzer.ComputeTrends(
             sortedLoaded,
             tesBySprintId,
             membershipsBySprintId,
@@ -152,6 +153,6 @@ public class GetQaTrendsEndpoint(
             subTeam);
 
         // 12. Return result
-        await Send.OkAsync(result, ct);
+        await Send.OkAsync(result.Adapt<QaTrendsResponse>(), ct);
     }
 }

@@ -1,3 +1,5 @@
+using Fokus.Domain.Analytics;
+
 namespace Fokus.API.Features.Analytics.GetDeveloperQuality;
 
 [HttpGet("/api/analytics/developer-quality")]
@@ -8,7 +10,7 @@ public class GetDeveloperQualityEndpoint(
     AppSettingsRepository appSettingsRepository,
     TicketRepository ticketRepository,
     TestExecutionRepository testExecutionRepository,
-    DeveloperQualityService developerQualityService)
+    DeveloperQualityScorer developerQualityScorer)
     : Endpoint<GetDeveloperQualityQuery, DeveloperQualityResponse>
 {
     public override async Task HandleAsync(GetDeveloperQualityQuery req, CancellationToken ct)
@@ -180,7 +182,7 @@ public class GetDeveloperQualityEndpoint(
         // Merge sparkline TEs into the TE lookup for service (service will look up by sprint ID)
         var allTesBySprintId = new Dictionary<int, List<TestExecution>>(tesBySprintId);
 
-        var result = developerQualityService.ComputeDeveloperQuality(
+        var result = developerQualityScorer.ComputeDeveloperQuality(
             allLoadedSprints,
             targetSprintIds,
             activeDevelopers,
@@ -200,7 +202,7 @@ public class GetDeveloperQualityEndpoint(
         await Send.OkAsync(MapResponse(result), ct);
     }
 
-    private static DeveloperQualityResponse MapResponse(DeveloperQualityResult result) => new()
+    private static DeveloperQualityResponse MapResponse(DeveloperQualityResultData result) => new()
     {
         HasQaData = result.HasQaData,
         Sprints = result.Sprints.Select(s => new DeveloperQualitySprintInfoResponse

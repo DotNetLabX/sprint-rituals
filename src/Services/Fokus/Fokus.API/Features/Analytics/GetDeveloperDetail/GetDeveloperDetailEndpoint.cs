@@ -1,5 +1,6 @@
 using Fokus.Domain.Analytics;
 using Jira.RestApi;
+using Mapster;
 using Microsoft.Extensions.Options;
 
 namespace Fokus.API.Features.Analytics.GetDeveloperDetail;
@@ -11,7 +12,7 @@ public class GetDeveloperDetailEndpoint(
     DeveloperRepository developerRepository,
     AppSettingsRepository appSettingsRepository,
     TicketRepository ticketRepository,
-    DeveloperDetailService developerDetailService,
+    DeveloperDetailCalculator developerDetailCalculator,
     IOptions<JiraOptions> jiraOptions)
     : Endpoint<GetDeveloperDetailQuery, DeveloperDetailResponse>
 {
@@ -105,7 +106,7 @@ public class GetDeveloperDetailEndpoint(
         var last = req.Last ?? 10;
 
         // 11. Compute and return
-        var result = developerDetailService.ComputeDetail(
+        var result = developerDetailCalculator.ComputeDetail(
             req.AccountId,
             developer,
             closedSprints,
@@ -118,6 +119,6 @@ public class GetDeveloperDetailEndpoint(
             settings.BugRatio.Target,
             jiraOptions.Value.InstanceUrl);
 
-        await Send.OkAsync(result, ct);
+        await Send.OkAsync(result.Adapt<DeveloperDetailResponse>(), ct);
     }
 }

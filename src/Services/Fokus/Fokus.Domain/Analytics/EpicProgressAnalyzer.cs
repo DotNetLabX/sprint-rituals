@@ -1,86 +1,8 @@
-using Fokus.Domain.Analytics;
-namespace Fokus.API.Features.Analytics;
+namespace Fokus.Domain.Analytics;
 
-// --- Response record hierarchy ---
-
-public record EpicProgressSummaryMetrics(
-    int ActiveEpicCount,
-    int CompletedEpicCount,
-    decimal AverageCompletionPercentage);
-
-public record TestRunSummaryDto(
-    int Passed,
-    int Failed,
-    int Todo,
-    int Executing,
-    int Aborted);
-
-public record EpicProgressTicketEntry(
-    string TicketKey,
-    string Summary,
-    string IssueType,
-    decimal? StoryPoints,
-    string CurrentStatus,
-    string? AssigneeDisplayName,
-    bool IsDone,
-    string? TestStatus,
-    decimal? TestPassRate,
-    int? TestBugsFound,
-    TestRunSummaryDto? TestRunSummary);
-
-public record EpicProgressEntry(
-    string EpicKey,
-    string EpicName,
-    int TotalTickets,
-    int DoneTickets,
-    int RemainingTickets,
-    decimal TicketCompletionPercentage,
-    decimal TotalSp,
-    decimal DoneSp,
-    decimal RemainingSp,
-    decimal? ImputedSp,
-    decimal? AdjustedTotalSp,
-    decimal? SpCompletionPercentage,
-    int UnestimatedTicketCount,
-    decimal? Velocity,
-    decimal? ProjectedSprintsRemaining,
-    string? ProjectionConfidence,
-    int ActiveSprintCount,
-    DateOnly? StartedDate,
-    DateOnly? LastWorkDate,
-    bool IsCompleted,
-    List<EpicProgressTicketEntry> Tickets,
-    decimal? CoverageRate,
-    decimal? PassRate,
-    int BugsFound,
-    int FeatureTicketCount,
-    int CoveredTicketCount,
-    string? CoverageRag,
-    string? PassRateRag);
-
-public record EpicProgressUnlinkedWork(
-    int TicketCount,
-    decimal TotalSp);
-
-public record EpicProgressResponse(
-    EpicProgressSummaryMetrics SummaryMetrics,
-    List<EpicProgressEntry> Epics,
-    EpicProgressUnlinkedWork UnlinkedWork,
-    bool HasQaData,
-    decimal? AverageTestCoverage);
-
-// --- QA data parameter type ---
-
-public record EpicQaData(
-    Dictionary<string, List<string>> TestsLinksByTicket,
-    Dictionary<string, List<string>> BlocksLinksByTicket,
-    Dictionary<string, List<TestRun>> RunsByTeId);
-
-// --- Service ---
-
-public class EpicProgressService
+public class EpicProgressAnalyzer
 {
-    public EpicProgressResponse ComputeEpicProgress(
+    public EpicProgressResultData ComputeEpicProgress(
         List<Ticket> epicTickets,
         List<SprintMembership> allClosedMemberships,
         List<Ticket> unlinkedTickets,
@@ -114,7 +36,7 @@ public class EpicProgressService
             .GroupBy(t => t.TicketId, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
 
-        var epicEntries = new List<EpicProgressEntry>();
+        var epicEntries = new List<EpicProgressEntryData>();
 
         foreach (var group in epicGroups)
         {
@@ -271,7 +193,7 @@ public class EpicProgressService
                 .Select(t => BuildTicketEntry(t, completedStatuses, qaData))
                 .ToList();
 
-            epicEntries.Add(new EpicProgressEntry(
+            epicEntries.Add(new EpicProgressEntryData(
                 epicKey,
                 epicName,
                 totalTickets,
@@ -344,7 +266,7 @@ public class EpicProgressService
             averageCompletionPct = 0m;
         }
 
-        var summaryMetrics = new EpicProgressSummaryMetrics(
+        var summaryMetrics = new EpicProgressSummaryMetricsData(
             activeEpicCount,
             completedEpicCount,
             averageCompletionPct);
@@ -354,7 +276,7 @@ public class EpicProgressService
         var unlinkedTotalSp = filteredUnlinkedTickets
             .Sum(t => GetEffectiveTicketSp(t, defaultSpPerBug) ?? 0m);
 
-        var unlinkedWork = new EpicProgressUnlinkedWork(
+        var unlinkedWork = new EpicProgressUnlinkedWorkData(
             unlinkedCount,
             Math.Round(unlinkedTotalSp, 1));
 
@@ -371,7 +293,7 @@ public class EpicProgressService
                 averageTestCoverage = Math.Round(coverageRates.Average(), 1);
         }
 
-        return new EpicProgressResponse(summaryMetrics, sortedEpics, unlinkedWork, hasQaData, averageTestCoverage);
+        return new EpicProgressResultData(summaryMetrics, sortedEpics, unlinkedWork, hasQaData, averageTestCoverage);
     }
 
     // --- Effective SP for Ticket entities (mirrors SprintMembership.GetEffectiveSp) ---
@@ -499,7 +421,7 @@ public class EpicProgressService
     /// Builds a ticket entry with per-ticket QA fields (BR5–BR7).
     /// Bug tickets get null for all QA fields.
     /// </summary>
-    private static EpicProgressTicketEntry BuildTicketEntry(
+    private static EpicProgressTicketEntryData BuildTicketEntry(
         Ticket ticket,
         HashSet<string> completedStatuses,
         EpicQaData? qaData)
@@ -508,7 +430,7 @@ public class EpicProgressService
 
         if (qaData is null || ticket.IssueType == "Bug")
         {
-            return new EpicProgressTicketEntry(
+            return new EpicProgressTicketEntryData(
                 ticket.Id,
                 ticket.Summary,
                 ticket.IssueType,
@@ -532,7 +454,7 @@ public class EpicProgressService
 
         if (effectiveTeIds.Count == 0)
         {
-            return new EpicProgressTicketEntry(
+            return new EpicProgressTicketEntryData(
                 ticket.Id,
                 ticket.Summary,
                 ticket.IssueType,
@@ -587,9 +509,9 @@ public class EpicProgressService
             .Select(kvp => kvp.Key)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        var runSummary = new TestRunSummaryDto(passCount, failCount, todoCount, executingCount, abortedCount);
+        var runSummary = new TestRunSummaryData(passCount, failCount, todoCount, executingCount, abortedCount);
 
-        return new EpicProgressTicketEntry(
+        return new EpicProgressTicketEntryData(
             ticket.Id,
             ticket.Summary,
             ticket.IssueType,

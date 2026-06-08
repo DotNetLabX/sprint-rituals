@@ -1,73 +1,8 @@
-using Fokus.Domain.Analytics;
-namespace Fokus.API.Features.Analytics;
+namespace Fokus.Domain.Analytics;
 
-// --- Response record hierarchy ---
-
-public record DeveloperDetailInfo(
-    string AccountId,
-    string DisplayName,
-    string? SubTeam,
-    string? AvatarUrl,
-    string Role,
-    int DefaultCapacityPercent);
-
-public record SprintTrendEntry(
-    int SprintId,
-    string SprintName,
-    DateTime StartDate,
-    DateTime EndDate,
-    decimal FeatureSp,
-    decimal BugSp,
-    decimal TotalSp,
-    decimal AssignedSp,
-    decimal CompletionPercent,
-    int CapacityPercent,
-    decimal? RollingAverageSp,
-    decimal BugPercent);
-
-public record WorkAllocationSummary(
-    decimal AverageBugPercent,
-    int SprintsAboveTarget,
-    int TotalSprints);
-
-public record CurrentSprintDetail(
-    DeveloperProgressSprintInfo Sprint,
-    int CurrentDay,
-    int TotalDays,
-    decimal AssignedSp,
-    decimal CompletedSp,
-    decimal CompletionPercent,
-    decimal FeatureCompletedSp,
-    decimal BugCompletedSp,
-    decimal DailyPace,
-    bool IsBehindPace,
-    decimal? PaceGapSp,
-    List<DayBreakdownEntry> DailyBreakdown,
-    List<TicketDetailEntry> Tickets);
-
-public record TicketDetailEntry(
-    string Key,
-    string Summary,
-    string CurrentStatus,
-    decimal? StoryPoints,
-    string IssueType,
-    int DaysInCurrentStatus,
-    string State,
-    bool IsStalled);
-
-public record DeveloperDetailResponse(
-    DeveloperDetailInfo Developer,
-    List<SprintTrendEntry> SprintTrends,
-    WorkAllocationSummary WorkAllocation,
-    CurrentSprintDetail? CurrentSprint,
-    decimal BugRatioTarget,
-    string JiraInstanceUrl);
-
-// --- Service ---
-
-public class DeveloperDetailService
+public class DeveloperDetailCalculator
 {
-    public DeveloperDetailResponse ComputeDetail(
+    public DeveloperDetailResultData ComputeDetail(
         string accountId,
         Developer developer,
         List<Sprint> closedSprints,
@@ -90,17 +25,12 @@ public class DeveloperDetailService
 
         // --- Cross-sprint trends ---
         // All sprints where developer has at least one non-removed membership, ordered chronologically.
-        // The full qualifying list is used for rolling average look-back; TakeLast is applied at the end
-        // so the `last` count is over post-exclusion sprints only (plan: "Range counts only sprints
-        // passing inclusion rule").
         var qualifyingSprints = closedSprints
             .OrderBy(s => s.StartDate)
             .Where(s => s.Memberships.Any(m => m.Ticket?.AssigneeId == accountId && m.RemovedAt == null))
             .ToList();
 
-        // Compute per-sprint trends over all qualifying sprints, applying exclusion guard inline.
-        // Rolling average receives the full qualifying list so look-back is stable regardless of TakeLast.
-        var allSprintTrends = new List<SprintTrendEntry>();
+        var allSprintTrends = new List<SprintTrendData>();
         for (var i = 0; i < qualifyingSprints.Count; i++)
         {
             var sprint = qualifyingSprints[i];
@@ -132,10 +62,9 @@ public class DeveloperDetailService
             var bugPercent = totalSp > 0 ? bugSp / totalSp * 100m : 0m;
 
             // Rolling average: 3-sprint window over all-types SP, computed over full qualifying list
-            // so the window is stable regardless of how many sprints TakeLast will return.
             decimal? rollingAverage = ComputeRollingAverage(accountId, i, qualifyingSprints, capacityLookup, statusTransitions, settings, devList, defaultSpPerBug);
 
-            allSprintTrends.Add(new SprintTrendEntry(
+            allSprintTrends.Add(new SprintTrendData(
                 sprint.Id,
                 sprint.Name,
                 sprint.StartDate,
@@ -161,13 +90,13 @@ public class DeveloperDetailService
             ? sprintsWithSp.Average(t => t.BugPercent)
             : 0m;
         var sprintsAboveTarget = sprintTrends.Count(t => t.BugPercent > bugRatioTarget);
-        var workAllocation = new WorkAllocationSummary(
+        var workAllocation = new WorkAllocationData(
             Math.Round(averageBugPercent, 1),
             sprintsAboveTarget,
             sprintTrends.Count);
 
         // --- Current sprint detail ---
-        CurrentSprintDetail? currentSprintDetail = null;
+        CurrentSprintDetailData? currentSprintDetail = null;
         if (activeSprint is not null)
         {
             currentSprintDetail = ComputeCurrentSprintDetail(
@@ -176,7 +105,7 @@ public class DeveloperDetailService
         }
 
         // --- Developer info ---
-        var devInfo = new DeveloperDetailInfo(
+        var devInfo = new DeveloperDetailInfoData(
             developer.Id,
             developer.DisplayName,
             developer.SubTeam,
@@ -184,7 +113,7 @@ public class DeveloperDetailService
             developer.Role,
             developer.DefaultCapacityPercent);
 
-        return new DeveloperDetailResponse(
+        return new DeveloperDetailResultData(
             devInfo,
             sprintTrends,
             workAllocation,
@@ -193,9 +122,9 @@ public class DeveloperDetailService
             jiraInstanceUrl);
     }
 
-    // --- Current sprint computation (mirrors DeveloperProgressService) ---
+    // --- Current sprint computation (mirrors DeveloperProgressAnalyzer) ---
 
-    private static CurrentSprintDetail ComputeCurrentSprintDetail(
+    private static CurrentSprintDetailData ComputeCurrentSprintDetail(
         string accountId,
         Developer developer,
         Sprint activeSprint,
@@ -231,7 +160,7 @@ public class DeveloperDetailService
             ? assignedSp * (capacity / 100m) / totalDays
             : 0m;
 
-        var completionsByDay = new Dictionary<int, List<CompletedTicketEntry>>();
+        var completionsByDay = new Dictionary<int, List<CompletedTicketData>>();
         var completedSp = 0m;
         var featureCompletedSp = 0m;
         var bugCompletedSp = 0m;
@@ -261,14 +190,14 @@ public class DeveloperDetailService
             if (!completionsByDay.ContainsKey(completionDay))
                 completionsByDay[completionDay] = [];
 
-            completionsByDay[completionDay].Add(new CompletedTicketEntry(
+            completionsByDay[completionDay].Add(new CompletedTicketData(
                 m.TicketId,
                 m.Ticket?.Summary ?? m.TicketId,
                 effectiveSp,
                 m.Ticket?.IssueType ?? "Unknown"));
         }
 
-        var dailyBreakdown = new List<DayBreakdownEntry>();
+        var dailyBreakdown = new List<DayBreakdownData>();
         var cumulativeSp = 0m;
         for (var day = 1; day <= currentDay; day++)
         {
@@ -277,7 +206,7 @@ public class DeveloperDetailService
             cumulativeSp += daySp;
             var expectedCumulative = Math.Round(dailyPace * day, 10);
             var date = activeSprint.StartDate.Date.AddDays(day - 1);
-            dailyBreakdown.Add(new DayBreakdownEntry(day, date, dayTickets, cumulativeSp, expectedCumulative));
+            dailyBreakdown.Add(new DayBreakdownData(day, date, dayTickets, cumulativeSp, expectedCumulative));
         }
 
         var completionPercent = assignedSp > 0 ? completedSp / assignedSp * 100m : 0m;
@@ -297,10 +226,10 @@ public class DeveloperDetailService
         var tickets = BuildTicketDetails(
             memberships, statusTransitions, activeSprint, orderedStages, startIndex, endIndex);
 
-        var sprintInfo = new DeveloperProgressSprintInfo(
+        var sprintInfo = new DeveloperProgressSprintData(
             activeSprint.Id, activeSprint.Name, activeSprint.StartDate, activeSprint.EndDate);
 
-        return new CurrentSprintDetail(
+        return new CurrentSprintDetailData(
             sprintInfo,
             currentDay,
             totalDays,
@@ -318,7 +247,7 @@ public class DeveloperDetailService
 
     // --- Ticket state derivation (BR10) and ordering (BR12) ---
 
-    private static List<TicketDetailEntry> BuildTicketDetails(
+    private static List<TicketDetailData> BuildTicketDetails(
         List<SprintMembership> memberships,
         List<StatusTransition> statusTransitions,
         Sprint sprint,
@@ -327,7 +256,7 @@ public class DeveloperDetailService
         int endIndex)
     {
         var today = DateTime.UtcNow.Date;
-        var entries = new List<TicketDetailEntry>();
+        var entries = new List<TicketDetailData>();
 
         foreach (var m in memberships)
         {
@@ -353,7 +282,6 @@ public class DeveloperDetailService
             if (isCompleted)
             {
                 state = "done";
-                // Days since last transition or sprint start
                 daysInCurrentStatus = ticketTransitions.Count > 0
                     ? CountBusinessDays(ticketTransitions[0].Timestamp, today)
                     : CountBusinessDays(sprint.StartDate, today);
@@ -382,7 +310,7 @@ public class DeveloperDetailService
                 state = isStalled ? "stalled" : "in-progress";
             }
 
-            entries.Add(new TicketDetailEntry(
+            entries.Add(new TicketDetailData(
                 m.TicketId,
                 m.Ticket?.Summary ?? m.TicketId,
                 m.Ticket?.CurrentStatus ?? m.FinalStatus,

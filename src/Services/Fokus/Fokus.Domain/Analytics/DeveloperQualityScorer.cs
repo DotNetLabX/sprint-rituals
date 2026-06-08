@@ -1,52 +1,8 @@
-using Fokus.API.Features.Analytics.GetSprintSummary;
-using Fokus.Domain.Analytics;
+namespace Fokus.Domain.Analytics;
 
-namespace Fokus.API.Features.Analytics;
-
-// --- Result records ---
-
-public record DeveloperQualitySprintInfo(int Id, string Name, DateTime StartDate, DateTime EndDate);
-
-public record DeveloperQualitySprintBreakdown(
-    int SprintId,
-    int Stories,
-    int Covered,
-    decimal CoveragePercent,
-    decimal PassRatePercent,
-    int Untested,
-    int BugsFound,
-    string? CoverageRag,
-    string? PassRateRag,
-    decimal? CoveragePercentDelta,
-    string? CoveragePercentDeltaDirection,
-    string? CoveragePercentDeltaPolarity,
-    decimal? PassRatePercentDelta,
-    string? PassRatePercentDeltaDirection,
-    string? PassRatePercentDeltaPolarity,
-    int? BugsFoundDelta,
-    string? BugsFoundDeltaDirection,
-    string? BugsFoundDeltaPolarity,
-    List<SparklinePoint>? CoverageSparkline,
-    List<SparklinePoint>? PassRateSparkline);
-
-public record DeveloperQualityEntry(
-    string AccountId,
-    string DisplayName,
-    string? SubTeam,
-    string? AvatarUrl,
-    List<DeveloperQualitySprintBreakdown> SprintBreakdowns,
-    int? BelowMedianStreak);
-
-public record DeveloperQualityResult(
-    bool HasQaData,
-    List<DeveloperQualitySprintInfo> Sprints,
-    List<DeveloperQualityEntry> Developers);
-
-// --- Service ---
-
-public class DeveloperQualityService
+public class DeveloperQualityScorer
 {
-    public DeveloperQualityResult ComputeDeveloperQuality(
+    public DeveloperQualityResultData ComputeDeveloperQuality(
         List<Sprint> allLoadedSprints,
         List<int> targetSprintIds,
         List<Developer> activeDevelopers,
@@ -83,7 +39,7 @@ public class DeveloperQualityService
 
         // Sprint info list
         var sprintInfos = targetSprints
-            .Select(s => new DeveloperQualitySprintInfo(s.Id, s.Name, s.StartDate, s.EndDate))
+            .Select(s => new DeveloperQualitySprintData(s.Id, s.Name, s.StartDate, s.EndDate))
             .ToList();
 
         // Check if there's any QA data at all
@@ -113,8 +69,8 @@ public class DeveloperQualityService
                 int? bugsDelta = null;
                 string? bugsDeltaDir = null;
                 string? bugsDeltaPol = null;
-                List<SparklinePoint>? coverageSparkline = null;
-                List<SparklinePoint>? passRateSparkline = null;
+                List<DeveloperQualitySparklinePointData>? coverageSparkline = null;
+                List<DeveloperQualitySparklinePointData>? passRateSparkline = null;
 
                 if (isSingleSprint && priorSprint is not null && priorSprintTEs is not null && priorSprintTEs.Count > 0)
                 {
@@ -122,16 +78,16 @@ public class DeveloperQualityService
                         ComputeDevMetrics(developer.Id, priorSprint, priorSprintTEs, transitionsByTicket, settings, orderedStages, startIndex, subTeam);
 
                     coverageDelta = Math.Round(coveragePercent - priorCoverage, 1);
-                    coverageDeltaDir = DeltaDirection(coverageDelta.Value);
-                    coverageDeltaPol = DeltaPolarity(coverageDelta.Value, positiveUp: true);
+                    coverageDeltaDir = MetricCardBuilder.Direction(coverageDelta.Value);
+                    coverageDeltaPol = MetricCardBuilder.Polarity(coverageDelta.Value, positiveUp: true);
 
                     passRateDelta = Math.Round(passRatePercent - priorPassRate, 1);
-                    passRateDeltaDir = DeltaDirection(passRateDelta.Value);
-                    passRateDeltaPol = DeltaPolarity(passRateDelta.Value, positiveUp: true);
+                    passRateDeltaDir = MetricCardBuilder.Direction(passRateDelta.Value);
+                    passRateDeltaPol = MetricCardBuilder.Polarity(passRateDelta.Value, positiveUp: true);
 
                     bugsDelta = bugsFound - priorBugs;
-                    bugsDeltaDir = DeltaDirection(bugsDelta.Value);
-                    bugsDeltaPol = "neutral";
+                    bugsDeltaDir = MetricCardBuilder.Direction(bugsDelta.Value);
+                    bugsDeltaPol = "neutral"; // DO-NOT-TOUCH carve-out (line 134 of original)
                 }
 
                 if (isSingleSprint && sparklineWindow.Count > 0)
@@ -140,7 +96,7 @@ public class DeveloperQualityService
                     passRateSparkline = BuildDevSparkline(developer.Id, sparklineWindow, sparklineTEsBySprintId, transitionsByTicket, settings, orderedStages, startIndex, subTeam, usePassRate: true);
                 }
 
-                return new DeveloperQualitySprintBreakdown(
+                return new DeveloperQualitySprintBreakdownData(
                     sprint.Id,
                     stories,
                     covered,
@@ -174,7 +130,7 @@ public class DeveloperQualityService
                     filteredDevelopers, settings, orderedStages, startIndex, subTeam);
             }
 
-            return new DeveloperQualityEntry(
+            return new DeveloperQualityEntryData(
                 developer.Id,
                 developer.DisplayName,
                 developer.SubTeam,
@@ -183,7 +139,7 @@ public class DeveloperQualityService
                 belowMedianStreak);
         }).ToList();
 
-        return new DeveloperQualityResult(hasQaData, sprintInfos, developerEntries);
+        return new DeveloperQualityResultData(hasQaData, sprintInfos, developerEntries);
     }
 
     // --- Per-developer metrics for a single sprint ---
@@ -246,10 +202,7 @@ public class DeveloperQualityService
         var coveragePercent = stories > 0 ? (decimal)covered / stories * 100 : 0m;
         var untested = stories - covered;
 
-        // Pass rate (BR4) and bugs found (BR6): only TEs directly linked to this developer's
-        // active scope tickets. Sub-task inheritance (BR10) is coverage-only — it marks a story
-        // as covered but does not pull the parent's test runs into the developer's pass rate or
-        // bug count.
+        // Pass rate (BR4) and bugs found (BR6)
         var directTeIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var key in activeTicketKeys)
         {
@@ -342,7 +295,7 @@ public class DeveloperQualityService
 
     // --- Sparkline for a developer ---
 
-    private static List<SparklinePoint> BuildDevSparkline(
+    private static List<DeveloperQualitySparklinePointData> BuildDevSparkline(
         string developerId,
         List<Sprint> window,
         Dictionary<int, List<TestExecution>> tesBySprintId,
@@ -353,14 +306,14 @@ public class DeveloperQualityService
         string? subTeam,
         bool usePassRate)
     {
-        var points = new List<SparklinePoint>();
+        var points = new List<DeveloperQualitySparklinePointData>();
         foreach (var sprint in window)
         {
             var sprintTEs = tesBySprintId.GetValueOrDefault(sprint.Id, []);
             var (_, _, coveragePercent, passRatePercent, _, _) =
                 ComputeDevMetrics(developerId, sprint, sprintTEs, transitionsByTicket, settings, orderedStages, startIndex, subTeam);
             var value = usePassRate ? passRatePercent : coveragePercent;
-            points.Add(new SparklinePoint(sprint.Name, Math.Round(value, 1)));
+            points.Add(new DeveloperQualitySparklinePointData(sprint.Name, Math.Round(value, 1)));
         }
         return points;
     }
@@ -379,9 +332,6 @@ public class DeveloperQualityService
         int startIndex,
         string? subTeam)
     {
-        // Walk backward from target sprint through consecutive closed sprints with QA data.
-        // streakSprints is pre-filtered to only sprints with QA data (BR8-attributed),
-        // ordered ascending, capped at up to 12 sprints ending at the target sprint.
         var targetIndex = streakSprints.FindIndex(s => s.Id == targetSprint.Id);
         if (targetIndex < 0) return null;
 
@@ -389,13 +339,11 @@ public class DeveloperQualityService
         for (var i = targetIndex; i >= 0; i--)
         {
             var sprint = streakSprints[i];
-
             var sprintTEs = streakTEsBySprintId.GetValueOrDefault(sprint.Id, []);
 
             // Sprint with no QA data breaks the streak
             if (sprintTEs.Count == 0) break;
 
-            // Get this developer's metrics for this sprint
             var (devStories, _, devCoverage, _, _, _) =
                 ComputeDevMetrics(developerId, sprint, sprintTEs, transitionsByTicket, settings, orderedStages, startIndex, subTeam);
 
@@ -408,7 +356,7 @@ public class DeveloperQualityService
             {
                 var (s, _, cov, _, _, _) =
                     ComputeDevMetrics(dev.Id, sprint, sprintTEs, transitionsByTicket, settings, orderedStages, startIndex, subTeam);
-                if (s > 0) // Exclude zero-story developers from median
+                if (s > 0)
                     teamCoverageValues.Add(cov);
             }
 
@@ -416,7 +364,6 @@ public class DeveloperQualityService
 
             var median = ComputeMedian(teamCoverageValues);
 
-            // Check if strictly below median
             if (devCoverage < median)
                 streak++;
             else
@@ -436,19 +383,6 @@ public class DeveloperQualityService
             : sorted[mid];
     }
 
-    // --- Delta helpers ---
-
-    private static string DeltaDirection(decimal delta) =>
-        delta > 0 ? "up" : delta < 0 ? "down" : "flat";
-
-    private static string DeltaDirection(int delta) =>
-        delta > 0 ? "up" : delta < 0 ? "down" : "flat";
-
-    private static string DeltaPolarity(decimal delta, bool positiveUp) =>
-        positiveUp
-            ? (delta > 0 ? "positive" : delta < 0 ? "negative" : "neutral")
-            : (delta < 0 ? "positive" : delta > 0 ? "negative" : "neutral");
-
     // --- Sub-team filtering ---
 
     private static List<Developer> FilterDevelopers(List<Developer> developers, string? subTeam)
@@ -458,7 +392,7 @@ public class DeveloperQualityService
         return developers.Where(d => d.SubTeam == subTeam).ToList();
     }
 
-    // --- Transition helpers ---
+    // --- Transition helpers (local copies — NOT merged with TransitionAttributionChecker; behavior parity) ---
 
     private static bool IsStartedInSprint(
         List<StatusTransition> transitions,

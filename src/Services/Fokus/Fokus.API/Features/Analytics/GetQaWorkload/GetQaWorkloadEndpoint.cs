@@ -1,4 +1,4 @@
-using Fokus.API.Features.Analytics.GetSprintSummary;
+using Fokus.Domain.Analytics;
 
 namespace Fokus.API.Features.Analytics.GetQaWorkload;
 
@@ -9,7 +9,7 @@ public class GetQaWorkloadEndpoint(
     AppSettingsRepository appSettingsRepository,
     DeveloperRepository developerRepository,
     TestExecutionRepository testExecutionRepository,
-    QaWorkloadService qaWorkloadService)
+    QaWorkloadAnalyzer qaWorkloadAnalyzer)
     : Endpoint<GetQaWorkloadQuery, QaWorkloadResponseDto>
 {
     public override async Task HandleAsync(GetQaWorkloadQuery req, CancellationToken ct)
@@ -91,7 +91,7 @@ public class GetQaWorkloadEndpoint(
             allClosedTesBySprintId[sprintId] = await testExecutionRepository.GetTestExecutionsForSprintAsync(sprintId, ct);
         }
 
-        var result = qaWorkloadService.ComputeMultiSprint(
+        var result = qaWorkloadAnalyzer.ComputeMultiSprint(
             targetSprints,
             tesBySprintId,
             allDevelopers,
@@ -187,7 +187,7 @@ public class GetQaWorkloadEndpoint(
                 allClosedTesBySprintId[sprintId] = await testExecutionRepository.GetTestExecutionsForSprintAsync(sprintId, ct);
         }
 
-        var result = qaWorkloadService.ComputeSingleSprint(
+        var result = qaWorkloadAnalyzer.ComputeSingleSprint(
             targetSprint,
             targetTEs,
             priorSprint,
@@ -205,7 +205,7 @@ public class GetQaWorkloadEndpoint(
 
     // --- Mapping ---
 
-    private static QaWorkloadResponseDto MapMultiResponse(QaWorkloadMultiSprintResponse result) => new()
+    private static QaWorkloadResponseDto MapMultiResponse(QaWorkloadMultiSprintResultData result) => new()
     {
         HasQaData = true,
         Mode = "multi",
@@ -224,7 +224,7 @@ public class GetQaWorkloadEndpoint(
         }
     };
 
-    private static QaWorkloadResponseDto MapSingleResponse(QaWorkloadSingleSprintResponse result) => new()
+    private static QaWorkloadResponseDto MapSingleResponse(QaWorkloadSingleSprintResultData result) => new()
     {
         HasQaData = true,
         Mode = "single",
@@ -241,7 +241,7 @@ public class GetQaWorkloadEndpoint(
         }
     };
 
-    private static QaWorkloadSprintInfoDto MapSprintInfo(SprintSummaryItem s) => new()
+    private static QaWorkloadSprintInfoDto MapSprintInfo(SprintSummaryItemData s) => new()
     {
         Id = s.Id,
         Name = s.Name,
@@ -249,14 +249,14 @@ public class GetQaWorkloadEndpoint(
         EndDate = s.EndDate
     };
 
-    private static WorkloadAlertDto MapAlert(WorkloadAlert alert) => new()
+    private static WorkloadAlertDto MapAlert(WorkloadAlertData alert) => new()
     {
         IsActive = alert.IsActive,
         ConsecutiveSprintCount = alert.ConsecutiveSprintCount,
         ThresholdPercent = alert.ThresholdPercent
     };
 
-    private static QaWorkloadEntryDto MapEntry(QaWorkloadEntry e) => new()
+    private static QaWorkloadEntryDto MapEntry(QaWorkloadEntryData e) => new()
     {
         AccountId = e.AccountId,
         DisplayName = e.DisplayName,
@@ -284,7 +284,7 @@ public class GetQaWorkloadEndpoint(
         WorkloadAlert = MapAlert(e.WorkloadAlert)
     };
 
-    private static QaWorkloadSingleEntryDto MapSingleEntry(QaWorkloadSingleEntry e) => new()
+    private static QaWorkloadSingleEntryDto MapSingleEntry(QaWorkloadSingleEntryData e) => new()
     {
         AccountId = e.AccountId,
         DisplayName = e.DisplayName,
@@ -321,7 +321,7 @@ public class GetQaWorkloadEndpoint(
         WorkloadAlert = MapAlert(e.WorkloadAlert)
     };
 
-    private static QaWorkloadMetricCardDto MapMetricCard(MetricCard card) => new()
+    private static QaWorkloadMetricCardDto MapMetricCard(QaWorkloadMetricCardData card) => new()
     {
         Name = card.Name,
         Value = card.Value,

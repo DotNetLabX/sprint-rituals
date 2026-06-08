@@ -42,18 +42,18 @@ public static class DependencyInjection
         services.AddScoped<SprintSummaryCalculator>();
         services.AddScoped<QaMetricsCalculator>();
         services.AddScoped<TestTimelineCalculator>();
-        services.AddScoped<DeveloperThroughputService>();
+        services.AddScoped<DeveloperThroughputCalculator>();
         services.AddScoped<ScopeChangeCalculator>();
         services.AddScoped<CarryOverCalculator>();
         services.AddScoped<BugRatioCalculator>();
-        services.AddScoped<EpicProgressService>();
+        services.AddScoped<EpicProgressAnalyzer>();
         services.AddScoped<CycleTimeCalculator>();
         services.AddScoped<LeaderboardCalculator>();
-        services.AddScoped<DeveloperQualityService>();
-        services.AddScoped<QaWorkloadService>();
-        services.AddScoped<QaTrendsService>();
-        services.AddScoped<DeveloperProgressService>();
-        services.AddScoped<DeveloperDetailService>();
+        services.AddScoped<DeveloperQualityScorer>();
+        services.AddScoped<QaWorkloadAnalyzer>();
+        services.AddScoped<QaTrendsAnalyzer>();
+        services.AddScoped<DeveloperProgressAnalyzer>();
+        services.AddScoped<DeveloperDetailCalculator>();
 
         return services;
     }

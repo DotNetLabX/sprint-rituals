@@ -1,4 +1,6 @@
 using Fokus.Domain.Analytics;
+using Mapster;
+
 namespace Fokus.API.Features.Analytics.GetDeveloperThroughput;
 
 [HttpGet("/api/analytics/developer-throughput")]
@@ -8,7 +10,7 @@ public class GetDeveloperThroughputEndpoint(
     DeveloperRepository developerRepository,
     AppSettingsRepository appSettingsRepository,
     TicketRepository ticketRepository,
-    DeveloperThroughputService developerThroughputService)
+    DeveloperThroughputCalculator developerThroughputCalculator)
     : Endpoint<GetDeveloperThroughputQuery, DeveloperThroughputResponse>
 {
     public override async Task HandleAsync(GetDeveloperThroughputQuery req, CancellationToken ct)
@@ -97,7 +99,7 @@ public class GetDeveloperThroughputEndpoint(
             .ToList();
 
         // 12. Compute throughput
-        var result = developerThroughputService.ComputeThroughput(
+        var result = developerThroughputCalculator.ComputeThroughput(
             loadedSprints,
             targetSprintIds,
             filteredActiveDevelopers,
@@ -107,6 +109,6 @@ public class GetDeveloperThroughputEndpoint(
             allDevelopers,
             statusTransitions);
 
-        await Send.OkAsync(result, ct);
+        await Send.OkAsync(result.Adapt<DeveloperThroughputResponse>(), ct);
     }
 }

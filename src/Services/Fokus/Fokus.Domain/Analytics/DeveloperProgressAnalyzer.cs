@@ -1,56 +1,8 @@
-using Fokus.Domain.Analytics;
-namespace Fokus.API.Features.Analytics;
+namespace Fokus.Domain.Analytics;
 
-// --- Response record hierarchy ---
-
-public record DeveloperProgressSprintInfo(int Id, string Name, DateTime StartDate, DateTime EndDate);
-
-public record DeveloperProgressAlert(
-    string AccountId,
-    string DisplayName,
-    string? AvatarUrl,
-    decimal GapSp,
-    decimal GapDays,
-    decimal? GapDelta,
-    string Direction);
-
-public record CompletedTicketEntry(string Key, string Summary, decimal? StoryPoints, string IssueType);
-
-public record DayBreakdownEntry(int Day, DateTime Date, List<CompletedTicketEntry> CompletedTickets, decimal CumulativeSp, decimal ExpectedCumulativeSp);
-
-public record StalledTicketEntry(string Key, string Summary, string CurrentStatus, string IssueType, decimal? StoryPoints, int DaysSinceLastTransition);
-
-public record DeveloperProgressEntry(
-    string AccountId,
-    string DisplayName,
-    string? SubTeam,
-    string? AvatarUrl,
-    decimal AssignedSp,
-    decimal CompletedSp,
-    decimal FeatureCompletedSp,
-    decimal BugCompletedSp,
-    decimal CompletionPercent,
-    int CapacityPercent,
-    decimal DailyPace,
-    bool IsBehindPace,
-    decimal? PaceGapSp,
-    List<StalledTicketEntry> StalledTickets,
-    List<DayBreakdownEntry> DailyBreakdown);
-
-public record DeveloperProgressResponse(
-    bool HasActiveSprint,
-    DeveloperProgressSprintInfo? Sprint,
-    int CurrentDay,
-    int TotalDays,
-    bool IsGracePeriod,
-    List<DeveloperProgressAlert> Alerts,
-    List<DeveloperProgressEntry> Developers);
-
-// --- Service ---
-
-public class DeveloperProgressService
+public class DeveloperProgressAnalyzer
 {
-    public DeveloperProgressResponse ComputeProgress(
+    public DeveloperProgressResultData ComputeProgress(
         Sprint? activeSprint,
         List<Developer> activeDevelopers,
         List<DeveloperSprintCapacity> capacityRecords,
@@ -61,7 +13,7 @@ public class DeveloperProgressService
         HashSet<string> excludedDeveloperIds)
     {
         if (activeSprint is null)
-            return new DeveloperProgressResponse(false, null, 0, 0, false, [], []);
+            return new DeveloperProgressResultData(false, null, 0, 0, false, [], []);
 
         // BR8: totalDays inclusive, min 1
         var totalDays = Math.Max(1, (activeSprint.EndDate.Date - activeSprint.StartDate.Date).Days + 1);
@@ -116,7 +68,7 @@ public class DeveloperProgressService
 
             // Completion: tickets completed in sprint via IsCompletedInSprint
             // Build per-ticket completion info for daily breakdown
-            var completionsByDay = new Dictionary<int, List<CompletedTicketEntry>>();
+            var completionsByDay = new Dictionary<int, List<CompletedTicketData>>();
             var completedSp = 0m;
             var featureCompletedSp = 0m;
             var bugCompletedSp = 0m;
@@ -147,7 +99,7 @@ public class DeveloperProgressService
                 if (!completionsByDay.ContainsKey(completionDay))
                     completionsByDay[completionDay] = [];
 
-                completionsByDay[completionDay].Add(new CompletedTicketEntry(
+                completionsByDay[completionDay].Add(new CompletedTicketData(
                     m.TicketId,
                     m.Ticket?.Summary ?? m.TicketId,
                     effectiveSp,
@@ -155,7 +107,7 @@ public class DeveloperProgressService
             }
 
             // Build daily breakdown 1..currentDay with running cumulative
-            var dailyBreakdown = new List<DayBreakdownEntry>();
+            var dailyBreakdown = new List<DayBreakdownData>();
             var cumulativeSp = 0m;
             for (var day = 1; day <= currentDay; day++)
             {
@@ -167,7 +119,7 @@ public class DeveloperProgressService
 
                 var expectedCumulative = Math.Round(dailyPace * day, 10); // keep precision for comparison
                 var date = activeSprint.StartDate.Date.AddDays(day - 1);
-                dailyBreakdown.Add(new DayBreakdownEntry(day, date, dayTickets, cumulativeSp, expectedCumulative));
+                dailyBreakdown.Add(new DayBreakdownData(day, date, dayTickets, cumulativeSp, expectedCumulative));
             }
 
             // BR12-14: behind-pace detection (suppressed during grace period)
@@ -198,7 +150,7 @@ public class DeveloperProgressService
                 .Select(t => t.Key)
                 .ToHashSet();
 
-            var entry = new DeveloperProgressEntry(
+            var entry = new DeveloperProgressEntryData(
                 developer.Id,
                 developer.DisplayName,
                 developer.SubTeam,
@@ -221,7 +173,7 @@ public class DeveloperProgressService
         var developerEntries = developerData.Select(d => d.Entry).ToList();
 
         // Build alerts (pace-change developers, suppressed during grace period)
-        var alerts = new List<DeveloperProgressAlert>();
+        var alerts = new List<DeveloperProgressAlertData>();
         if (!isGracePeriod)
         {
             foreach (var (entry, yesterdayStalledKeys, devRecord) in developerData)
@@ -263,7 +215,7 @@ public class DeveloperProgressService
                 var gapDays = entry.DailyPace > 0 && entry.PaceGapSp.HasValue
                     ? Math.Round(entry.PaceGapSp.Value / entry.DailyPace, 1)
                     : 0m;
-                alerts.Add(new DeveloperProgressAlert(
+                alerts.Add(new DeveloperProgressAlertData(
                     entry.AccountId,
                     entry.DisplayName,
                     devRecord.AvatarUrl,
@@ -285,16 +237,16 @@ public class DeveloperProgressService
                 .ToList();
         }
 
-        var sprintInfo = new DeveloperProgressSprintInfo(
+        var sprintInfo = new DeveloperProgressSprintData(
             activeSprint.Id, activeSprint.Name, activeSprint.StartDate, activeSprint.EndDate);
 
-        return new DeveloperProgressResponse(
+        return new DeveloperProgressResultData(
             true, sprintInfo, currentDay, totalDays, isGracePeriod, alerts, developerEntries);
     }
 
     // --- Stall detection (BR15-17) ---
 
-    private List<StalledTicketEntry> BuildStalledTickets(
+    private List<StalledTicketData> BuildStalledTickets(
         List<SprintMembership> memberships,
         List<StatusTransition> statusTransitions,
         Sprint sprint,
@@ -303,7 +255,7 @@ public class DeveloperProgressService
         int endIndex,
         DateTime referenceDate)
     {
-        var stalled = new List<StalledTicketEntry>();
+        var stalled = new List<StalledTicketData>();
 
         foreach (var m in memberships)
         {
@@ -337,7 +289,7 @@ public class DeveloperProgressService
 
             if (businessDays <= 2) continue;
 
-            stalled.Add(new StalledTicketEntry(
+            stalled.Add(new StalledTicketData(
                 m.TicketId,
                 m.Ticket?.Summary ?? m.TicketId,
                 m.Ticket?.CurrentStatus ?? m.FinalStatus,

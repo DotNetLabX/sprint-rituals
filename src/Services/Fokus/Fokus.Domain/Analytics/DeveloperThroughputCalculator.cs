@@ -1,51 +1,8 @@
-using Fokus.Domain.Analytics;
-namespace Fokus.API.Features.Analytics;
+namespace Fokus.Domain.Analytics;
 
-// --- Response record hierarchy ---
-
-public record SprintSummaryItem(int Id, string Name, DateTime StartDate, DateTime EndDate);
-
-public record SprintBreakdown(
-    int SprintId,
-    decimal SpAssigned,
-    decimal SpCompleted,
-    decimal CompletionPercent,
-    int TicketsDone,
-    int TicketsCarriedOver,
-    int CapacityPercent,
-    decimal? RollingAverageSpCompleted,
-    decimal? SpAssignedDelta,
-    decimal? SpCompletedDelta,
-    decimal? CompletionPercentDelta,
-    int? TicketsDoneDelta,
-    int? TicketsCarriedOverDelta,
-    string? SpAssignedDeltaDirection,
-    string? SpCompletedDeltaDirection,
-    string? CompletionPercentDeltaDirection,
-    string? TicketsDoneDeltaDirection,
-    string? TicketsCarriedOverDeltaDirection,
-    string? SpAssignedDeltaPolarity,
-    string? SpCompletedDeltaPolarity,
-    string? CompletionPercentDeltaPolarity,
-    string? TicketsDoneDeltaPolarity,
-    string? TicketsCarriedOverDeltaPolarity);
-
-public record DeveloperThroughputEntry(
-    string AccountId,
-    string DisplayName,
-    string? SubTeam,
-    string? AvatarUrl,
-    List<SprintBreakdown> SprintBreakdowns);
-
-public record DeveloperThroughputResponse(
-    List<SprintSummaryItem> Sprints,
-    List<DeveloperThroughputEntry> Developers);
-
-// --- Service ---
-
-public class DeveloperThroughputService
+public class DeveloperThroughputCalculator
 {
-    public DeveloperThroughputResponse ComputeThroughput(
+    public DeveloperThroughputResultData ComputeThroughput(
         List<Sprint> allLoadedSprints,
         List<int> targetSprintIds,
         List<Developer> activeDevelopers,
@@ -91,7 +48,7 @@ public class DeveloperThroughputService
         }
 
         var sprintSummaryItems = targetSprints
-            .Select(s => new SprintSummaryItem(s.Id, s.Name, s.StartDate, s.EndDate))
+            .Select(s => new SprintSummaryItemData(s.Id, s.Name, s.StartDate, s.EndDate))
             .ToList();
 
         var developerEntries = filteredDevelopers.Select(developer =>
@@ -144,20 +101,20 @@ public class DeveloperThroughputService
                     ticketsDoneDelta = ticketsDone - priorTicketsDone;
                     ticketsCarriedOverDelta = ticketsCarriedOver - priorTicketsCarriedOver;
 
-                    spAssignedDeltaDirection = DeltaDirection(spAssignedDelta.Value);
-                    spCompletedDeltaDirection = DeltaDirection(spCompletedDelta.Value);
-                    completionPercentDeltaDirection = DeltaDirection(completionPercentDelta.Value);
-                    ticketsDoneDeltaDirection = DeltaDirection(ticketsDoneDelta.Value);
-                    ticketsCarriedOverDeltaDirection = DeltaDirection(ticketsCarriedOverDelta.Value);
+                    spAssignedDeltaDirection = MetricCardBuilder.Direction(spAssignedDelta.Value);
+                    spCompletedDeltaDirection = MetricCardBuilder.Direction(spCompletedDelta.Value);
+                    completionPercentDeltaDirection = MetricCardBuilder.Direction(completionPercentDelta.Value);
+                    ticketsDoneDeltaDirection = MetricCardBuilder.Direction(ticketsDoneDelta.Value);
+                    ticketsCarriedOverDeltaDirection = MetricCardBuilder.Direction(ticketsCarriedOverDelta.Value);
 
-                    spAssignedDeltaPolarity = "neutral";
-                    spCompletedDeltaPolarity = DeltaPolarity(spCompletedDelta.Value, positiveUp: true);
-                    completionPercentDeltaPolarity = DeltaPolarity(completionPercentDelta.Value, positiveUp: true);
-                    ticketsDoneDeltaPolarity = DeltaPolarity(ticketsDoneDelta.Value, positiveUp: true);
-                    ticketsCarriedOverDeltaPolarity = DeltaPolarity(ticketsCarriedOverDelta.Value, positiveUp: false);
+                    spAssignedDeltaPolarity = "neutral"; // DO-NOT-TOUCH carve-out (line 153 of original)
+                    spCompletedDeltaPolarity = MetricCardBuilder.Polarity(spCompletedDelta.Value, positiveUp: true);
+                    completionPercentDeltaPolarity = MetricCardBuilder.Polarity(completionPercentDelta.Value, positiveUp: true);
+                    ticketsDoneDeltaPolarity = MetricCardBuilder.Polarity(ticketsDoneDelta.Value, positiveUp: true);
+                    ticketsCarriedOverDeltaPolarity = MetricCardBuilder.Polarity(ticketsCarriedOverDelta.Value, positiveUp: false);
                 }
 
-                return new SprintBreakdown(
+                return new SprintBreakdownData(
                     sprint.Id,
                     Math.Round(spAssigned, 1),
                     Math.Round(spCompleted, 1),
@@ -183,10 +140,10 @@ public class DeveloperThroughputService
                     ticketsCarriedOverDeltaPolarity);
             }).ToList();
 
-            return new DeveloperThroughputEntry(developer.Id, developer.DisplayName, developer.SubTeam, developer.AvatarUrl, breakdowns);
+            return new DeveloperThroughputEntryData(developer.Id, developer.DisplayName, developer.SubTeam, developer.AvatarUrl, breakdowns);
         }).ToList();
 
-        return new DeveloperThroughputResponse(sprintSummaryItems, developerEntries);
+        return new DeveloperThroughputResultData(sprintSummaryItems, developerEntries);
     }
 
     // --- Core metrics computation (transition-based, feature-only) ---
@@ -311,22 +268,4 @@ public class DeveloperThroughputService
 
         return qualifyingSpCompleted.Average();
     }
-
-    // --- Delta helpers ---
-
-    private static string DeltaDirection(decimal delta) =>
-        delta > 0 ? "up" : delta < 0 ? "down" : "flat";
-
-    private static string DeltaDirection(int delta) =>
-        delta > 0 ? "up" : delta < 0 ? "down" : "flat";
-
-    private static string DeltaPolarity(decimal delta, bool positiveUp) =>
-        positiveUp
-            ? (delta > 0 ? "positive" : delta < 0 ? "negative" : "neutral")
-            : (delta < 0 ? "positive" : delta > 0 ? "negative" : "neutral");
-
-    private static string DeltaPolarity(int delta, bool positiveUp) =>
-        positiveUp
-            ? (delta > 0 ? "positive" : delta < 0 ? "negative" : "neutral")
-            : (delta < 0 ? "positive" : delta > 0 ? "negative" : "neutral");
 }
