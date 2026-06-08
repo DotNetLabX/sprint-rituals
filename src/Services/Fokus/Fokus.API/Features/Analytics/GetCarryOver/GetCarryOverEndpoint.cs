@@ -1,4 +1,6 @@
 using Fokus.Domain.Analytics;
+using Mapster;
+
 namespace Fokus.API.Features.Analytics.GetCarryOver;
 
 [HttpGet("/api/analytics/carry-over")]
@@ -8,7 +10,7 @@ public class GetCarryOverEndpoint(
     AppSettingsRepository appSettingsRepository,
     DeveloperRepository developerRepository,
     TicketRepository ticketRepository,
-    CarryOverService carryOverService)
+    CarryOverCalculator carryOverCalculator)
     : Endpoint<GetCarryOverQuery, CarryOverResponse>
 {
     public override async Task HandleAsync(GetCarryOverQuery req, CancellationToken ct)
@@ -63,10 +65,10 @@ public class GetCarryOverEndpoint(
                 target, allDevelopers, capacityRecords, statusTransitions, settings);
 
             // 10b. Compute single-sprint response
-            var singleResult = carryOverService.ComputeSingleSprint(
+            var singleResult = carryOverCalculator.ComputeSingleSprint(
                 target, priorSprint, allSprints, statusTransitions, settings, subTeam, excludedIds);
 
-            await Send.OkAsync(new CarryOverResponse("single", null, singleResult), ct);
+            await Send.OkAsync(new CarryOverResponse("single", null, singleResult.Adapt<CarryOverSingleSprintResponse>()), ct);
         }
         else
         {
@@ -87,10 +89,10 @@ public class GetCarryOverEndpoint(
                 .ToHashSet();
 
             // 10a. Compute multi-sprint response
-            var multiResult = carryOverService.ComputeMultiSprint(
+            var multiResult = carryOverCalculator.ComputeMultiSprint(
                 selectedSprints, allSprints, statusTransitions, settings, subTeam, excludedInAll);
 
-            await Send.OkAsync(new CarryOverResponse("multi", multiResult, null), ct);
+            await Send.OkAsync(new CarryOverResponse("multi", multiResult.Adapt<CarryOverMultiSprintResponse>(), null), ct);
         }
     }
 }

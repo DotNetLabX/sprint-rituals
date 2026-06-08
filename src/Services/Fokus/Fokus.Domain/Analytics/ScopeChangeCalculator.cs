@@ -1,106 +1,8 @@
-using Fokus.Domain.Analytics;
-namespace Fokus.API.Features.Analytics;
+namespace Fokus.Domain.Analytics;
 
-// --- Response record hierarchy ---
-
-public record ScopeChangeSprintInfo(int Id, string Name, DateTime StartDate, DateTime EndDate);
-
-public record ScopeChangeSummaryMetrics(
-    decimal AverageDisruptionRate,
-    decimal? AverageDisruptionRateDelta,
-    string? AverageDisruptionRateDeltaDirection,
-    decimal AverageNetScopeChange,
-    int TotalBugsAdded);
-
-public record ScopeChangePerSprintData(
-    int SprintId,
-    decimal CommittedSpActive,
-    decimal CommittedSpTotal,
-    decimal AddedSp,
-    decimal RemovedSp,
-    decimal NetScopeChange,
-    decimal CompletedSp,
-    decimal DisruptionRate,
-    int BugCount,
-    decimal BugSpCompleted);
-
-public record ClassificationEntry(
-    string Category,
-    int TicketCount,
-    decimal? SpTotal,
-    decimal Percentage);
-
-public record ScopeChangeMultiSprintResponse(
-    List<ScopeChangeSprintInfo> Sprints,
-    ScopeChangeSummaryMetrics SummaryMetrics,
-    List<ScopeChangePerSprintData> PerSprintData,
-    List<ClassificationEntry> ClassificationBreakdown);
-
-public record ScopeMetricCard(
-    string Name,
-    decimal Value,
-    string DisplayValue,
-    decimal? Delta,
-    string? DeltaDirection,
-    string? DeltaPolarity);
-
-public record ScopeChangeSingleSprintMetrics(
-    ScopeMetricCard CommittedSpActive,
-    ScopeMetricCard CommittedSpTotal,
-    ScopeMetricCard AddedSp,
-    ScopeMetricCard RemovedSp,
-    ScopeMetricCard NetScopeChange,
-    ScopeMetricCard DisruptionRate,
-    ScopeMetricCard BugCount);
-
-public record BurnupDataPoint(
-    int DayNumber,
-    DateTime Date,
-    decimal TotalScopeSp,
-    decimal CompletedSp,
-    string Phase,
-    decimal BugSp,
-    int TotalScopeTickets,
-    int CompletedTickets,
-    int BugTickets,
-    decimal CommittedTotalSp,
-    int CommittedTotalTickets);
-
-public record ScopeChangeEvent(
-    DateTime Date,
-    int SprintDayNumber,
-    string TicketKey,
-    string TicketSummary,
-    decimal? StoryPoints,
-    string IssueType,
-    string Action,
-    string? Category,
-    bool IsExcluded);
-
-public record BugTimeInProgress(
-    string TicketKey,
-    string TicketSummary,
-    decimal TimeInActiveDays,
-    string CurrentStatus);
-
-public record ScopeChangeSingleSprintResponse(
-    ScopeChangeSprintInfo Sprint,
-    ScopeChangeSingleSprintMetrics Metrics,
-    List<BurnupDataPoint> BurnupData,
-    List<ClassificationEntry> ClassificationBreakdown,
-    List<ScopeChangeEvent> Events,
-    List<BugTimeInProgress> BugTimeInProgress);
-
-public record ScopeChangeResponse(
-    string Mode,
-    ScopeChangeMultiSprintResponse? MultiSprint,
-    ScopeChangeSingleSprintResponse? SingleSprint);
-
-// --- Service ---
-
-public class ScopeChangeService
+public class ScopeChangeCalculator
 {
-    public ScopeChangeMultiSprintResponse ComputeMultiSprint(
+    public ScopeChangeMultiSprintData ComputeMultiSprint(
         List<Sprint> sprints,
         List<StatusTransition> statusTransitions,
         AppSettings settings,
@@ -116,7 +18,7 @@ public class ScopeChangeService
         var endIndex = TransitionAttributionChecker.ResolveEndIndex(settings, orderedStages);
 
         var sprintInfos = sortedSprints
-            .Select(s => new ScopeChangeSprintInfo(s.Id, s.Name, s.StartDate, s.EndDate))
+            .Select(s => new ScopeChangeSprintData(s.Id, s.Name, s.StartDate, s.EndDate))
             .ToList();
 
         var perSprintData = sortedSprints
@@ -146,17 +48,17 @@ public class ScopeChangeService
 
         var totalBugsAdded = perSprintData.Sum(d => d.BugCount);
 
-        var summaryMetrics = new ScopeChangeSummaryMetrics(
+        var summaryMetrics = new ScopeChangeSummaryData(
             avgDisruptionRate,
             null,
             null,
             avgNetScopeChange,
             totalBugsAdded);
 
-        return new ScopeChangeMultiSprintResponse(sprintInfos, summaryMetrics, perSprintData, classificationBreakdown);
+        return new ScopeChangeMultiSprintData(sprintInfos, summaryMetrics, perSprintData, classificationBreakdown);
     }
 
-    public ScopeChangeSingleSprintResponse ComputeSingleSprint(
+    public ScopeChangeSingleSprintData ComputeSingleSprint(
         Sprint targetSprint,
         Sprint? priorSprint,
         List<StatusTransition> statusTransitions,
@@ -177,7 +79,7 @@ public class ScopeChangeService
             ? FilterMemberships(priorSprint.Memberships, subTeam, excludedDeveloperIds)
             : null;
 
-        var sprintInfo = new ScopeChangeSprintInfo(
+        var sprintInfo = new ScopeChangeSprintData(
             targetSprint.Id, targetSprint.Name, targetSprint.StartDate, targetSprint.EndDate);
 
         // Core metrics for target sprint
@@ -192,21 +94,21 @@ public class ScopeChangeService
                 excludedStatuses, defaultSpPerBug, settings.Sync.PlanningWindowDays)
             : null;
 
-        // Build metric cards with deltas
-        var metrics = new ScopeChangeSingleSprintMetrics(
-            CommittedSpActive: BuildMetricCard("Committed SP (Active)", current.CommittedSpActive,
+        // Build metric cards with deltas (MetricCardBuilder replaces private BuildMetricCard)
+        var metrics = new ScopeChangeSingleSprintMetricsData(
+            CommittedSpActive: MetricCardBuilder.Build("Committed SP (Active)", current.CommittedSpActive,
                 $"{current.CommittedSpActive:0.#}", prior is not null ? current.CommittedSpActive - prior.CommittedSpActive : null, "neutral"),
-            CommittedSpTotal: BuildMetricCard("Committed SP (Total)", current.CommittedSpTotal,
+            CommittedSpTotal: MetricCardBuilder.Build("Committed SP (Total)", current.CommittedSpTotal,
                 $"Active: {current.CommittedSpActive:0.#} | Total: {current.CommittedSpTotal:0.#}", null, "neutral"),
-            AddedSp: BuildMetricCard("Added SP", current.AddedSp,
+            AddedSp: MetricCardBuilder.Build("Added SP", current.AddedSp,
                 $"{current.AddedSp:0.#}", prior is not null ? current.AddedSp - prior.AddedSp : null, "positive-down"),
-            RemovedSp: BuildMetricCard("Removed SP", current.RemovedSp,
+            RemovedSp: MetricCardBuilder.Build("Removed SP", current.RemovedSp,
                 $"{current.RemovedSp:0.#}", prior is not null ? current.RemovedSp - prior.RemovedSp : null, "neutral"),
-            NetScopeChange: BuildMetricCard("Net Scope Change", current.NetScopeChange,
+            NetScopeChange: MetricCardBuilder.Build("Net Scope Change", current.NetScopeChange,
                 $"{current.NetScopeChange:+0.#;-0.#;0}", prior is not null ? current.NetScopeChange - prior.NetScopeChange : null, "neutral"),
-            DisruptionRate: BuildMetricCard("Disruption Rate", current.DisruptionRate,
+            DisruptionRate: MetricCardBuilder.Build("Disruption Rate", current.DisruptionRate,
                 $"{current.DisruptionRate:0.#}%", prior is not null ? current.DisruptionRate - prior.DisruptionRate : null, "positive-down"),
-            BugCount: BuildMetricCard("Bug Count", current.BugCount,
+            BugCount: MetricCardBuilder.Build("Bug Count", current.BugCount,
                 $"{current.BugCount}", prior is not null ? (decimal)(current.BugCount - prior.BugCount) : null, "positive-down"));
 
         // Classification breakdown for this sprint
@@ -227,7 +129,7 @@ public class ScopeChangeService
         // Bug time-in-progress
         var bugTimeInProgress = ComputeBugTimeInProgress(memberships, statusTransitions, targetSprint, workflowStages);
 
-        return new ScopeChangeSingleSprintResponse(
+        return new ScopeChangeSingleSprintData(
             sprintInfo, metrics, burnupData, classificationBreakdown, events, bugTimeInProgress);
     }
 
@@ -248,7 +150,7 @@ public class ScopeChangeService
 
     // --- Per-sprint data computation ---
 
-    private static ScopeChangePerSprintData ComputePerSprintData(
+    private static ScopeChangePerSprintMetricsData ComputePerSprintData(
         Sprint sprint,
         List<SprintMembership> memberships,
         List<StatusTransition> statusTransitions,
@@ -263,7 +165,7 @@ public class ScopeChangeService
             memberships, statusTransitions, sprint,
             orderedStages, startIndex, endIndex,
             excludedStatuses, defaultSpPerBug, planningWindowDays);
-        return new ScopeChangePerSprintData(
+        return new ScopeChangePerSprintMetricsData(
             sprint.Id,
             Math.Round(metrics.CommittedSpActive, 1),
             Math.Round(metrics.CommittedSpTotal, 1),
@@ -428,7 +330,7 @@ public class ScopeChangeService
         return "Scope Injection";
     }
 
-    private static List<ClassificationEntry> BuildClassificationBreakdown(
+    private static List<ClassificationData> BuildClassificationBreakdown(
         List<MidSprintAddition> additions,
         int defaultSpPerBug)
     {
@@ -443,13 +345,13 @@ public class ScopeChangeService
             var spItems = items.Where(a => a.Membership.GetEffectiveSp(defaultSpPerBug).HasValue).ToList();
             decimal? spTotal = spItems.Count > 0 ? spItems.Sum(a => a.Membership.GetEffectiveSp(defaultSpPerBug)!.Value) : null;
             var percentage = total > 0 ? Math.Round((decimal)count / total * 100, 1) : 0;
-            return new ClassificationEntry(category, count, spTotal.HasValue ? Math.Round(spTotal.Value, 1) : null, percentage);
+            return new ClassificationData(category, count, spTotal.HasValue ? Math.Round(spTotal.Value, 1) : null, percentage);
         }).ToList();
     }
 
     // --- Event table ---
 
-    private static List<ScopeChangeEvent> BuildEventTable(
+    private static List<ScopeChangeEventData> BuildEventTable(
         List<SprintMembership> memberships,
         Sprint sprint,
         List<string> excludedStatuses,
@@ -467,7 +369,7 @@ public class ScopeChangeService
             .GroupBy(t => t.TicketId, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
 
-        var events = new List<ScopeChangeEvent>();
+        var events = new List<ScopeChangeEventData>();
 
         foreach (var m in memberships)
         {
@@ -497,7 +399,7 @@ public class ScopeChangeService
                         category = ClassifyAddition(m, sprint);
                 }
 
-                events.Add(new ScopeChangeEvent(
+                events.Add(new ScopeChangeEventData(
                     m.AddedAt, dayNumber, ticketKey, ticketSummary,
                     effectiveSp, issueType, "added", category, isExcluded));
             }
@@ -506,7 +408,7 @@ public class ScopeChangeService
             if (m.RemovedAt.HasValue)
             {
                 var removeDayNumber = (int)(m.RemovedAt.Value - sprint.StartDate).TotalDays + 1;
-                events.Add(new ScopeChangeEvent(
+                events.Add(new ScopeChangeEventData(
                     m.RemovedAt.Value, removeDayNumber, ticketKey, ticketSummary,
                     effectiveSp, issueType, "removed", null, isExcluded));
             }
@@ -517,7 +419,7 @@ public class ScopeChangeService
 
     // --- Burnup chart data (transition-based cumulative lines — spec BR11) ---
 
-    private static List<BurnupDataPoint> BuildBurnupData(
+    private static List<BurnupDataPointData> BuildBurnupData(
         List<SprintMembership> memberships,
         Sprint sprint,
         List<StatusTransition> statusTransitions,
@@ -607,7 +509,7 @@ public class ScopeChangeService
                         && !IsExcluded(m.FinalStatus, excludedStatuses)
                         && m.AddedAt <= sprint.StartDate);
 
-        var result = new List<BurnupDataPoint>();
+        var result = new List<BurnupDataPointData>();
         var cumulativeTotalScope = 0m;    // cumulative feature SP started (scope line starts near 0)
         var cumulativeCompleted = 0m;     // cumulative feature SP completed
         var cumulativeBugSp = startingBugSp;
@@ -729,7 +631,7 @@ public class ScopeChangeService
 
             var phase = dayNumber <= planningWindowDays ? "planning" : "execution";
 
-            result.Add(new BurnupDataPoint(
+            result.Add(new BurnupDataPointData(
                 dayNumber,
                 day,
                 Math.Round(cumulativeTotalScope, 1),
@@ -748,7 +650,7 @@ public class ScopeChangeService
 
     // --- Bug time-in-progress ---
 
-    private static List<BugTimeInProgress> ComputeBugTimeInProgress(
+    private static List<BugTimeInProgressData> ComputeBugTimeInProgress(
         List<SprintMembership> memberships,
         List<StatusTransition> statusTransitions,
         Sprint sprint,
@@ -763,7 +665,7 @@ public class ScopeChangeService
 
         var activeStatuses = GetActiveStatuses(workflowStages);
 
-        var result = new List<BugTimeInProgress>();
+        var result = new List<BugTimeInProgressData>();
 
         foreach (var m in midSprintBugs)
         {
@@ -774,7 +676,7 @@ public class ScopeChangeService
 
             var timeInActive = ComputeTimeInActiveStatuses(ticketTransitions, activeStatuses, sprint.EndDate);
 
-            result.Add(new BugTimeInProgress(
+            result.Add(new BugTimeInProgressData(
                 m.TicketId,
                 m.Ticket?.Summary ?? m.TicketId,
                 Math.Round(timeInActive, 2),
@@ -826,37 +728,5 @@ public class ScopeChangeService
         }
 
         return totalTime;
-    }
-
-    // --- Metric card builder ---
-
-    private static ScopeMetricCard BuildMetricCard(
-        string name,
-        decimal value,
-        string displayValue,
-        decimal? delta,
-        string polarity)
-    {
-        string? direction = null;
-        string? deltaPolarity = null;
-
-        if (delta.HasValue)
-        {
-            direction = delta.Value > 0 ? "up" : delta.Value < 0 ? "down" : "flat";
-            deltaPolarity = polarity switch
-            {
-                "positive-up" => delta.Value > 0 ? "positive" : delta.Value < 0 ? "negative" : "neutral",
-                "positive-down" => delta.Value < 0 ? "positive" : delta.Value > 0 ? "negative" : "neutral",
-                _ => "neutral"
-            };
-        }
-
-        return new ScopeMetricCard(
-            name,
-            Math.Round(value, 1),
-            displayValue,
-            delta.HasValue ? Math.Round(delta.Value, 1) : null,
-            direction,
-            deltaPolarity);
     }
 }

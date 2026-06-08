@@ -1,126 +1,8 @@
-using Fokus.Domain.Analytics;
-namespace Fokus.API.Features.Analytics;
+namespace Fokus.Domain.Analytics;
 
-// --- Response record hierarchy ---
-
-public record BugRatioSprintInfo(int Id, string Name, DateTime StartDate, DateTime EndDate);
-
-// --- Multi-sprint ---
-
-public record BugRatioTeamTrendEntry(
-    int SprintId,
-    decimal BugRatioPercent,
-    decimal BugSp,
-    decimal NonBugSp,
-    decimal CompletedSp);
-
-public record BugRatioTeamMetrics(
-    decimal BugRatioPercent,
-    decimal TotalBugSp,
-    decimal TotalNonBugSp,
-    decimal TotalCompletedSp,
-    List<BugRatioTeamTrendEntry> PerSprintTrend);
-
-public record BugRatioIssueTypeEntry(
-    string IssueType,
-    int TicketCount,
-    decimal SpTotal);
-
-public record BugRatioAlertStatus(bool IsActive, int ConsecutiveSprintCount, int ThresholdPercent);
-
-public record BugRatioDeveloperSprintBreakdown(
-    int SprintId,
-    decimal BugSp,
-    decimal NonBugSp,
-    decimal CompletedSp,
-    decimal BugRatioPercent,
-    int BugTicketCount,
-    int NonBugTicketCount);
-
-public record BugRatioDeveloperEntry(
-    string AccountId,
-    string DisplayName,
-    string? SubTeam,
-    string? AvatarUrl,
-    decimal BugSp,
-    decimal NonBugSp,
-    decimal CompletedSp,
-    decimal BugRatioPercent,
-    int BugTicketCount,
-    int NonBugTicketCount,
-    List<BugRatioDeveloperSprintBreakdown> SprintBreakdowns,
-    BugRatioAlertStatus Alert);
-
-public record BugRatioMultiSprintResponse(
-    List<BugRatioSprintInfo> Sprints,
-    BugRatioTeamMetrics TeamMetrics,
-    List<BugRatioIssueTypeEntry> IssueTypeBreakdown,
-    List<BugRatioDeveloperEntry> Developers);
-
-// --- Single-sprint ---
-
-public record BugRatioMetricCard(
-    string Name,
-    decimal Value,
-    string DisplayValue,
-    decimal? Delta,
-    string? DeltaDirection,
-    string? DeltaPolarity);
-
-public record BugRatioTeamSingleMetrics(
-    BugRatioMetricCard BugRatioPercent,
-    BugRatioMetricCard BugSp,
-    BugRatioMetricCard NonBugSp);
-
-public record BugRatioDeveloperDelta(
-    decimal BugSpDelta,
-    string BugSpDeltaDirection,
-    string BugSpDeltaPolarity,
-    decimal NonBugSpDelta,
-    string NonBugSpDeltaDirection,
-    string NonBugSpDeltaPolarity,
-    decimal BugRatioPercentDelta,
-    string BugRatioPercentDeltaDirection,
-    string BugRatioPercentDeltaPolarity,
-    int BugTicketCountDelta,
-    string BugTicketCountDeltaDirection,
-    string BugTicketCountDeltaPolarity,
-    int NonBugTicketCountDelta,
-    string NonBugTicketCountDeltaDirection,
-    string NonBugTicketCountDeltaPolarity);
-
-public record BugRatioDeveloperSingleEntry(
-    string AccountId,
-    string DisplayName,
-    string? SubTeam,
-    string? AvatarUrl,
-    decimal BugSp,
-    decimal NonBugSp,
-    decimal CompletedSp,
-    decimal BugRatioPercent,
-    int BugTicketCount,
-    int NonBugTicketCount,
-    BugRatioDeveloperDelta? Delta,
-    BugRatioAlertStatus Alert);
-
-public record BugRatioSingleSprintResponse(
-    BugRatioSprintInfo Sprint,
-    BugRatioTeamSingleMetrics TeamMetrics,
-    List<BugRatioIssueTypeEntry> IssueTypeBreakdown,
-    List<BugRatioDeveloperSingleEntry> Developers);
-
-// --- Response wrapper ---
-
-public record BugRatioResponse(
-    string Mode,
-    BugRatioMultiSprintResponse? MultiSprint,
-    BugRatioSingleSprintResponse? SingleSprint);
-
-// --- Service ---
-
-public class BugRatioService
+public class BugRatioCalculator
 {
-    public BugRatioMultiSprintResponse ComputeMultiSprint(
+    public BugRatioMultiSprintData ComputeMultiSprint(
         List<Sprint> targetSprints,
         List<Sprint> allClosedSprints,
         List<Developer> activeDevelopers,
@@ -139,7 +21,7 @@ public class BugRatioService
         var filteredDevelopers = FilterDevelopers(activeDevelopers, subTeam);
 
         var sprintInfos = sortedTarget
-            .Select(s => new BugRatioSprintInfo(s.Id, s.Name, s.StartDate, s.EndDate))
+            .Select(s => new BugRatioSprintData(s.Id, s.Name, s.StartDate, s.EndDate))
             .ToList();
 
         // Team-level per-sprint trend
@@ -151,7 +33,7 @@ public class BugRatioService
                 orderedStages, endIndex, excludedStatuses, defaultSpPerBug);
             var completedSp = bugSp + nonBugSp;
             var ratioPercent = completedSp > 0 ? bugSp / completedSp * 100 : 0m;
-            return new BugRatioTeamTrendEntry(
+            return new BugRatioTeamTrendData(
                 s.Id,
                 Math.Round(ratioPercent, 1),
                 Math.Round(bugSp, 1),
@@ -165,7 +47,7 @@ public class BugRatioService
         var totalCompletedSp = totalBugSp + totalNonBugSp;
         var teamRatio = totalCompletedSp > 0 ? totalBugSp / totalCompletedSp * 100 : 0m;
 
-        var teamMetrics = new BugRatioTeamMetrics(
+        var teamMetrics = new BugRatioTeamMetricsData(
             Math.Round(teamRatio, 1),
             Math.Round(totalBugSp, 1),
             Math.Round(totalNonBugSp, 1),
@@ -197,7 +79,7 @@ public class BugRatioService
                     orderedStages, endIndex, excludedStatuses);
                 var bugCount = completed.Count(IsBug);
                 var nonBugCount = completed.Count(m => !IsBug(m));
-                return new BugRatioDeveloperSprintBreakdown(
+                return new BugRatioDeveloperSprintData(
                     s.Id,
                     Math.Round(bugSp, 1),
                     Math.Round(nonBugSp, 1),
@@ -219,7 +101,7 @@ public class BugRatioService
                 excludedStatuses, settings.BugRatio.AlertThreshold,
                 settings.BugRatio.ConsecutiveSprintCount, subTeam, defaultSpPerBug);
 
-            return new BugRatioDeveloperEntry(
+            return new BugRatioDeveloperData(
                 dev.Id, dev.DisplayName, dev.SubTeam, dev.AvatarUrl,
                 Math.Round(devBugSp, 1),
                 Math.Round(devNonBugSp, 1),
@@ -231,10 +113,10 @@ public class BugRatioService
                 alert);
         }).ToList();
 
-        return new BugRatioMultiSprintResponse(sprintInfos, teamMetrics, issueTypeBreakdown, developerEntries);
+        return new BugRatioMultiSprintData(sprintInfos, teamMetrics, issueTypeBreakdown, developerEntries);
     }
 
-    public BugRatioSingleSprintResponse ComputeSingleSprint(
+    public BugRatioSingleSprintData ComputeSingleSprint(
         Sprint targetSprint,
         Sprint? priorSprint,
         List<Sprint> allClosedSprints,
@@ -251,7 +133,7 @@ public class BugRatioService
         var (orderedStages, startIndex) = TransitionAttributionChecker.ResolveStartIndex(settings);
         var endIndex = TransitionAttributionChecker.ResolveEndIndex(settings, orderedStages);
 
-        var sprintInfo = new BugRatioSprintInfo(
+        var sprintInfo = new BugRatioSprintData(
             targetSprint.Id, targetSprint.Name, targetSprint.StartDate, targetSprint.EndDate);
 
         // Team metrics for current sprint
@@ -279,12 +161,12 @@ public class BugRatioService
             priorRatio = priorCompletedSp > 0 ? priorBugSp / priorCompletedSp * 100 : 0m;
         }
 
-        var teamMetrics = new BugRatioTeamSingleMetrics(
-            BuildMetricCard("Bug Ratio %", ratio, $"{ratio:0.#}%",
+        var teamMetrics = new BugRatioTeamSingleData(
+            MetricCardBuilder.Build("Bug Ratio %", ratio, $"{ratio:0.#}%",
                 priorRatio.HasValue ? ratio - priorRatio.Value : null, "positive-down"),
-            BuildMetricCard("Bug SP", bugSp, $"{bugSp:0.#}",
+            MetricCardBuilder.Build("Bug SP", bugSp, $"{bugSp:0.#}",
                 priorBugSp.HasValue ? bugSp - priorBugSp.Value : null, "positive-down"),
-            BuildMetricCard("Non-Bug SP", nonBugSp, $"{nonBugSp:0.#}",
+            MetricCardBuilder.Build("Non-Bug SP", nonBugSp, $"{nonBugSp:0.#}",
                 priorNonBugSp.HasValue ? nonBugSp - priorNonBugSp.Value : null, "positive-up"));
 
         // Issue type breakdown for current sprint completed tickets (BR18)
@@ -308,7 +190,7 @@ public class BugRatioService
             var devBugCount = devCompleted.Count(IsBug);
             var devNonBugCount = devCompleted.Count(m => !IsBug(m));
 
-            BugRatioDeveloperDelta? delta = null;
+            BugRatioDeveloperDeltaData? delta = null;
             if (priorSprint is not null)
             {
                 var priorDevMemberships = GetDeveloperMemberships(priorSprint, dev.Id, subTeam);
@@ -329,12 +211,12 @@ public class BugRatioService
                 var bugCountDelta = devBugCount - priorDevBugCount;
                 var nonBugCountDelta = devNonBugCount - priorDevNonBugCount;
 
-                delta = new BugRatioDeveloperDelta(
-                    Math.Round(bugSpDelta, 1), DeltaDirection(bugSpDelta), DeltaPolarity(bugSpDelta, positiveUp: false),
-                    Math.Round(nonBugSpDelta, 1), DeltaDirection(nonBugSpDelta), DeltaPolarity(nonBugSpDelta, positiveUp: true),
-                    Math.Round(ratioDelta, 1), DeltaDirection(ratioDelta), DeltaPolarity(ratioDelta, positiveUp: false),
-                    bugCountDelta, DeltaDirection(bugCountDelta), DeltaPolarity(bugCountDelta, positiveUp: false),
-                    nonBugCountDelta, DeltaDirection(nonBugCountDelta), DeltaPolarity(nonBugCountDelta, positiveUp: true));
+                delta = new BugRatioDeveloperDeltaData(
+                    Math.Round(bugSpDelta, 1), MetricCardBuilder.Direction(bugSpDelta), MetricCardBuilder.Polarity(bugSpDelta, positiveUp: false),
+                    Math.Round(nonBugSpDelta, 1), MetricCardBuilder.Direction(nonBugSpDelta), MetricCardBuilder.Polarity(nonBugSpDelta, positiveUp: true),
+                    Math.Round(ratioDelta, 1), MetricCardBuilder.Direction(ratioDelta), MetricCardBuilder.Polarity(ratioDelta, positiveUp: false),
+                    bugCountDelta, MetricCardBuilder.Direction(bugCountDelta), MetricCardBuilder.Polarity(bugCountDelta, positiveUp: false),
+                    nonBugCountDelta, MetricCardBuilder.Direction(nonBugCountDelta), MetricCardBuilder.Polarity(nonBugCountDelta, positiveUp: true));
             }
 
             var alert = EvaluateAlert(
@@ -342,7 +224,7 @@ public class BugRatioService
                 excludedStatuses, settings.BugRatio.AlertThreshold,
                 settings.BugRatio.ConsecutiveSprintCount, subTeam, defaultSpPerBug);
 
-            return new BugRatioDeveloperSingleEntry(
+            return new BugRatioDeveloperSingleData(
                 dev.Id, dev.DisplayName, dev.SubTeam, dev.AvatarUrl,
                 Math.Round(devBugSp, 1),
                 Math.Round(devNonBugSp, 1),
@@ -354,12 +236,12 @@ public class BugRatioService
                 alert);
         }).ToList();
 
-        return new BugRatioSingleSprintResponse(sprintInfo, teamMetrics, issueTypeBreakdown, developerEntries);
+        return new BugRatioSingleSprintData(sprintInfo, teamMetrics, issueTypeBreakdown, developerEntries);
     }
 
     // --- Alert evaluation (BR9, BR10, BR11) ---
 
-    private BugRatioAlertStatus EvaluateAlert(
+    private BugRatioAlertData EvaluateAlert(
         string developerId,
         List<Sprint> allClosedSprints,
         List<StatusTransition> statusTransitions,
@@ -371,7 +253,6 @@ public class BugRatioService
         string? subTeam,
         int defaultSpPerBug = 0)
     {
-        // Evaluate sprints from most recent backward (BR9)
         var sortedDesc = allClosedSprints.OrderByDescending(s => s.StartDate).ToList();
 
         var consecutiveAbove = 0;
@@ -398,15 +279,11 @@ public class BugRatioService
             }
         }
 
-        return new BugRatioAlertStatus(consecutiveAbove >= consecutiveCount, consecutiveAbove, threshold);
+        return new BugRatioAlertData(consecutiveAbove >= consecutiveCount, consecutiveAbove, threshold);
     }
 
     // --- Transition-based completed memberships ---
 
-    /// <summary>
-    /// Returns memberships whose ticket has a qualifying completion transition during the sprint window.
-    /// Excludes removed and excluded-from-scope tickets.
-    /// </summary>
     private static List<SprintMembership> GetTransitionCompletedMemberships(
         List<SprintMembership> memberships,
         List<StatusTransition> statusTransitions,
@@ -433,9 +310,6 @@ public class BugRatioService
             .ToList();
     }
 
-    /// <summary>
-    /// Computes bug and non-bug completed SP using transition-based attribution.
-    /// </summary>
     private static (decimal BugSp, decimal NonBugSp) ComputeCompletedBugNonBugSp(
         List<SprintMembership> memberships,
         List<StatusTransition> statusTransitions,
@@ -495,7 +369,7 @@ public class BugRatioService
 
     // --- Issue type breakdown (BR18) ---
 
-    private static List<BugRatioIssueTypeEntry> BuildIssueTypeBreakdown(
+    private static List<BugRatioIssueTypeData> BuildIssueTypeBreakdown(
         List<SprintMembership> completedMemberships,
         int defaultSpPerBug = 0)
     {
@@ -504,59 +378,9 @@ public class BugRatioService
             .Select(g =>
             {
                 var spTotal = g.Sum(m => m.GetEffectiveSp(defaultSpPerBug) ?? 0m);
-                return new BugRatioIssueTypeEntry(g.Key, g.Count(), Math.Round(spTotal, 1));
+                return new BugRatioIssueTypeData(g.Key, g.Count(), Math.Round(spTotal, 1));
             })
             .OrderByDescending(e => e.TicketCount)
             .ToList();
     }
-
-    // --- Metric card builder ---
-
-    private static BugRatioMetricCard BuildMetricCard(
-        string name,
-        decimal value,
-        string displayValue,
-        decimal? delta,
-        string polarity)
-    {
-        string? direction = null;
-        string? deltaPolarity = null;
-
-        if (delta.HasValue)
-        {
-            direction = delta.Value > 0 ? "up" : delta.Value < 0 ? "down" : "flat";
-            deltaPolarity = polarity switch
-            {
-                "positive-up" => delta.Value > 0 ? "positive" : delta.Value < 0 ? "negative" : "neutral",
-                "positive-down" => delta.Value < 0 ? "positive" : delta.Value > 0 ? "negative" : "neutral",
-                _ => "neutral"
-            };
-        }
-
-        return new BugRatioMetricCard(
-            name,
-            Math.Round(value, 1),
-            displayValue,
-            delta.HasValue ? Math.Round(delta.Value, 1) : null,
-            direction,
-            deltaPolarity);
-    }
-
-    // --- Delta helpers ---
-
-    private static string DeltaDirection(decimal delta) =>
-        delta > 0 ? "up" : delta < 0 ? "down" : "flat";
-
-    private static string DeltaDirection(int delta) =>
-        delta > 0 ? "up" : delta < 0 ? "down" : "flat";
-
-    private static string DeltaPolarity(decimal delta, bool positiveUp) =>
-        positiveUp
-            ? (delta > 0 ? "positive" : delta < 0 ? "negative" : "neutral")
-            : (delta < 0 ? "positive" : delta > 0 ? "negative" : "neutral");
-
-    private static string DeltaPolarity(int delta, bool positiveUp) =>
-        positiveUp
-            ? (delta > 0 ? "positive" : delta < 0 ? "negative" : "neutral")
-            : (delta < 0 ? "positive" : delta > 0 ? "negative" : "neutral");
 }

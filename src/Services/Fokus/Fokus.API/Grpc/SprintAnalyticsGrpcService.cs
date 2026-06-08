@@ -1,7 +1,5 @@
 using Blocks.Contracts.Grpc;
 using Blocks.Contracts.Grpc.DataContracts;
-using Fokus.API.Features.Analytics;
-using Fokus.API.Features.Analytics.GetCarryOver;
 using Fokus.API.Features.Analytics.GetSprintSummary;
 using Fokus.Domain.Analytics;
 using Fokus.Persistence;
@@ -23,8 +21,8 @@ public class SprintAnalyticsGrpcService(
     TicketRepository ticketRepository,
     TestExecutionRepository testExecutionRepository,
     SprintSummaryCalculator sprintSummaryCalculator,
-    ScopeChangeService scopeChangeService,
-    CarryOverService carryOverService,
+    ScopeChangeCalculator scopeChangeCalculator,
+    CarryOverCalculator carryOverCalculator,
     QaMetricsCalculator qaMetricsCalculator) : ISprintAnalyticsService
 {
     public async Task<AnonymizedSprintSummary> GetSprintSummaryAsync(SprintQuery request, CancellationToken ct = default)
@@ -74,7 +72,7 @@ public class SprintAnalyticsGrpcService(
             targetSprint, allDevelopers, capacityRecords, statusTransitions, settings);
 
         var priorSprint = loadedSprints.FirstOrDefault(s => s.Id != target.Id);
-        var singleResult = scopeChangeService.ComputeSingleSprint(
+        var singleResult = scopeChangeCalculator.ComputeSingleSprint(
             targetSprint, priorSprint, statusTransitions, settings, subTeam: null, excludedIds);
 
         return MapToDisruptionMetrics(singleResult);
@@ -101,7 +99,7 @@ public class SprintAnalyticsGrpcService(
         var selectedSprints = allSprints.TakeLast(5).ToList();
         var excludedInAll = BuildCrossSprintExclusions(selectedSprints, allDevelopers, capacityRecords, statusTransitions, settings);
 
-        var multiResult = carryOverService.ComputeMultiSprint(
+        var multiResult = carryOverCalculator.ComputeMultiSprint(
             selectedSprints, allSprints, statusTransitions, settings, subTeam: null, excludedInAll);
 
         return MapToCarryOverHistory(multiResult, selectedSprints, allSprints);
@@ -241,7 +239,7 @@ public class SprintAnalyticsGrpcService(
             .ToList();
     }
 
-    private static DisruptionMetrics MapToDisruptionMetrics(ScopeChangeSingleSprintResponse result)
+    private static DisruptionMetrics MapToDisruptionMetrics(ScopeChangeSingleSprintData result)
     {
         var metrics = result.Metrics;
         return new DisruptionMetrics
@@ -250,12 +248,13 @@ public class SprintAnalyticsGrpcService(
             BugDisruptionRate = 0m,
             AddedSp = metrics.AddedSp.Value,
             BugAddedSp = 0m,
+            // Note: Action is stored as lowercase "added" — this check ("Added") is a latent case bug preserved verbatim.
             MidSprintAdditionCount = result.Events.Count(e => e.Action == "Added" && !e.IsExcluded),
         };
     }
 
     private static CarryOverHistory MapToCarryOverHistory(
-        CarryOverMultiSprintResponse result,
+        CarryOverMultiSprintData result,
         List<Sprint> selectedSprints,
         List<Sprint> allSprints)
     {

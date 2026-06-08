@@ -1,104 +1,6 @@
-using Fokus.Domain.Analytics;
-namespace Fokus.API.Features.Analytics;
+namespace Fokus.Domain.Analytics;
 
-// --- Shared types ---
-
-public record CycleTimeSprintInfo(int Id, string Name, DateTime StartDate, DateTime EndDate);
-
-public record CycleTimeMetricCard(
-    string Name,
-    decimal Value,
-    string DisplayValue,
-    decimal? Delta,
-    string? DeltaDirection,
-    string? DeltaPolarity);
-
-public record StageBreakdownEntry(string StageName, decimal DurationDays);
-
-public record CycleTimeScatterPoint(
-    string TicketKey,
-    string TicketSummary,
-    string IssueType,
-    decimal CycleTimeDays,
-    DateTime CompletionDate,
-    List<StageBreakdownEntry> StageBreakdown,
-    int ReworkCount);
-
-public record StageFunnelEntry(string StageName, decimal AverageDurationDays, decimal Percentage);
-
-public record CycleTimeIssueTypeEntry(
-    string IssueType,
-    int TicketCount,
-    decimal MedianCycleTime,
-    decimal P85CycleTime);
-
-public record CycleTimeDeveloperEntry(
-    string DisplayName,
-    string? AvatarUrl,
-    string? SubTeam,
-    int TicketsCompleted,
-    decimal MedianCycleTime,
-    decimal P85CycleTime,
-    string DominantStage);
-
-public record CycleTimeOutlierEntry(
-    string TicketKey,
-    string TicketSummary,
-    string IssueType,
-    decimal CycleTimeDays,
-    List<StageBreakdownEntry> StageBreakdown,
-    int ReworkCount);
-
-public record CycleTimeBoundaries(string StartStage, string EndStage);
-
-// --- Single-sprint response ---
-
-public record CycleTimeSingleSprintResponse(
-    CycleTimeSprintInfo? Sprint,
-    List<CycleTimeMetricCard>? MetricCards,
-    List<CycleTimeScatterPoint> ScatterPlot,
-    List<StageFunnelEntry> StageFunnel,
-    List<CycleTimeIssueTypeEntry> IssueTypeBreakdown,
-    List<CycleTimeDeveloperEntry> DeveloperBreakdown,
-    List<CycleTimeOutlierEntry> Outliers,
-    CycleTimeBoundaries Boundaries);
-
-// --- Multi-sprint response ---
-
-public record CycleTimeTrendEntry(
-    int SprintId,
-    string SprintName,
-    decimal P85CycleTime,
-    decimal MedianCycleTime,
-    int TicketsCompleted);
-
-public record CycleTimeSprintSummaryEntry(
-    int SprintId,
-    string SprintName,
-    DateTime StartDate,
-    int TicketsCompleted,
-    decimal MedianCycleTime,
-    decimal P85CycleTime,
-    int OutlierCount);
-
-public record CycleTimeMultiSprintResponse(
-    List<CycleTimeSprintInfo> Sprints,
-    List<CycleTimeMetricCard>? MetricCards,
-    List<CycleTimeTrendEntry> Trend,
-    List<StageFunnelEntry> StageFunnel,
-    List<CycleTimeSprintSummaryEntry> SprintSummaries,
-    CycleTimeBoundaries Boundaries);
-
-// --- Wrapper ---
-
-public record CycleTimeResponse(
-    string Mode,
-    CycleTimeSingleSprintResponse? SingleSprint,
-    CycleTimeMultiSprintResponse? MultiSprint);
-
-// --- Service ---
-
-public class CycleTimeService
+public class CycleTimeCalculator
 {
     // Per-ticket computed result used internally
     private record TicketCycleResult(
@@ -111,7 +13,7 @@ public class CycleTimeService
         Dictionary<string, decimal> StageDurations,
         int ReworkCount);
 
-    public CycleTimeSingleSprintResponse ComputeSingleSprint(
+    public CycleTimeSingleSprintData ComputeSingleSprint(
         Sprint targetSprint,
         Sprint? priorSprint,
         List<StatusTransition> statusTransitions,
@@ -121,7 +23,7 @@ public class CycleTimeService
     {
         var (startStage, endStage, orderedStages) = ResolveBoundaries(settings);
         var endIndex = TransitionAttributionChecker.GetStageIndex(endStage, orderedStages);
-        var boundaries = new CycleTimeBoundaries(startStage, endStage);
+        var boundaries = new CycleTimeBoundariesData(startStage, endStage);
 
         var memberships = FilterMemberships(targetSprint.Memberships, subTeam, excludedDeveloperIds);
 
@@ -130,14 +32,14 @@ public class CycleTimeService
             orderedStages, endIndex, startStage, endStage,
             targetSprint.StartDate, targetSprint.EndDate);
 
-        var sprintInfo = new CycleTimeSprintInfo(
+        var sprintInfo = new CycleTimeSprintData(
             targetSprint.Id, targetSprint.Name,
             targetSprint.StartDate, targetSprint.EndDate);
 
         if (ticketResults.Count == 0)
         {
             var emptyCards = BuildMetricCards(0, 0, 0, 0, null);
-            return new CycleTimeSingleSprintResponse(
+            return new CycleTimeSingleSprintData(
                 sprintInfo, emptyCards, [], [], [], [], [], boundaries);
         }
 
@@ -151,7 +53,6 @@ public class CycleTimeService
         if (priorSprint is not null)
         {
             var priorMemberships = FilterMemberships(priorSprint.Memberships, subTeam, excludedDeveloperIds);
-            // Status transitions passed in include both target and prior sprint tickets
             var priorResults = ComputeTicketCycleTime(
                 priorMemberships, statusTransitions,
                 orderedStages, endIndex, startStage, endStage,
@@ -179,12 +80,12 @@ public class CycleTimeService
         var developerBreakdown = BuildDeveloperBreakdown(ticketResults, targetSprint, orderedStages, startStage, endStage);
         var outliers = BuildOutlierTable(ticketResults, percentiles.P50, orderedStages, startStage, endStage);
 
-        return new CycleTimeSingleSprintResponse(
+        return new CycleTimeSingleSprintData(
             sprintInfo, metricCards, scatterPlot, stageFunnel,
             issueTypeBreakdown, developerBreakdown, outliers, boundaries);
     }
 
-    public CycleTimeMultiSprintResponse ComputeMultiSprint(
+    public CycleTimeMultiSprintData ComputeMultiSprint(
         List<Sprint> sprints,
         List<StatusTransition> statusTransitions,
         AppSettings settings,
@@ -193,12 +94,12 @@ public class CycleTimeService
     {
         var (startStage, endStage, orderedStages) = ResolveBoundaries(settings);
         var endIndex = TransitionAttributionChecker.GetStageIndex(endStage, orderedStages);
-        var boundaries = new CycleTimeBoundaries(startStage, endStage);
+        var boundaries = new CycleTimeBoundariesData(startStage, endStage);
 
         var sortedSprints = sprints.OrderBy(s => s.StartDate).ToList();
 
         var sprintInfos = sortedSprints
-            .Select(s => new CycleTimeSprintInfo(s.Id, s.Name, s.StartDate, s.EndDate))
+            .Select(s => new CycleTimeSprintData(s.Id, s.Name, s.StartDate, s.EndDate))
             .ToList();
 
         // Per-sprint computation
@@ -219,7 +120,7 @@ public class CycleTimeService
         {
             var times = pair.Results.Select(r => r.CycleTimeDays).ToList();
             var p = ComputePercentiles(times);
-            return new CycleTimeTrendEntry(
+            return new CycleTimeTrendData(
                 pair.Sprint.Id, pair.Sprint.Name,
                 Math.Round(p.P85, 1), Math.Round(p.P50, 1),
                 pair.Results.Count);
@@ -232,7 +133,7 @@ public class CycleTimeService
             var p = ComputePercentiles(times);
             var median = p.P50;
             var outlierCount = CountOutliers(pair.Results, median);
-            return new CycleTimeSprintSummaryEntry(
+            return new CycleTimeSprintSummaryData(
                 pair.Sprint.Id, pair.Sprint.Name, pair.Sprint.StartDate,
                 pair.Results.Count,
                 Math.Round(median, 1),
@@ -244,7 +145,7 @@ public class CycleTimeService
         var stageFunnel = BuildMultiSprintStageFunnel(perSprintResults, orderedStages, startStage, endStage, settings.WorkflowStages);
 
         // Metric cards: per-sprint averaging (BR12)
-        List<CycleTimeMetricCard>? metricCards = null;
+        List<MetricCardData>? metricCards = null;
         if (perSprintResults.Count > 0)
         {
             var sprintMetrics = perSprintResults.Select(pair =>
@@ -274,16 +175,16 @@ public class CycleTimeService
                 deltaOutliers = last.OutlierCount - prev.OutlierCount;
             }
 
-            metricCards = new List<CycleTimeMetricCard>
+            metricCards = new List<MetricCardData>
             {
-                BuildCard("Median Cycle Time", avgP50, $"{Math.Round(avgP50, 1)} days", deltaP50, "positive-down"),
-                BuildCard("P85 Cycle Time", avgP85, $"{Math.Round(avgP85, 1)} days", deltaP85, "positive-down"),
-                BuildCard("Throughput", avgThroughput, $"{Math.Round(avgThroughput, 1)} tickets", deltaThroughput.HasValue ? (decimal)deltaThroughput.Value : null, "positive-up"),
-                BuildCard("Outliers", avgOutliers, $"{Math.Round(avgOutliers, 1)} outliers", deltaOutliers.HasValue ? (decimal)deltaOutliers.Value : null, "positive-down"),
+                MetricCardBuilder.Build("Median Cycle Time", avgP50, $"{Math.Round(avgP50, 1)} days", deltaP50, "positive-down"),
+                MetricCardBuilder.Build("P85 Cycle Time", avgP85, $"{Math.Round(avgP85, 1)} days", deltaP85, "positive-down"),
+                MetricCardBuilder.Build("Throughput", avgThroughput, $"{Math.Round(avgThroughput, 1)} tickets", deltaThroughput.HasValue ? (decimal)deltaThroughput.Value : null, "positive-up"),
+                MetricCardBuilder.Build("Outliers", avgOutliers, $"{Math.Round(avgOutliers, 1)} outliers", deltaOutliers.HasValue ? (decimal)deltaOutliers.Value : null, "positive-down"),
             };
         }
 
-        return new CycleTimeMultiSprintResponse(
+        return new CycleTimeMultiSprintData(
             sprintInfos, metricCards, trend, stageFunnel, sprintSummaries, boundaries);
     }
 
@@ -365,7 +266,6 @@ public class CycleTimeService
             var visitedStages = new HashSet<string>();
             var reworkCount = 0;
 
-            // Walk transitions
             for (int i = 0; i < transitions.Count; i++)
             {
                 var transition = transitions[i];
@@ -378,7 +278,6 @@ public class CycleTimeService
                 // BR21: stages not in orderedStages at all (renamed/removed) are tracked as "Other"
                 if (stageIdx == -1)
                 {
-                    // Accumulate time under a sentinel key; resolved to "Other" in the funnel builder
                     var enterOther = transition.Timestamp < sprintStart ? sprintStart : transition.Timestamp;
                     DateTime exitOther;
                     if (i + 1 < transitions.Count)
@@ -493,7 +392,7 @@ public class CycleTimeService
 
     // --- Metric card builders ---
 
-    private List<CycleTimeMetricCard> BuildMetricCards(
+    private static List<MetricCardData> BuildMetricCards(
         decimal p50, decimal p85, int throughput, int outlierCount,
         (decimal? PriorP50, decimal? PriorP85, int? PriorThroughput, int? PriorOutlierCount)? prior)
     {
@@ -502,43 +401,18 @@ public class CycleTimeService
         decimal? deltaThroughput = prior.HasValue && prior.Value.PriorThroughput.HasValue ? throughput - prior.Value.PriorThroughput.Value : null;
         decimal? deltaOutliers = prior.HasValue && prior.Value.PriorOutlierCount.HasValue ? outlierCount - prior.Value.PriorOutlierCount.Value : null;
 
-        return new List<CycleTimeMetricCard>
+        return new List<MetricCardData>
         {
-            BuildCard("Median Cycle Time", p50, $"{Math.Round(p50, 1)} days", deltaP50, "positive-down"),
-            BuildCard("P85 Cycle Time", p85, $"{Math.Round(p85, 1)} days", deltaP85, "positive-down"),
-            BuildCard("Throughput", throughput, $"{throughput} tickets", deltaThroughput, "positive-up"),
-            BuildCard("Outliers", outlierCount, $"{outlierCount} outliers", deltaOutliers, "positive-down"),
+            MetricCardBuilder.Build("Median Cycle Time", p50, $"{Math.Round(p50, 1)} days", deltaP50, "positive-down"),
+            MetricCardBuilder.Build("P85 Cycle Time", p85, $"{Math.Round(p85, 1)} days", deltaP85, "positive-down"),
+            MetricCardBuilder.Build("Throughput", throughput, $"{throughput} tickets", deltaThroughput, "positive-up"),
+            MetricCardBuilder.Build("Outliers", outlierCount, $"{outlierCount} outliers", deltaOutliers, "positive-down"),
         };
-    }
-
-    private static CycleTimeMetricCard BuildCard(string name, decimal value, string displayValue, decimal? delta, string polarity)
-    {
-        string? direction = null;
-        string? deltaPolarity = null;
-
-        if (delta.HasValue)
-        {
-            direction = delta.Value > 0 ? "up" : delta.Value < 0 ? "down" : "flat";
-            deltaPolarity = polarity switch
-            {
-                "positive-up" => delta.Value > 0 ? "positive" : delta.Value < 0 ? "negative" : "neutral",
-                "positive-down" => delta.Value < 0 ? "positive" : delta.Value > 0 ? "negative" : "neutral",
-                _ => "neutral"
-            };
-        }
-
-        return new CycleTimeMetricCard(
-            name,
-            Math.Round(value, 1),
-            displayValue,
-            delta.HasValue ? Math.Round(delta.Value, 1) : null,
-            direction,
-            deltaPolarity);
     }
 
     // --- Scatter plot builder ---
 
-    private static List<CycleTimeScatterPoint> BuildScatterPlot(
+    private static List<CycleTimeScatterPointData> BuildScatterPlot(
         List<TicketCycleResult> results,
         List<string> orderedStages,
         string startStage,
@@ -547,7 +421,7 @@ public class CycleTimeService
         return results.Select(r =>
         {
             var breakdown = BuildStageBreakdown(r.StageDurations, orderedStages, startStage, endStage);
-            return new CycleTimeScatterPoint(
+            return new CycleTimeScatterPointData(
                 r.TicketKey, r.TicketSummary, r.IssueType,
                 r.CycleTimeDays, r.CompletionDate, breakdown, r.ReworkCount);
         }).ToList();
@@ -555,7 +429,7 @@ public class CycleTimeService
 
     // --- Stage funnel builder (BR8) ---
 
-    private static List<StageFunnelEntry> BuildStageFunnel(
+    private static List<StageFunnelData> BuildStageFunnel(
         List<TicketCycleResult> results,
         List<string> orderedStages,
         string startStage,
@@ -571,10 +445,8 @@ public class CycleTimeService
         if (startIdx < 0 || endIdx < 0 || startIdx > endIdx)
             return [];
 
-        // Stages within boundaries
         var boundaryStages = orderedStages.Skip(startIdx).Take(endIdx - startIdx + 1).ToList();
 
-        // Accumulate durations per recognized stage, group unrecognized as "Other"
         var stageSums = new Dictionary<string, decimal>();
         var otherSum = 0m;
 
@@ -591,7 +463,6 @@ public class CycleTimeService
                 }
                 else
                 {
-                    // BR21: Unrecognized stages grouped as "Other"
                     otherSum += kvp.Value;
                 }
             }
@@ -613,7 +484,7 @@ public class CycleTimeService
 
         var total = funnelEntries.Sum(e => e.Avg);
 
-        return funnelEntries.Select(e => new StageFunnelEntry(
+        return funnelEntries.Select(e => new StageFunnelData(
             e.Stage,
             Math.Round(e.Avg, 2),
             total > 0 ? Math.Round(e.Avg / total * 100, 1) : 0)).ToList();
@@ -621,7 +492,7 @@ public class CycleTimeService
 
     // --- Multi-sprint stage funnel builder ---
 
-    private static List<StageFunnelEntry> BuildMultiSprintStageFunnel(
+    private static List<StageFunnelData> BuildMultiSprintStageFunnel(
         List<(Sprint Sprint, List<TicketCycleResult> Results)> perSprintResults,
         List<string> orderedStages,
         string startStage,
@@ -631,7 +502,6 @@ public class CycleTimeService
         if (perSprintResults.Count == 0)
             return [];
 
-        // Average across sprints: compute per-sprint funnel, then average the averages
         var sprintFunnels = perSprintResults
             .Select(pair => BuildStageFunnel(pair.Results, orderedStages, startStage, endStage, configuredWorkflowStages))
             .Where(f => f.Count > 0)
@@ -640,13 +510,11 @@ public class CycleTimeService
         if (sprintFunnels.Count == 0)
             return [];
 
-        // Gather all stage names across all funnels
         var allStageNames = sprintFunnels
             .SelectMany(f => f.Select(e => e.StageName))
             .Distinct()
             .ToList();
 
-        // Preserve boundary stage order
         var startIdx = orderedStages.IndexOf(startStage);
         var endIdx = orderedStages.IndexOf(endStage);
         var boundaryStages = startIdx >= 0 && endIdx >= 0
@@ -667,7 +535,7 @@ public class CycleTimeService
         }).ToList();
 
         var total = averaged.Sum(e => e.avg);
-        return averaged.Select(e => new StageFunnelEntry(
+        return averaged.Select(e => new StageFunnelData(
             e.stageName,
             Math.Round(e.avg, 2),
             total > 0 ? Math.Round(e.avg / total * 100, 1) : 0)).ToList();
@@ -675,7 +543,7 @@ public class CycleTimeService
 
     // --- Issue type breakdown ---
 
-    private static List<CycleTimeIssueTypeEntry> BuildIssueTypeBreakdown(List<TicketCycleResult> results)
+    private static List<CycleTimeIssueTypeData> BuildIssueTypeBreakdown(List<TicketCycleResult> results)
     {
         return results
             .GroupBy(r => r.IssueType)
@@ -683,7 +551,7 @@ public class CycleTimeService
             {
                 var times = g.Select(r => r.CycleTimeDays).OrderBy(t => t).ToList();
                 var p = ComputePercentiles(times);
-                return new CycleTimeIssueTypeEntry(
+                return new CycleTimeIssueTypeData(
                     g.Key, g.Count(),
                     Math.Round(p.P50, 1),
                     Math.Round(p.P85, 1));
@@ -694,7 +562,7 @@ public class CycleTimeService
 
     // --- Developer breakdown (BR9) ---
 
-    private static List<CycleTimeDeveloperEntry> BuildDeveloperBreakdown(
+    private static List<CycleTimeDeveloperData> BuildDeveloperBreakdown(
         List<TicketCycleResult> results,
         Sprint sprint,
         List<string> orderedStages,
@@ -706,7 +574,7 @@ public class CycleTimeService
             .GroupBy(r => r.AssigneeId!)
             .ToList();
 
-        var entries = new List<CycleTimeDeveloperEntry>();
+        var entries = new List<CycleTimeDeveloperData>();
 
         foreach (var group in byDeveloper)
         {
@@ -714,7 +582,6 @@ public class CycleTimeService
             var times = devResults.Select(r => r.CycleTimeDays).OrderBy(t => t).ToList();
             var p = ComputePercentiles(times);
 
-            // Dominant stage: stage with highest average time for this developer's tickets (BR9)
             var startIdx = orderedStages.IndexOf(startStage);
             var endIdx = orderedStages.IndexOf(endStage);
             var boundaryStages = startIdx >= 0 && endIdx >= 0
@@ -735,11 +602,10 @@ public class CycleTimeService
                 ? stageSums.MaxBy(kvp => kvp.Value).Key
                 : startStage;
 
-            // Find developer info from sprint memberships
             var membership = sprint.Memberships.FirstOrDefault(m => m.Ticket?.AssigneeId == group.Key);
             var developer = membership?.Ticket?.Assignee;
 
-            entries.Add(new CycleTimeDeveloperEntry(
+            entries.Add(new CycleTimeDeveloperData(
                 developer?.DisplayName ?? group.Key,
                 developer?.AvatarUrl,
                 developer?.SubTeam,
@@ -754,7 +620,7 @@ public class CycleTimeService
 
     // --- Outlier table (BR6) ---
 
-    private static List<CycleTimeOutlierEntry> BuildOutlierTable(
+    private static List<CycleTimeOutlierData> BuildOutlierTable(
         List<TicketCycleResult> results,
         decimal median,
         List<string> orderedStages,
@@ -767,7 +633,7 @@ public class CycleTimeService
             .Select(r =>
             {
                 var breakdown = BuildStageBreakdown(r.StageDurations, orderedStages, startStage, endStage);
-                return new CycleTimeOutlierEntry(
+                return new CycleTimeOutlierData(
                     r.TicketKey, r.TicketSummary, r.IssueType,
                     r.CycleTimeDays, breakdown, r.ReworkCount);
             })
@@ -776,7 +642,7 @@ public class CycleTimeService
 
     // --- Stage breakdown helper ---
 
-    private static List<StageBreakdownEntry> BuildStageBreakdown(
+    private static List<StageBreakdownData> BuildStageBreakdown(
         Dictionary<string, decimal> stageDurations,
         List<string> orderedStages,
         string startStage,
@@ -786,14 +652,14 @@ public class CycleTimeService
         var endIdx = orderedStages.IndexOf(endStage);
 
         if (startIdx < 0 || endIdx < 0)
-            return stageDurations.Select(kvp => new StageBreakdownEntry(kvp.Key, Math.Round(kvp.Value, 2))).ToList();
+            return stageDurations.Select(kvp => new StageBreakdownData(kvp.Key, Math.Round(kvp.Value, 2))).ToList();
 
         var boundaryStages = orderedStages.Skip(startIdx).Take(endIdx - startIdx + 1).ToList();
 
         return stageDurations
             .Where(kvp => boundaryStages.Contains(kvp.Key))
             .OrderBy(kvp => orderedStages.IndexOf(kvp.Key))
-            .Select(kvp => new StageBreakdownEntry(kvp.Key, Math.Round(kvp.Value, 2)))
+            .Select(kvp => new StageBreakdownData(kvp.Key, Math.Round(kvp.Value, 2)))
             .ToList();
     }
 

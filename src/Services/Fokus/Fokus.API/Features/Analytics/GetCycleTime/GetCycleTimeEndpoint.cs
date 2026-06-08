@@ -1,4 +1,6 @@
 using Fokus.Domain.Analytics;
+using Mapster;
+
 namespace Fokus.API.Features.Analytics.GetCycleTime;
 
 [HttpGet("/api/analytics/cycle-time")]
@@ -8,7 +10,7 @@ public class GetCycleTimeEndpoint(
     TicketRepository ticketRepository,
     AppSettingsRepository appSettingsRepository,
     DeveloperRepository developerRepository,
-    CycleTimeService cycleTimeService)
+    CycleTimeCalculator cycleTimeCalculator)
     : Endpoint<GetCycleTimeQuery, CycleTimeResponse>
 {
     public override async Task HandleAsync(GetCycleTimeQuery req, CancellationToken ct)
@@ -69,10 +71,10 @@ public class GetCycleTimeEndpoint(
             var excludedIds = ExcludedDeveloperFilter.GetExcludedDeveloperIds(
                 targetSprint, allDevelopers, capacityRecords, statusTransitions, settings);
 
-            var singleResult = cycleTimeService.ComputeSingleSprint(
+            var singleResult = cycleTimeCalculator.ComputeSingleSprint(
                 targetSprint, priorSprint, statusTransitions, settings, subTeam, excludedIds);
 
-            await Send.OkAsync(new CycleTimeResponse("single", singleResult, null), ct);
+            await Send.OkAsync(new CycleTimeResponse("single", singleResult.Adapt<CycleTimeSingleSprintResponse>(), null), ct);
         }
         else
         {
@@ -96,10 +98,10 @@ public class GetCycleTimeEndpoint(
                 .Select(g => g.Key)
                 .ToHashSet();
 
-            var multiResult = cycleTimeService.ComputeMultiSprint(
+            var multiResult = cycleTimeCalculator.ComputeMultiSprint(
                 loadedSprints, statusTransitions, settings, subTeam, excludedInAll);
 
-            await Send.OkAsync(new CycleTimeResponse("multi", null, multiResult), ct);
+            await Send.OkAsync(new CycleTimeResponse("multi", null, multiResult.Adapt<CycleTimeMultiSprintResponse>()), ct);
         }
     }
 }

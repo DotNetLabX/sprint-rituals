@@ -1,3 +1,5 @@
+using Fokus.Domain.Analytics;
+
 namespace Fokus.API.Features.Analytics.GetQaTrends;
 
 [HttpGet("/api/analytics/qa-trends")]
@@ -8,7 +10,7 @@ public class GetQaTrendsEndpoint(
     TestExecutionRepository testExecutionRepository,
     TicketRepository ticketRepository,
     DeveloperRepository developerRepository,
-    BugRatioService bugRatioService,
+    BugRatioCalculator bugRatioCalculator,
     QaTrendsService qaTrendsService)
     : Endpoint<GetQaTrendsQuery, QaTrendsResponse>
 {
@@ -92,7 +94,7 @@ public class GetQaTrendsEndpoint(
         // 8. Load status transitions for target sprint tickets
         var statusTransitions = await ticketRepository.GetStatusTransitionsForSprintTicketsAsync(targetIds, ct);
 
-        // 9. Bug ratio per sprint via BugRatioService.ComputeMultiSprint
+        // 9. Bug ratio per sprint via BugRatioCalculator.ComputeMultiSprint
         // Include one extra sprint beyond the target range for N+1 correlation
         var activeDevelopers = await developerRepository.GetActiveDevelopersAsync(ct);
 
@@ -107,7 +109,7 @@ public class GetQaTrendsEndpoint(
             extendedIds.Add(nextSprint.Id);
         }
 
-        // Load all closed sprints with memberships for BugRatioService (alert evaluation needs all)
+        // Load all closed sprints with memberships for BugRatioCalculator (alert evaluation needs all)
         var allLoadedSprints = await sprintRepository.GetSprintsWithMembershipsAsync(allSprintIds, ct);
         var allSortedSprints = allLoadedSprints.OrderBy(s => s.StartDate).ToList();
 
@@ -131,7 +133,7 @@ public class GetQaTrendsEndpoint(
         // 10. Normalize sub-team
         var subTeam = string.IsNullOrWhiteSpace(req.SubTeam) ? null : req.SubTeam;
 
-        var bugRatioResult = bugRatioService.ComputeMultiSprint(
+        var bugRatioResult = bugRatioCalculator.ComputeMultiSprint(
             extendedTargetSprints, allSortedSprints, activeDevelopers,
             settings, bugRatioTransitions, subTeam);
 

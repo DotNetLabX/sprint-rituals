@@ -418,15 +418,8 @@ public class QaMetricsCalculator
         string rag)
     {
         decimal? delta = priorValue.HasValue ? value - priorValue.Value : null;
-        string? direction = null;
-        string? deltaPolarity = null;
-
-        if (delta.HasValue)
-        {
-            direction = delta.Value > 0 ? "up" : delta.Value < 0 ? "down" : "flat";
-            // All QA metrics are positive-up
-            deltaPolarity = delta.Value > 0 ? "positive" : delta.Value < 0 ? "negative" : "neutral";
-        }
+        // All QA metrics are positive-up
+        var (direction, deltaPolarity) = MetricCardBuilder.ComputeDelta(delta, "positive-up");
 
         return new QaMetricCardData(
             name,

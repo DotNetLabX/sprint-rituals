@@ -1,4 +1,6 @@
 using Fokus.Domain.Analytics;
+using Mapster;
+
 namespace Fokus.API.Features.Analytics.GetScopeChange;
 
 [HttpGet("/api/analytics/scope-change")]
@@ -8,7 +10,7 @@ public class GetScopeChangeEndpoint(
     TicketRepository ticketRepository,
     AppSettingsRepository appSettingsRepository,
     DeveloperRepository developerRepository,
-    ScopeChangeService scopeChangeService)
+    ScopeChangeCalculator scopeChangeCalculator)
     : Endpoint<GetScopeChangeQuery, ScopeChangeResponse>
 {
     public override async Task HandleAsync(GetScopeChangeQuery req, CancellationToken ct)
@@ -70,10 +72,10 @@ public class GetScopeChangeEndpoint(
                 targetSprint, allDevelopers, capacityRecords, statusTransitions, settings);
 
             // 10b. Compute single-sprint response
-            var singleResult = scopeChangeService.ComputeSingleSprint(
+            var singleResult = scopeChangeCalculator.ComputeSingleSprint(
                 targetSprint, priorSprint, statusTransitions, settings, subTeam, excludedIds);
 
-            await Send.OkAsync(new ScopeChangeResponse("single", null, singleResult), ct);
+            await Send.OkAsync(new ScopeChangeResponse("single", null, singleResult.Adapt<ScopeChangeSingleSprintResponse>()), ct);
         }
         else
         {
@@ -101,9 +103,9 @@ public class GetScopeChangeEndpoint(
                 .ToHashSet();
 
             // 10a. Compute multi-sprint response
-            var multiResult = scopeChangeService.ComputeMultiSprint(loadedSprints, statusTransitions, settings, subTeam, excludedInAll);
+            var multiResult = scopeChangeCalculator.ComputeMultiSprint(loadedSprints, statusTransitions, settings, subTeam, excludedInAll);
 
-            await Send.OkAsync(new ScopeChangeResponse("multi", multiResult, null), ct);
+            await Send.OkAsync(new ScopeChangeResponse("multi", multiResult.Adapt<ScopeChangeMultiSprintResponse>(), null), ct);
         }
     }
 }

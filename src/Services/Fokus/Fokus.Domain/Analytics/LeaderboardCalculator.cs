@@ -1,82 +1,8 @@
-using Fokus.Domain.Analytics;
-namespace Fokus.API.Features.Analytics;
+namespace Fokus.Domain.Analytics;
 
-// --- Response record hierarchy ---
-
-public record LeaderboardSprintInfo(int Id, string Name, DateTime StartDate, DateTime EndDate);
-
-public record LeaderboardDeveloperSprintBreakdown(
-    int SprintId,
-    decimal FeatureSp,
-    decimal BugSp,
-    decimal TotalSp,
-    int FeatureTickets,
-    int BugTickets,
-    int CapacityPercent);
-
-public record LeaderboardDeveloperEntry(
-    string AccountId,
-    string DisplayName,
-    string? SubTeam,
-    string? AvatarUrl,
-    decimal FeatureSp,
-    decimal BugSp,
-    decimal TotalSp,
-    int FeatureTickets,
-    int BugTickets,
-    int TotalTickets,
-    int CapacityPercent,
-    List<LeaderboardDeveloperSprintBreakdown> SprintBreakdowns);
-
-public record LeaderboardMultiSprintResponse(
-    List<LeaderboardSprintInfo> Sprints,
-    List<LeaderboardDeveloperEntry> Developers);
-
-public record LeaderboardDeveloperDelta(
-    decimal FeatureSpDelta,
-    string FeatureSpDeltaDirection,
-    string FeatureSpDeltaPolarity,
-    decimal BugSpDelta,
-    string BugSpDeltaDirection,
-    string BugSpDeltaPolarity,
-    decimal TotalSpDelta,
-    string TotalSpDeltaDirection,
-    string TotalSpDeltaPolarity,
-    int FeatureTicketsDelta,
-    string FeatureTicketsDeltaDirection,
-    string FeatureTicketsDeltaPolarity,
-    int BugTicketsDelta,
-    string BugTicketsDeltaDirection,
-    string BugTicketsDeltaPolarity);
-
-public record LeaderboardDeveloperSingleEntry(
-    string AccountId,
-    string DisplayName,
-    string? SubTeam,
-    string? AvatarUrl,
-    decimal FeatureSp,
-    decimal BugSp,
-    decimal TotalSp,
-    int FeatureTickets,
-    int BugTickets,
-    int TotalTickets,
-    int CapacityPercent,
-    LeaderboardDeveloperDelta? Delta);
-
-public record LeaderboardSingleSprintResponse(
-    LeaderboardSprintInfo Sprint,
-    List<LeaderboardDeveloperSingleEntry> Developers);
-
-public record LeaderboardResponse(
-    string Mode,
-    LeaderboardMultiSprintResponse? MultiSprint,
-    LeaderboardSingleSprintResponse? SingleSprint);
-
-// --- Service ---
-
-public class LeaderboardService
+public class LeaderboardCalculator
 {
-    public LeaderboardMultiSprintResponse ComputeMultiSprint(
+    public LeaderboardMultiSprintData ComputeMultiSprint(
         List<Sprint> targetSprints,
         List<Developer> activeDevelopers,
         AppSettings settings,
@@ -96,7 +22,7 @@ public class LeaderboardService
         var filteredDevelopers = FilterDevelopers(activeDevelopers, subTeam);
 
         var sprintInfos = sortedTarget
-            .Select(s => new LeaderboardSprintInfo(s.Id, s.Name, s.StartDate, s.EndDate))
+            .Select(s => new LeaderboardSprintData(s.Id, s.Name, s.StartDate, s.EndDate))
             .ToList();
 
         var developerEntries = filteredDevelopers.Select(dev =>
@@ -113,7 +39,7 @@ public class LeaderboardService
                 var featureTickets = completed.Count(m => !IsBug(m));
                 var bugTickets = completed.Count(m => IsBug(m));
                 var capacityPercent = GetCapacity(capacityLookup, dev.Id, s.Id, allDevelopers);
-                return new LeaderboardDeveloperSprintBreakdown(
+                return new LeaderboardDeveloperSprintData(
                     s.Id,
                     Math.Round(featureSp, 1),
                     Math.Round(bugSp, 1),
@@ -133,7 +59,7 @@ public class LeaderboardService
                 ? (int)Math.Round(sprintBreakdowns.Average(b => b.CapacityPercent))
                 : 100;
 
-            return new LeaderboardDeveloperEntry(
+            return new LeaderboardDeveloperData(
                 dev.Id,
                 dev.DisplayName,
                 dev.SubTeam,
@@ -151,10 +77,10 @@ public class LeaderboardService
         .ThenBy(d => d.DisplayName)
         .ToList();
 
-        return new LeaderboardMultiSprintResponse(sprintInfos, developerEntries);
+        return new LeaderboardMultiSprintData(sprintInfos, developerEntries);
     }
 
-    public LeaderboardSingleSprintResponse ComputeSingleSprint(
+    public LeaderboardSingleSprintData ComputeSingleSprint(
         Sprint targetSprint,
         Sprint? priorSprint,
         List<Developer> activeDevelopers,
@@ -172,7 +98,7 @@ public class LeaderboardService
         var (orderedStages, _) = TransitionAttributionChecker.ResolveStartIndex(settings);
         var endIndex = TransitionAttributionChecker.ResolveEndIndex(settings, orderedStages);
 
-        var sprintInfo = new LeaderboardSprintInfo(
+        var sprintInfo = new LeaderboardSprintData(
             targetSprint.Id, targetSprint.Name, targetSprint.StartDate, targetSprint.EndDate);
 
         var developerEntries = filteredDevelopers.Select(dev =>
@@ -188,7 +114,7 @@ public class LeaderboardService
             var bugTickets = devCompleted.Count(m => IsBug(m));
             var totalTickets = featureTickets + bugTickets;
 
-            LeaderboardDeveloperDelta? delta = null;
+            LeaderboardDeveloperDeltaData? delta = null;
             if (priorSprint is not null)
             {
                 var priorMemberships = GetDeveloperMemberships(priorSprint, dev.Id, subTeam);
@@ -207,17 +133,19 @@ public class LeaderboardService
                 var featureTicketsDelta = featureTickets - priorFeatureTickets;
                 var bugTicketsDelta = bugTickets - priorBugTickets;
 
-                delta = new LeaderboardDeveloperDelta(
-                    Math.Round(featureSpDelta, 1), DeltaDirection(featureSpDelta), DeltaPolarity(featureSpDelta, positiveUp: true),
-                    Math.Round(bugSpDelta, 1), DeltaDirection(bugSpDelta), DeltaPolarity(bugSpDelta, positiveUp: false),
-                    Math.Round(totalSpDelta, 1), DeltaDirection(totalSpDelta), "neutral",
-                    featureTicketsDelta, DeltaDirection(featureTicketsDelta), DeltaPolarity(featureTicketsDelta, positiveUp: true),
-                    bugTicketsDelta, DeltaDirection(bugTicketsDelta), DeltaPolarity(bugTicketsDelta, positiveUp: false));
+                delta = new LeaderboardDeveloperDeltaData(
+                    Math.Round(featureSpDelta, 1), MetricCardBuilder.Direction(featureSpDelta), MetricCardBuilder.Polarity(featureSpDelta, positiveUp: true),
+                    Math.Round(bugSpDelta, 1), MetricCardBuilder.Direction(bugSpDelta), MetricCardBuilder.Polarity(bugSpDelta, positiveUp: false),
+                    // Finding 1: TotalSpDeltaPolarity is the hard-coded literal "neutral" — must NOT be converted
+                    // to MetricCardBuilder.Polarity(...) as that would compute sign-based polarity.
+                    Math.Round(totalSpDelta, 1), MetricCardBuilder.Direction(totalSpDelta), "neutral",
+                    featureTicketsDelta, MetricCardBuilder.Direction(featureTicketsDelta), MetricCardBuilder.Polarity(featureTicketsDelta, positiveUp: true),
+                    bugTicketsDelta, MetricCardBuilder.Direction(bugTicketsDelta), MetricCardBuilder.Polarity(bugTicketsDelta, positiveUp: false));
             }
 
             var capacityPercent = GetCapacity(capacityLookup, dev.Id, targetSprint.Id, allDevelopers);
 
-            return new LeaderboardDeveloperSingleEntry(
+            return new LeaderboardDeveloperSingleData(
                 dev.Id,
                 dev.DisplayName,
                 dev.SubTeam,
@@ -235,7 +163,7 @@ public class LeaderboardService
         .ThenBy(d => d.DisplayName)
         .ToList();
 
-        return new LeaderboardSingleSprintResponse(sprintInfo, developerEntries);
+        return new LeaderboardSingleSprintData(sprintInfo, developerEntries);
     }
 
     // --- Transition-based completed memberships ---
@@ -307,22 +235,4 @@ public class LeaderboardService
                         (string.IsNullOrWhiteSpace(subTeam) || m.Ticket?.Assignee?.SubTeam == subTeam))
             .ToList();
     }
-
-    // --- Delta helpers ---
-
-    private static string DeltaDirection(decimal delta) =>
-        delta > 0 ? "up" : delta < 0 ? "down" : "flat";
-
-    private static string DeltaDirection(int delta) =>
-        delta > 0 ? "up" : delta < 0 ? "down" : "flat";
-
-    private static string DeltaPolarity(decimal delta, bool positiveUp) =>
-        positiveUp
-            ? (delta > 0 ? "positive" : delta < 0 ? "negative" : "neutral")
-            : (delta < 0 ? "positive" : delta > 0 ? "negative" : "neutral");
-
-    private static string DeltaPolarity(int delta, bool positiveUp) =>
-        positiveUp
-            ? (delta > 0 ? "positive" : delta < 0 ? "negative" : "neutral")
-            : (delta < 0 ? "positive" : delta > 0 ? "negative" : "neutral");
 }

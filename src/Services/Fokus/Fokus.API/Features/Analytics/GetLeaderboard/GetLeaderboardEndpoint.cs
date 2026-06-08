@@ -1,4 +1,6 @@
 using Fokus.Domain.Analytics;
+using Mapster;
+
 namespace Fokus.API.Features.Analytics.GetLeaderboard;
 
 [HttpGet("/api/analytics/leaderboard")]
@@ -8,7 +10,7 @@ public class GetLeaderboardEndpoint(
     AppSettingsRepository appSettingsRepository,
     DeveloperRepository developerRepository,
     TicketRepository ticketRepository,
-    LeaderboardService leaderboardService)
+    LeaderboardCalculator leaderboardCalculator)
     : Endpoint<GetLeaderboardQuery, LeaderboardResponse>
 {
     public override async Task HandleAsync(GetLeaderboardQuery req, CancellationToken ct)
@@ -74,10 +76,10 @@ public class GetLeaderboardEndpoint(
                 target, allDevelopers, capacityRecords, statusTransitions, settings);
             var filteredActive = activeDevelopers.Where(d => !excludedIds.Contains(d.Id)).ToList();
 
-            var singleResult = leaderboardService.ComputeSingleSprint(
+            var singleResult = leaderboardCalculator.ComputeSingleSprint(
                 target, priorSprint, filteredActive, settings, statusTransitions, subTeam, capacityLookup, allDevelopers, excludedIds);
 
-            await Send.OkAsync(new LeaderboardResponse("single", null, singleResult), ct);
+            await Send.OkAsync(new LeaderboardResponse("single", null, singleResult.Adapt<LeaderboardSingleSprintResponse>()), ct);
         }
         else
         {
@@ -94,10 +96,10 @@ public class GetLeaderboardEndpoint(
                 .ToHashSet();
             var filteredActive = activeDevelopers.Where(d => !excludedInAll.Contains(d.Id)).ToList();
 
-            var multiResult = leaderboardService.ComputeMultiSprint(
+            var multiResult = leaderboardCalculator.ComputeMultiSprint(
                 selectedSprints, filteredActive, settings, statusTransitions, subTeam, capacityLookup, allDevelopers, excludedInAll);
 
-            await Send.OkAsync(new LeaderboardResponse("multi", multiResult, null), ct);
+            await Send.OkAsync(new LeaderboardResponse("multi", multiResult.Adapt<LeaderboardMultiSprintResponse>(), null), ct);
         }
     }
 }

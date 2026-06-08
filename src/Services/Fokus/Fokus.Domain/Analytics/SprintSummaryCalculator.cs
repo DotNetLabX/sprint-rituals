@@ -532,20 +532,7 @@ public class SprintSummaryCalculator
         string polarity,
         List<SprintSparklinePoint> sparkline)
     {
-        string? direction = null;
-        string? deltaPolarity = null;
-
-        if (delta.HasValue)
-        {
-            direction = delta.Value > 0 ? "up" : delta.Value < 0 ? "down" : "flat";
-
-            deltaPolarity = polarity switch
-            {
-                "positive-up" => delta.Value > 0 ? "positive" : delta.Value < 0 ? "negative" : "neutral",
-                "positive-down" => delta.Value < 0 ? "positive" : delta.Value > 0 ? "negative" : "neutral",
-                _ => "neutral"
-            };
-        }
+        var (direction, deltaPolarity) = MetricCardBuilder.ComputeDelta(delta, polarity);
 
         return new SprintMetricCardData(name, Math.Round(value, 1), displayValue, delta.HasValue ? Math.Round(delta.Value, 1) : null, direction, deltaPolarity, sparkline);
     }

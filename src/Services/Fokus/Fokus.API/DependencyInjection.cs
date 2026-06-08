@@ -43,12 +43,12 @@ public static class DependencyInjection
         services.AddScoped<QaMetricsCalculator>();
         services.AddScoped<TestTimelineCalculator>();
         services.AddScoped<DeveloperThroughputService>();
-        services.AddScoped<ScopeChangeService>();
-        services.AddScoped<CarryOverService>();
-        services.AddScoped<BugRatioService>();
+        services.AddScoped<ScopeChangeCalculator>();
+        services.AddScoped<CarryOverCalculator>();
+        services.AddScoped<BugRatioCalculator>();
         services.AddScoped<EpicProgressService>();
-        services.AddScoped<CycleTimeService>();
-        services.AddScoped<LeaderboardService>();
+        services.AddScoped<CycleTimeCalculator>();
+        services.AddScoped<LeaderboardCalculator>();
         services.AddScoped<DeveloperQualityService>();
         services.AddScoped<QaWorkloadService>();
         services.AddScoped<QaTrendsService>();
