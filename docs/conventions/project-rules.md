@@ -64,7 +64,7 @@ API  ──▶  Domain
 - **Aggregate creation:** static factory when business rules or domain events are involved; `required init` properties when plain data.
 - **FastEndpoints:** one endpoint class per feature, validator as sibling class in same folder.
 - **Repositories** wrap `SaveChangesAsync` — endpoints never touch DbContext directly.
-- **EF migrations:** `dotnet ef migrations add Name -p Services/{Svc}/{Svc}.Persistence -s Services/{Svc}/{Svc}.API`
+- **EF migrations:** `dotnet ef migrations add Name -p Services/{Svc}/{Svc}.Persistence -s Services/{Svc}/{Svc}.API` — the startup project (`-s`) must carry `Microsoft.EntityFrameworkCore.Design`. If the API project is a class library that does not include it, use the Persistence project as startup instead (`-s Services/{Svc}/{Svc}.Persistence`), provided it has an `IDesignTimeDbContextFactory`.
 
 ## Plan-to-Code Boundary
 
