@@ -80,6 +80,11 @@ public class JiraUser
     public string AccountId { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
     public Dictionary<string, string> AvatarUrls { get; set; } = [];
+    /// <summary>
+    /// Email address. Null when Jira Cloud restricts visibility (default for most orgs).
+    /// Populated only when the user's email is publicly visible in the Jira instance.
+    /// </summary>
+    public string? EmailAddress { get; set; }
 }
 
 public class JiraPriority

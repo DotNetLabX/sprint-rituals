@@ -11,6 +11,9 @@ public class PersonRepository(IdentityDbContext db)
     public async Task<Person?> GetByExternalIdAsync(string externalId, CancellationToken ct = default) =>
         await db.Persons.SingleOrDefaultAsync(p => p.ExternalId == externalId, ct);
 
+    public async Task<Person?> GetByExternalIdAndSourceAsync(string externalId, string source, CancellationToken ct = default) =>
+        await db.Persons.SingleOrDefaultAsync(p => p.ExternalId == externalId && p.Source.ToString() == source, ct);
+
     public async Task AddAsync(Person person, CancellationToken ct = default) =>
         await db.Persons.AddAsync(person, ct);
 

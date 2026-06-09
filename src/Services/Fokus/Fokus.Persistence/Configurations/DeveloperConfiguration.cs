@@ -16,5 +16,6 @@ public class DeveloperConfiguration : EntityConfiguration<Developer, string>
         builder.Property(d => d.SubTeam).HasMaxLength(128);
         builder.Property(d => d.Role).IsRequired().HasMaxLength(64).HasDefaultValue("Developer");
         builder.Property(d => d.DefaultCapacityPercent).HasDefaultValue(100);
+        builder.Property(d => d.Email).HasMaxLength(256);
     }
 }

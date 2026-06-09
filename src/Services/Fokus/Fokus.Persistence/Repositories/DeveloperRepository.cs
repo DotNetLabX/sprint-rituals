@@ -38,6 +38,9 @@ public class DeveloperRepository(FokusDbContext db)
             existing.DisplayName = developer.DisplayName;
             existing.AvatarUrl = developer.AvatarUrl;
             existing.IsActive = developer.IsActive;
+            // Email is best-effort: update only when a value is now known and the field is still unset.
+            if (developer.Email is not null && existing.Email is null)
+                existing.Email = developer.Email;
         }
     }
 

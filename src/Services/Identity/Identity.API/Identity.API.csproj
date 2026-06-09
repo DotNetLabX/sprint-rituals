@@ -13,13 +13,16 @@
   <ItemGroup>
     <PackageReference Include="FastEndpoints" />
     <PackageReference Include="Mapster" />
+    <PackageReference Include="MassTransit" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" />
+    <PackageReference Include="protobuf-net.Grpc.AspNetCore" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Identity.Domain\Identity.Domain.csproj" />
     <ProjectReference Include="..\Identity.Persistence\Identity.Persistence.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Blocks.AspNetCore\Blocks.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Blocks.Contracts\Blocks.Contracts.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Blocks.FastEndpoints\Blocks.FastEndpoints.csproj" />
   </ItemGroup>
 

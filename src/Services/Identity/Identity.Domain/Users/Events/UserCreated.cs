@@ -3,11 +3,8 @@ using Blocks.Domain.Events;
 namespace Identity.Domain.Users.Events;
 
 /// <summary>
-/// Intentional deferred-infra placeholder declared ahead of its consumer.
-/// Wiring is deferred to the Identity infra increment (invite redemption,
-/// CompanyDomain seed, PersonGrpcService). Not raised anywhere today — <c>User</c>
-/// is an <see cref="Blocks.Domain.Entities.Entity{TKey}"/>, not an AggregateRoot,
-/// so domain-event dispatch is not yet available on it. Do not delete as dead code;
-/// do not add a RaiseCreated call without first promoting User to AggregateRoot.
+/// Raised after a new User is persisted (after SaveChangesAsync, when EF has assigned the real PK).
+/// Carries only the UserId — handlers re-load the user and its person as needed.
+/// Drives the company-domain auto-seed announcement (first-administrator bootstrap only).
 /// </summary>
 public sealed record UserCreated(int UserId) : IDomainEvent;

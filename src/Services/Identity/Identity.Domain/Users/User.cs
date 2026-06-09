@@ -2,7 +2,7 @@ using Blocks.Domain.Entities;
 
 namespace Identity.Domain.Users;
 
-public partial class User : Entity<int>
+public partial class User : AggregateRoot<int>
 {
     public int PersonId { get; private set; }
     public string Role { get; private set; } = "Manager";

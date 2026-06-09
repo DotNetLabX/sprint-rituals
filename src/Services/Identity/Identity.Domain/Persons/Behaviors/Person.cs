@@ -24,6 +24,37 @@ public partial class Person
     }
 
     /// <summary>
+    /// Creates a Jira-sourced Person. Email is best-effort (may be null — Jira Cloud hides email by default).
+    /// Match/create key is ExternalId (Jira AccountId) + Source=Jira.
+    /// </summary>
+    public static Person CreateFromJira(string accountId, string firstName, string lastName, string? email, string? pictureUrl)
+    {
+        return new Person
+        {
+            FirstName = firstName,
+            LastName = lastName,
+            Email = email is not null ? email.ToLowerInvariant() : null,
+            PictureUrl = pictureUrl,
+            Source = PersonSource.Jira,
+            ExternalId = accountId,
+            CreatedAt = DateTime.UtcNow
+        };
+    }
+
+    /// <summary>
+    /// Updates a Jira-sourced Person from a sync. Email is updated only if a value is now known
+    /// (email is best-effort from Jira Cloud; once set, it is not cleared).
+    /// </summary>
+    public void UpdateFromJira(string firstName, string lastName, string? email, string? pictureUrl)
+    {
+        FirstName = firstName;
+        LastName = lastName;
+        PictureUrl = pictureUrl;
+        if (email is not null && Email is null)
+            Email = email.ToLowerInvariant();
+    }
+
+    /// <summary>
     /// Raises PersonCreated with the real persisted Id.
     /// Call AFTER SaveChangesAsync so EF has assigned the PK.
     /// </summary>

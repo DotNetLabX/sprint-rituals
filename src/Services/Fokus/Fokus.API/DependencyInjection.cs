@@ -1,3 +1,5 @@
+using Blocks.AspNetCore.Grpc;
+using Blocks.Contracts.Grpc;
 using Fokus.API.Features.Analytics;
 using Fokus.API.Features.Settings;
 using Fokus.API.Features.Sync;
@@ -30,11 +32,20 @@ public static class DependencyInjection
         services.AddCodeFirstGrpc();
 
         // MassTransit — in-memory transport (no RabbitMQ; integration events within the monorepo)
-        services.AddMassTransit(x => x.UsingInMemory((context, cfg) => cfg.ConfigureEndpoints(context)));
+        // AddConsumers discovers all IConsumer<T> implementations in this assembly (e.g. SeedCompanyDomain consumer).
+        services.AddMassTransit(x =>
+        {
+            x.AddConsumers(typeof(DependencyInjection).Assembly);
+            x.UsingInMemory((context, cfg) => cfg.ConfigureEndpoints(context));
+        });
 
         services.AddSignalR();
         services.AddRestApiJira(configuration);
         services.AddGraphQLXray(configuration);
+
+        // gRPC client — Fokus dials Identity's IPersonService from the Jira-developer sync path.
+        var grpcOptions = configuration.GetSection("Grpc").Get<GrpcServicesOptions>() ?? new GrpcServicesOptions();
+        services.AddCodeFirstGrpcClient<IPersonService>(grpcOptions, "Person");
 
         services.AddScoped<SprintIssueSyncService>();
         services.AddScoped<XrayIssueSyncService>();
@@ -99,6 +110,7 @@ public static class DependencyInjection
         // gRPC services (h2c endpoint configured in appsettings.json Kestrel:Endpoints:Grpc)
         app.MapGrpcService<SprintAnalyticsGrpcService>();
         app.MapGrpcService<SprintCatalogGrpcService>();
+        app.MapGrpcService<InvitationGrpcService>();
         return app;
     }
 }

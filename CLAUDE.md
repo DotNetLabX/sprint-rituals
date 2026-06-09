@@ -64,7 +64,11 @@ SprintRituals.slnx             # Solution file
 
 Auth lives entirely in **Identity**. The Host wires `AddIdentityAuth` (Google + cookie). Fokus has no auth registration — it relies on the cookie set by Identity. The global `ActiveUserPreProcessor` (Identity) validates the cookie on every authenticated request.
 
-**Deferred (infra increment):** Invitation redemption-at-login, CompanyDomain auto-seed, gRPC PersonGrpcService.
+**gRPC contract topology (two opposite-direction contracts, both live):**
+- `IInvitationService` (Fokus = server, Identity = client) — synchronous invite-token redemption at login. Identity calls Fokus from `AuthConfiguration.OnTicketReceived`.
+- `IPersonService` (Identity = server, Fokus = client) — cross-module Person upsert. Fokus calls Identity from `SprintIssueSyncService` for each discovered Jira developer (best-effort).
+
+**Company-domain auto-seed:** `AnnounceCompanyDomainOnUserCreatedHandler` (Identity) publishes `FirstAdministratorRegistered` on the in-process MassTransit bus (gated on first Admin, skips public email providers). `SeedCompanyDomainOnFirstAdministratorRegisteredConsumer` (Fokus) seeds `AppSettings.CompanyDomain` if null (idempotent).
 
 ## Databases
 

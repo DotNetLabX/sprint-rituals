@@ -1,3 +1,5 @@
+using Blocks.Contracts.Grpc;
+using Blocks.Contracts.Grpc.DataContracts;
 using Blocks.Contracts.IntegrationEvents;
 using Fokus.API.Features.Xray;
 using Jira.Contracts;
@@ -29,6 +31,7 @@ public class SprintIssueSyncService(
     AppSettingsRepository appSettingsRepository,
     XrayIssueSyncService xrayIssueSyncService,
     IPublishEndpoint publishEndpoint,
+    IPersonService personService,
     ILogger<SprintIssueSyncService> logger)
 {
     public async Task<SprintBatchSyncResult> SyncSprintsFromJiraAsync(
@@ -122,7 +125,10 @@ public class SprintIssueSyncService(
 
                     var developer = JiraDomainMapper.MapDeveloper(issue);
                     if (developer is not null)
+                    {
                         await developerRepository.UpsertAsync(developer, ct);
+                        await UpsertPersonBestEffortAsync(developer, ct);
+                    }
                 }
 
                 await ticketRepository.SaveChangesAsync(ct);
@@ -159,6 +165,9 @@ public class SprintIssueSyncService(
             {
                 await developerRepository.UpsertAsync(developer, ct);
                 uniqueDeveloperIds.Add(developer.Id);
+
+                // Reconcile developer as a Person in Identity (best-effort — gRPC failure must not abort sync).
+                await UpsertPersonBestEffortAsync(developer, ct);
             }
 
             var transitions = JiraDomainMapper.MapStatusTransitions(issue);
@@ -191,5 +200,39 @@ public class SprintIssueSyncService(
         }
 
         return new SprintIssueSyncResult(issues.Count, uniqueDeveloperIds, xrayResult);
+    }
+
+    /// <summary>
+    /// Upserts a Jira-sourced developer as a Person in Identity via gRPC.
+    /// Best-effort: any gRPC or transport failure is swallowed and logged — a Person reconciliation
+    /// failure must never abort the sprint sync (the Fokus data is already saved).
+    /// </summary>
+    private async Task UpsertPersonBestEffortAsync(Developer developer, CancellationToken ct)
+    {
+        try
+        {
+            var (firstName, lastName) = SplitDisplayName(developer.DisplayName);
+            await personService.UpsertPersonAsync(new UpsertPersonRequest
+            {
+                ExternalId = developer.Id,
+                Source = "Jira",
+                Email = developer.Email,
+                FirstName = firstName,
+                LastName = lastName,
+                PictureUrl = developer.AvatarUrl,
+            }, ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Person upsert failed for developer {DeveloperId} — sync continues", developer.Id);
+        }
+    }
+
+    private static (string firstName, string lastName) SplitDisplayName(string displayName)
+    {
+        var idx = displayName.IndexOf(' ');
+        return idx >= 0
+            ? (displayName[..idx], displayName[(idx + 1)..])
+            : (displayName, string.Empty);
     }
 }

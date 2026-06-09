@@ -31,4 +31,7 @@ public interface IJiraApi
 
     [Post("/rest/agile/1.0/sprint/{sprintId}")]
     Task<IApiResponse<JiraSprint>> UpdateSprintAsync(int sprintId, [Body] UpdateJiraSprintCommand request, CancellationToken ct);
+
+    [Get("/rest/api/3/user")]
+    Task<IApiResponse<JiraUser>> GetUserAsync([Query] string accountId, CancellationToken ct);
 }

@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using Blocks.Contracts.Grpc;
+using Blocks.Contracts.Grpc.DataContracts;
 using Identity.Persistence;
 using Identity.Persistence.Repositories;
 using Microsoft.AspNetCore.Authentication;
@@ -60,37 +62,17 @@ public static class AuthConfiguration
         var googleId = principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         var email = (principal.FindFirstValue(ClaimTypes.Email) ?? string.Empty).ToLowerInvariant();
         var pictureUrl = principal.FindFirstValue("urn:google:picture");
+        var (firstName, lastName) = ExtractName(principal, email);
 
-        // Google name mapping (F3): given_name / family_name; fallback to splitting Name claim
-        var firstName = principal.FindFirstValue(ClaimTypes.GivenName) ?? string.Empty;
-        var lastName = principal.FindFirstValue(ClaimTypes.Surname) ?? string.Empty;
-        if (string.IsNullOrEmpty(firstName) && string.IsNullOrEmpty(lastName))
-        {
-            var fullNameClaim = principal.FindFirstValue(ClaimTypes.Name) ?? email;
-            var spaceIdx = fullNameClaim.IndexOf(' ');
-            if (spaceIdx >= 0)
-            {
-                firstName = fullNameClaim[..spaceIdx];
-                lastName = fullNameClaim[(spaceIdx + 1)..];
-            }
-            else
-            {
-                firstName = fullNameClaim;
-                lastName = string.Empty;
-            }
-        }
-
-        // Read invite token from auth properties (deferred — scaffold stub)
         var inviteToken = context.Properties?.Items.TryGetValue("invite_token", out var token) == true ? token : null;
 
         Identity.Domain.Users.User? user;
 
         if (!string.IsNullOrEmpty(inviteToken))
         {
-            // DEFERRED (infra increment): invite-token redemption path
-            // Validate Invitation from Fokus module (cross-module plumbing not yet wired)
-            context.Response.Redirect("/invite/error?reason=not-implemented");
-            context.HandleResponse();
+            await HandleInviteRedemptionAsync(
+                context, sp, personRepository, userRepository,
+                googleId, email, firstName, lastName, pictureUrl, inviteToken);
             return;
         }
 
@@ -98,61 +80,179 @@ public static class AuthConfiguration
 
         if (userCount == 0)
         {
-            // Bootstrap path — first user becomes Admin
-            var person = Identity.Domain.Persons.Person.CreateFromGoogle(googleId, firstName, lastName, email, pictureUrl);
-            await personRepository.AddAsync(person);
-            await personRepository.SaveChangesAsync();
-            // Raise PersonCreated after save — Id is now the real EF-assigned PK (not 0)
-            person.RaiseCreated();
-            await personRepository.SaveChangesAsync();
-
-            user = Identity.Domain.Users.User.CreateFromPerson(person.Id, "Admin");
-            await userRepository.AddAsync(user);
-            await userRepository.SaveChangesAsync();
-
-            person.LinkUser(user.Id);
-            await personRepository.SaveChangesAsync();
-
-            // DEFERRED (infra increment): CompanyDomain auto-seed (F1)
-            // AppSettings lives in fokus.db (different module). Seed belongs on Fokus side
-            // when invitation validation is wired. Do not create Identity→Fokus coupling here.
+            user = await HandleBootstrapAsync(personRepository, userRepository, googleId, firstName, lastName, email, pictureUrl);
         }
         else
         {
-            // Regular login path — find Person by ExternalId (GoogleId) then email fallback
-            var person = await personRepository.GetByExternalIdAsync(googleId)
-                         ?? await personRepository.GetByEmailAsync(email);
-
-            if (person is null)
-            {
-                context.Response.Redirect("/login?error=no-account");
-                context.HandleResponse();
-                return;
-            }
-
-            user = await userRepository.GetByPersonIdAsync(person.Id);
-
-            if (user is null)
-            {
-                context.Response.Redirect("/login?error=no-account");
-                context.HandleResponse();
-                return;
-            }
-
-            if (!user.IsActive)
-            {
-                context.Response.Redirect("/login?error=deactivated");
-                context.HandleResponse();
-                return;
-            }
-
-            // Update person name/picture from Google on each login
-            person.UpdateFromGoogle(firstName, lastName, pictureUrl);
-            user.RecordLogin();
-            await personRepository.SaveChangesAsync();
+            user = await HandleRegularLoginAsync(context, personRepository, userRepository, googleId, email, firstName, lastName, pictureUrl);
+            if (user is null) return;
         }
 
-        // Fetch person for claims (need FullName, Email, PictureUrl)
+        await SignInAsync(context, personRepository, user!);
+    }
+
+    /// <summary>
+    /// Handles the invite-token branch. Always completes the response (error redirect or cookie sign-in).
+    /// Never returns without writing a response — caller must return immediately after awaiting this.
+    /// </summary>
+    private static async Task<bool> HandleInviteRedemptionAsync(
+        TicketReceivedContext context,
+        IServiceProvider sp,
+        PersonRepository personRepository,
+        UserRepository userRepository,
+        string googleId,
+        string email,
+        string firstName,
+        string lastName,
+        string? pictureUrl,
+        string inviteToken)
+    {
+        // Already-registered active user: ignore token and log in normally (Q5).
+        var existingPerson = await personRepository.GetByExternalIdAsync(googleId)
+                             ?? await personRepository.GetByEmailAsync(email);
+        if (existingPerson is not null)
+        {
+            var existingUser = await userRepository.GetByPersonIdAsync(existingPerson.Id);
+            if (existingUser is not null && existingUser.IsActive)
+            {
+                existingPerson.UpdateFromGoogle(firstName, lastName, pictureUrl);
+                existingUser.RecordLogin();
+                await personRepository.SaveChangesAsync();
+                await SignInAsync(context, personRepository, existingUser);
+                return true;
+            }
+        }
+
+        // Call Fokus's IInvitationService gRPC server atomically: validate + email-match + Accept.
+        var invitationService = sp.GetRequiredService<IInvitationService>();
+        var result = await invitationService.RedeemAsync(
+            new RedeemInvitationRequest { Token = inviteToken, SigningInEmail = email });
+
+        if (result.Outcome != InvitationRedeemOutcome.Success)
+        {
+            var reason = OutcomeToReason(result.Outcome);
+            context.Response.Redirect($"/invite/error?reason={reason}");
+            context.HandleResponse();
+            return true;
+        }
+
+        // Provision the user with the invitation's role.
+        var person = await ResolveOrCreatePersonAsync(personRepository, googleId, firstName, lastName, email, pictureUrl);
+        var user = Identity.Domain.Users.User.CreateFromPerson(person.Id, result.Role ?? "Manager");
+        await userRepository.AddAsync(user);
+        await userRepository.SaveChangesAsync();
+
+        // Raise UserCreated AFTER save so CountActiveAdminsAsync includes the new user.
+        user.RaiseCreated();
+        await userRepository.SaveChangesAsync();
+
+        person.LinkUser(user.Id);
+        await personRepository.SaveChangesAsync();
+
+        await SignInAsync(context, personRepository, user);
+        return true;
+    }
+
+    private static async Task<Identity.Domain.Users.User> HandleBootstrapAsync(
+        PersonRepository personRepository,
+        UserRepository userRepository,
+        string googleId,
+        string firstName,
+        string lastName,
+        string email,
+        string? pictureUrl)
+    {
+        var person = Identity.Domain.Persons.Person.CreateFromGoogle(googleId, firstName, lastName, email, pictureUrl);
+        await personRepository.AddAsync(person);
+        await personRepository.SaveChangesAsync();
+        person.RaiseCreated();
+        await personRepository.SaveChangesAsync();
+
+        var user = Identity.Domain.Users.User.CreateFromPerson(person.Id, "Admin");
+        await userRepository.AddAsync(user);
+        await userRepository.SaveChangesAsync();
+
+        person.LinkUser(user.Id);
+        await personRepository.SaveChangesAsync();
+
+        // Raise UserCreated AFTER save so CountActiveAdminsAsync == 1 when the handler fires.
+        user.RaiseCreated();
+        await userRepository.SaveChangesAsync();
+
+        return user;
+    }
+
+    private static async Task<Identity.Domain.Users.User?> HandleRegularLoginAsync(
+        TicketReceivedContext context,
+        PersonRepository personRepository,
+        UserRepository userRepository,
+        string googleId,
+        string email,
+        string firstName,
+        string lastName,
+        string? pictureUrl)
+    {
+        var person = await personRepository.GetByExternalIdAsync(googleId)
+                     ?? await personRepository.GetByEmailAsync(email);
+
+        if (person is null)
+        {
+            context.Response.Redirect("/login?error=no-account");
+            context.HandleResponse();
+            return null;
+        }
+
+        var user = await userRepository.GetByPersonIdAsync(person.Id);
+
+        if (user is null)
+        {
+            context.Response.Redirect("/login?error=no-account");
+            context.HandleResponse();
+            return null;
+        }
+
+        if (!user.IsActive)
+        {
+            context.Response.Redirect("/login?error=deactivated");
+            context.HandleResponse();
+            return null;
+        }
+
+        person.UpdateFromGoogle(firstName, lastName, pictureUrl);
+        user.RecordLogin();
+        await personRepository.SaveChangesAsync();
+        return user;
+    }
+
+    /// <summary>Reuses an existing Person for the invited email, or creates a new one (Q4 / AC 5).</summary>
+    private static async Task<Identity.Domain.Persons.Person> ResolveOrCreatePersonAsync(
+        PersonRepository personRepository,
+        string googleId,
+        string firstName,
+        string lastName,
+        string email,
+        string? pictureUrl)
+    {
+        // Check by ExternalId first (Google account may have been Jira-synced already).
+        var person = await personRepository.GetByExternalIdAsync(googleId)
+                     ?? await personRepository.GetByEmailAsync(email);
+
+        if (person is not null)
+            return person;
+
+        person = Identity.Domain.Persons.Person.CreateFromGoogle(googleId, firstName, lastName, email, pictureUrl);
+        await personRepository.AddAsync(person);
+        await personRepository.SaveChangesAsync();
+        person.RaiseCreated();
+        await personRepository.SaveChangesAsync();
+        return person;
+    }
+
+    private static async Task SignInAsync(
+        TicketReceivedContext context,
+        PersonRepository personRepository,
+        Identity.Domain.Users.User user)
+    {
         var claimPerson = await personRepository.GetByIdAsync(user.PersonId);
         if (claimPerson is null)
         {
@@ -161,11 +261,10 @@ public static class AuthConfiguration
             return;
         }
 
-        // Build claims principal — DisplayName = Person.FullName (F3 parity)
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new(ClaimTypes.Email, claimPerson.Email),
+            new(ClaimTypes.Email, claimPerson.Email ?? string.Empty),
             new(ClaimTypes.Name, claimPerson.FullName),
             new(ClaimTypes.Role, user.Role)
         };
@@ -184,4 +283,29 @@ public static class AuthConfiguration
         context.Response.Redirect("/");
         context.HandleResponse();
     }
+
+    private static (string firstName, string lastName) ExtractName(System.Security.Claims.ClaimsPrincipal principal, string email)
+    {
+        var firstName = principal.FindFirstValue(ClaimTypes.GivenName) ?? string.Empty;
+        var lastName = principal.FindFirstValue(ClaimTypes.Surname) ?? string.Empty;
+
+        if (!string.IsNullOrEmpty(firstName) || !string.IsNullOrEmpty(lastName))
+            return (firstName, lastName);
+
+        var fullNameClaim = principal.FindFirstValue(ClaimTypes.Name) ?? email;
+        var spaceIdx = fullNameClaim.IndexOf(' ');
+        return spaceIdx >= 0
+            ? (fullNameClaim[..spaceIdx], fullNameClaim[(spaceIdx + 1)..])
+            : (fullNameClaim, string.Empty);
+    }
+
+    private static string OutcomeToReason(InvitationRedeemOutcome outcome) => outcome switch
+    {
+        InvitationRedeemOutcome.NotFound => "not-found",
+        InvitationRedeemOutcome.Used => "used",
+        InvitationRedeemOutcome.Revoked => "revoked",
+        InvitationRedeemOutcome.Expired => "expired",
+        InvitationRedeemOutcome.EmailMismatch => "email-mismatch",
+        _ => "error"
+    };
 }

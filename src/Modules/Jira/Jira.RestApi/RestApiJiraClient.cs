@@ -58,6 +58,15 @@ public class RestApiJiraClient(IJiraApi api) : IJiraClient
         return result;
     }
 
+    public async Task<JiraUser?> GetUserAsync(string accountId, CancellationToken ct)
+    {
+        var response = await Api.GetUserAsync(accountId, ct);
+        if (response.IsSuccessStatusCode)
+            return response.Content;
+        // Email fetch is best-effort; return null on any failure (forbidden, not-found, etc.)
+        return null;
+    }
+
     public async Task<JiraSprint> UpdateSprintAsync(int sprintId, string name, DateTime startDate, DateTime endDate, string? goal, CancellationToken ct)
     {
         var request = new UpdateJiraSprintCommand

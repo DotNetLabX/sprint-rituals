@@ -33,7 +33,6 @@ namespace Identity.Persistence.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Email")
-                        .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("TEXT")
                         .UseCollation("NOCASE");
@@ -74,7 +73,8 @@ namespace Identity.Persistence.Migrations
 
                     b.HasIndex("Email")
                         .IsUnique()
-                        .HasDatabaseName("IX_Persons_Email");
+                        .HasDatabaseName("IX_Persons_Email")
+                        .HasFilter("[Email] IS NOT NULL");
 
                     b.HasIndex("ExternalId")
                         .HasDatabaseName("IX_Persons_ExternalId");
@@ -88,12 +88,24 @@ namespace Identity.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("CreatedById")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("CreatedOn")
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER")
                         .HasDefaultValue(true);
 
                     b.Property<DateTime?>("LastLogin")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastModifiedById")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastModifiedOn")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("PersonId")

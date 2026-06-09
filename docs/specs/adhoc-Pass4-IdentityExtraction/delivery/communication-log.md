@@ -52,6 +52,13 @@ Pass 4 of the refactor program: finish the Identity extraction (triage item **A2
 
 **H1 disposition (locked):** Jira→Person upsert keys Jira-sourced Persons by `ExternalId` (=Jira AccountId, Source=Jira); `Person.Email` becomes optional (nullable, unique index scoped to non-null); a best-effort Jira `/rest/api/3/user` fetch fills email when Cloud exposes it. Adds a 2nd Identity EF migration + a new Jira API method. Google-sourced Persons still match by email.
 
+| 29 | PO | team-lead | done | Spec patched (Person email optional / ExternalId; AC-8 reworded); Status: Ready holds | — |
+| 30 | architect | team-lead | plan revised | All 11 findings + H1 folded into plan + step revisions; "plan ready for approval"; plan now 12 steps | — |
+| 31 | team-lead | — | approve+commit | Validated Plan Review vs findings (all addressed) + spec↔plan consistency → **auto-approved**; committed `1aaa362` (scoped to Pass 4 paths) | — |
+| 32 | team-lead | developer | dispatch | Phase 1: Analyze adhoc-Pass4-IdentityExtraction | — |
+| 33 | developer | team-lead | all clear (P1) | 12 steps verified vs source, 0 questions; flagged risks: Step 3 build, Step 6 callback decomposition (~60-line rule), Step 9 single-bus + Identity MassTransit ref | Stopped correctly at checkpoint; 2nd notice was a no-op nudge (gate still developer:analyze) |
+| 34 | team-lead | developer | resume (P2) | Implement. Answers: None — all clear | — |
+
 **Scope note (locked at Q13):** Pass 4 now stands up **two** new gRPC code-first contracts in **opposite directions** — `PersonGrpcService` (Fokus→Identity, Identity-hosted server, Person upsert) and `IInvitationService` (Identity→Fokus, Fokus-hosted server, atomic validate+match+Accept→role) — **plus** gRPC client infrastructure built from scratch (CPM packages + `Blocks.AspNetCore` client helper), User promoted `Entity<int>`→`AggregateRoot<int>`, and a `RemoveUserRoleDbDefault`-style migration. This is the largest pass of the program.
 
 ## Runtime / Tooling Malfunctions Log

@@ -6,7 +6,7 @@
 
 ## Purpose
 
-Fokus is a sprint analytics service that syncs data from Jira (sprints, tickets, developers, status transitions) and computes health metrics (completion rate, disruption rate, carry-over rate) for sprint retrospectives. It is a single-service system with no cross-service dependencies in v1.
+Fokus is a sprint analytics service that syncs data from Jira (sprints, tickets, developers, status transitions) and computes health metrics (completion rate, disruption rate, carry-over rate) for sprint retrospectives. Cross-module communication uses gRPC (synchronous) and MassTransit in-process bus (integration events).
 
 ## Domain model
 
@@ -50,16 +50,20 @@ N/A — FastEndpoints native, no MediatR.
 
 ## gRPC clients
 
-None
+`IPersonService` (Blocks.Contracts) — dials Identity's `PersonGrpcService`. Registered via `AddCodeFirstGrpcClient<IPersonService>(grpcOptions, "Person")`. Config key: `Grpc:Services:Person:Url`. Called from `SprintIssueSyncService.UpsertPersonBestEffortAsync` for each discovered Jira developer. Best-effort: gRPC failure is caught/logged and does not abort sync.
 
 ## gRPC server
 
-None
+`InvitationGrpcService` (`Fokus.API/Grpc/`) implements `IInvitationService` (Blocks.Contracts). Provides `RedeemAsync` — atomically validates, enforces case-insensitive email match, and calls `Invitation.Accept(now)`. All failure outcomes are pre-checked before `Accept` (L1: no exception across gRPC boundary). Mapped via `MapFokusEndpoints()` → `app.MapGrpcService<InvitationGrpcService>()`.
+
+**Contract topology:** Two opposite-direction contracts — Fokus is server for Invitation, client for Person; Identity is server for Person, client for Invitation.
 
 ## Integration events
 
-**Published:** None
-**Consumed:** None
+**Published:** `SprintSynced` — published after each successfully-synced sprint.
+**Consumed:** `FirstAdministratorRegistered` — seeds `AppSettings.CompanyDomain` if currently null. Consumer: `SeedCompanyDomainOnFirstAdministratorRegisteredConsumer` (`Features/Settings/Consumers/`). Idempotent: never overwrites an existing value. Mutates the loaded AppSettings instance via `AppSettingsRepository` (never `new AppSettings{}`).
+
+**Bus:** single `AddMassTransit` in `Fokus.API/DependencyInjection.cs` (in-memory transport). `AddConsumers(typeof(DependencyInjection).Assembly)` discovers all consumers. Identity publishes via `IPublishEndpoint` from the same bus (resolved from Host's shared DI container).
 
 ## Jira integration
 

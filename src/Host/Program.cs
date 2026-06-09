@@ -37,6 +37,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapIdentityEndpoints();
+app.MapIdentityGrpcServices();
 
 app.UseFastEndpoints(c =>
 {

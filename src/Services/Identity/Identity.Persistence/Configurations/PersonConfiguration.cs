@@ -15,9 +15,12 @@ public class PersonConfiguration : IEntityTypeConfiguration<Person>
         // FullName is computed — not stored
         builder.Ignore(p => p.FullName);
 
-        builder.Property(p => p.Email).IsRequired().HasMaxLength(256).UseCollation("NOCASE");
+        // Email is nullable — Jira-sourced Persons may have no email (Jira Cloud hides it by default).
+        // Unique index scoped to non-null values so multiple emailless Jira Persons don't collide.
+        builder.Property(p => p.Email).HasMaxLength(256).UseCollation("NOCASE");
         builder.HasIndex(p => p.Email)
             .IsUnique()
+            .HasFilter("[Email] IS NOT NULL")
             .HasDatabaseName("IX_Persons_Email");
 
         builder.Property(p => p.PictureUrl).HasMaxLength(1024);

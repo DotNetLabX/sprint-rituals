@@ -8,7 +8,11 @@ public partial class Person : AggregateRoot<int>
     public string FirstName { get; private set; } = string.Empty;
     public string LastName { get; private set; } = string.Empty;
     public string FullName => $"{FirstName} {LastName}".Trim();
-    public string Email { get; private set; } = string.Empty;
+    /// <summary>
+    /// Email address. Nullable — Jira-sourced Persons may have no email
+    /// (Jira Cloud hides developer email by default). Google-sourced Persons always have email.
+    /// </summary>
+    public string? Email { get; private set; }
     public string? PictureUrl { get; private set; }
     public PersonSource Source { get; private set; }
     public string? ExternalId { get; private set; }

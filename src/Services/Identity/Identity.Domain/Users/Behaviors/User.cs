@@ -1,3 +1,5 @@
+using Identity.Domain.Users.Events;
+
 namespace Identity.Domain.Users;
 
 public partial class User
@@ -32,4 +34,10 @@ public partial class User
     {
         IsActive = true;
     }
+
+    /// <summary>
+    /// Raises UserCreated with the real persisted Id.
+    /// Call AFTER SaveChangesAsync so EF has assigned the PK.
+    /// </summary>
+    public void RaiseCreated() => AddDomainEvent(new UserCreated(Id));
 }

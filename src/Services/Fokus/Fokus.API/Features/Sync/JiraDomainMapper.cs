@@ -76,7 +76,9 @@ public class JiraDomainMapper : IRegister
             Id = assignee.AccountId,
             DisplayName = assignee.DisplayName,
             AvatarUrl = avatarUrl,
-            IsActive = true
+            IsActive = true,
+            // EmailAddress is null when Jira Cloud restricts visibility (default); propagated best-effort.
+            Email = assignee.EmailAddress is not null ? assignee.EmailAddress.ToLowerInvariant() : null
         };
     }
 
