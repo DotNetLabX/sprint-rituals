@@ -27,3 +27,13 @@ Programming conventions for EF Core specific to this codebase. Referenced by dev
 - `required int` on composite key members is more defensively correct than plain `int` — int defaults to 0 which can silently produce invalid FK records.
 - `HasData` + `ToJson()` are incompatible. EF Core cannot seed entities via `HasData` when the entity (or an owned type on it) uses `ToJson()` column mapping. Use runtime seeding (`SeedTestData`) instead.
 - Collection expressions (`[]`) fail in expression tree lambdas. EF Core translates lambdas to SQL via expression trees. C# 12 collection expressions are not representable as expression trees — use `new List<T>()` or `Array.Empty<T>()` explicitly.
+
+## Repository Upsert Pattern
+
+**Live pattern (what the codebase uses today):** Repositories with non-trivial upsert/copy semantics override `UpsertAsync` with `public new` and perform explicit per-column assignment (`SprintRepository`, `TicketRepository`, `DeveloperRepository`, `TestExecutionRepository` all follow this pattern). The base `RepositoryBase.UpsertAsync` is the fallback for simple flat entities and currently has no production callers.
+
+**Base method behavior (after B7 fix):** `RepositoryBase.UpsertAsync` copies values via `DbContext.Entry(existing).CurrentValues.SetValues(DbContext.Entry(entity).CurrentValues)`. The `SetValues(PropertyValues)` overload goes through EF's property machinery and respects `PropertyAccessMode` — including `PropertyAccessMode.Field` for backing-field-mapped properties. Do not revert to `SetValues(entity)` (passing the detached POCO directly) — that uses plain reflection and misses backing-field-mapped properties.
+
+**Forward-looking guardrail:** If a future repository drops its `public new` override and relies on the base `UpsertAsync`, and if its aggregate uses private backing fields, those fields must be configured with the matching `PropertyAccessMode` so the base copy picks them up.
+
+**Verification reality:** The base method has no end-to-end test path (no production callers); verification is compile-green + code reading, not a sync re-run. A sprint/ticket sync exercises the `public new` overrides, not the base.

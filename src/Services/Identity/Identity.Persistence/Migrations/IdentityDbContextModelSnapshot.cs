@@ -15,7 +15,7 @@ namespace Identity.Persistence.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.0-preview.4.25258.110");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.8");
 
             modelBuilder.Entity("Identity.Domain.Persons.Person", b =>
                 {
@@ -104,10 +104,8 @@ namespace Identity.Persistence.Migrations
 
                     b.Property<string>("Role")
                         .IsRequired()
-                        .ValueGeneratedOnAdd()
                         .HasMaxLength(32)
-                        .HasColumnType("TEXT")
-                        .HasDefaultValue("Manager");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 

@@ -19,7 +19,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired()
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Property(u => u.Role).IsRequired().HasMaxLength(32).HasDefaultValue("Manager");
+        builder.Property(u => u.Role).IsRequired().HasMaxLength(32);
         builder.Property(u => u.IsActive).IsRequired().HasDefaultValue(true);
         builder.Property(u => u.RegistrationDate).IsRequired();
         builder.Property(u => u.LastLogin);

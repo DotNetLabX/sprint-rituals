@@ -25,7 +25,13 @@ public abstract class RepositoryBase<TContext, TEntity, TKey>(TContext dbContext
         if (existing is null)
             await Entity.AddAsync(entity, ct);
         else
-            DbContext.Entry(existing).CurrentValues.SetValues(entity);
+            // Copy via EF PropertyValues so properties mapped to private backing fields
+            // (PropertyAccessMode.Field) are included. Passing the detached POCO directly
+            // to SetValues(object) uses plain reflection and misses field-backed properties.
+            // Note: this base method has no production callers — all four Fokus repositories
+            // hide it with `public new UpsertAsync` and do explicit per-column copy.
+            // This hardens the base for future flat-entity repositories that do not override.
+            DbContext.Entry(existing).CurrentValues.SetValues(DbContext.Entry(entity).CurrentValues);
     }
 
     public async Task DeleteByIdAsync(TKey id, CancellationToken ct = default)
