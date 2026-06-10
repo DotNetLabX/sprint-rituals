@@ -25,7 +25,9 @@ public static class GrpcClientRegistrationExtensions
             throw new InvalidOperationException($"Missing GrpcService config for: {typeof(TClient).Name}");
         }
 
-        services.AddScoped(_ =>
+        // Channel and typed client are registered as singleton — GrpcChannel is thread-safe and
+        // designed to be shared. Creating a new channel per-request would leak sockets (L1).
+        services.AddSingleton(_ =>
         {
             var channel = GrpcChannel.ForAddress(serviceSettings.Url);
             return channel.CreateGrpcService<TClient>();

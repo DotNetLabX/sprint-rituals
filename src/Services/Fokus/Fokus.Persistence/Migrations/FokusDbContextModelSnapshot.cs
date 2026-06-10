@@ -128,6 +128,10 @@ namespace Fokus.Persistence.Migrations
                     b.Property<DateTime?>("AcceptedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 

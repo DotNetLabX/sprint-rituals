@@ -17,6 +17,11 @@ public class InvitationConfiguration : IEntityTypeConfiguration<Invitation>
 
         builder.Property(i => i.Status).IsRequired().HasMaxLength(32).HasDefaultValue("Pending");
 
+        // Optimistic concurrency: EF appends WHERE ConcurrencyToken=<original> to UPDATEs.
+        // A concurrent second redemption of the same token will affect 0 rows →
+        // DbUpdateConcurrencyException → caller translates to Used outcome.
+        builder.Property(i => i.ConcurrencyToken).IsConcurrencyToken();
+
         // InvitedByUserId is a cross-module reference to Identity.User — no DB FK constraint.
         // Cross-aggregate/cross-module references are by ID only per architecture guardrails.
         // int is non-nullable by default; no explicit IsRequired() needed (avoids snapshot delta).

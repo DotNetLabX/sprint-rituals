@@ -37,29 +37,11 @@ namespace Identity.Persistence.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_Persons_Email",
-                table: "Persons");
-
-            migrationBuilder.AlterColumn<string>(
-                name: "Email",
-                table: "Persons",
-                type: "TEXT",
-                maxLength: 256,
-                nullable: false,
-                defaultValue: "",
-                collation: "NOCASE",
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldMaxLength: 256,
-                oldNullable: true,
-                oldCollation: "NOCASE");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Persons_Email",
-                table: "Persons",
-                column: "Email",
-                unique: true);
+            // Non-reversible: rolling back after Jira-sourced Persons (with NULL Email) have been
+            // created would coerce NULL→"" and then recreate an unfiltered unique index, violating
+            // uniqueness. Declare this explicitly non-reversible (M5).
+            throw new InvalidOperationException(
+                "MakePersonEmailOptional cannot be rolled back safely once null-email Persons exist.");
         }
     }
 }

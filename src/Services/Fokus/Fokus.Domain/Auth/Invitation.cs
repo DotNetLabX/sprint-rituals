@@ -11,5 +11,11 @@ public partial class Invitation : Entity<int>
     public DateTime? AcceptedAt { get; set; }
     public string Status { get; set; } = "Pending";
 
+    /// <summary>
+    /// EF optimistic-concurrency token. Updated by EF on every save.
+    /// Prevents two simultaneous redemption requests from both succeeding on the same invitation.
+    /// </summary>
+    public Guid ConcurrencyToken { get; set; } = Guid.NewGuid();
+
     public bool IsExpired => Status == "Pending" && DateTime.UtcNow > ExpiresAt;
 }

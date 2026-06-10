@@ -117,6 +117,7 @@ public class SprintIssueSyncService(
                 var existingKeys = await ticketRepository.GetExistingKeysAsync(issueKeys, ct);
 
                 var newIssues = epicIssues.Where(i => !existingKeys.Contains(i.Key)).ToList();
+                var epicDevelopers = new List<Developer>();
 
                 foreach (var issue in newIssues)
                 {
@@ -126,12 +127,19 @@ public class SprintIssueSyncService(
                     var developer = JiraDomainMapper.MapDeveloper(issue);
                     if (developer is not null)
                     {
+                        if (developer.Email is null)
+                            developer.Email = await FetchJiraEmailBestEffortAsync(developer.Id, ct);
+
                         await developerRepository.UpsertAsync(developer, ct);
-                        await UpsertPersonBestEffortAsync(developer, ct);
+                        epicDevelopers.Add(developer);
                     }
                 }
 
                 await ticketRepository.SaveChangesAsync(ct);
+
+                // Reconcile Persons AFTER Fokus data is committed (M4).
+                foreach (var developer in epicDevelopers)
+                    await UpsertPersonBestEffortAsync(developer, ct);
 
                 ticketsDiscovered += newIssues.Count;
             }
@@ -154,6 +162,7 @@ public class SprintIssueSyncService(
     {
         var memberships = new List<SprintMembership>();
         var uniqueDeveloperIds = new HashSet<string>();
+        var discoveredDevelopers = new List<Developer>();
 
         foreach (var issue in issues)
         {
@@ -163,11 +172,13 @@ public class SprintIssueSyncService(
             var developer = JiraDomainMapper.MapDeveloper(issue);
             if (developer is not null)
             {
+                // Enrich email best-effort via Jira user fetch when the assignee field was empty (M2).
+                if (developer.Email is null)
+                    developer.Email = await FetchJiraEmailBestEffortAsync(developer.Id, ct);
+
                 await developerRepository.UpsertAsync(developer, ct);
                 uniqueDeveloperIds.Add(developer.Id);
-
-                // Reconcile developer as a Person in Identity (best-effort — gRPC failure must not abort sync).
-                await UpsertPersonBestEffortAsync(developer, ct);
+                discoveredDevelopers.Add(developer);
             }
 
             var transitions = JiraDomainMapper.MapStatusTransitions(issue);
@@ -181,6 +192,11 @@ public class SprintIssueSyncService(
 
         await sprintRepository.UpsertMembershipsAsync(sprint.Id, memberships, ct);
         await sprintRepository.SaveChangesAsync(ct);
+
+        // Reconcile developers as Persons in Identity AFTER Fokus data is committed (M4).
+        // Best-effort: a gRPC failure must not orphan saved Fokus data.
+        foreach (var developer in discoveredDevelopers)
+            await UpsertPersonBestEffortAsync(developer, ct);
 
         // Piggyback Xray TestSet sync if enabled — TE discovery is project-wide via dedicated endpoint
         XraySyncResult? xrayResult = null;
@@ -234,5 +250,23 @@ public class SprintIssueSyncService(
         return idx >= 0
             ? (displayName[..idx], displayName[(idx + 1)..])
             : (displayName, string.Empty);
+    }
+
+    /// <summary>
+    /// Fetches the Jira user's email via the user REST endpoint. Best-effort: returns null on any failure
+    /// (Jira Cloud restricts email visibility by default — null is the expected result in most deployments).
+    /// </summary>
+    private async Task<string?> FetchJiraEmailBestEffortAsync(string accountId, CancellationToken ct)
+    {
+        try
+        {
+            var jiraUser = await jiraClient.GetUserAsync(accountId, ct);
+            return jiraUser?.EmailAddress?.ToLowerInvariant();
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Jira user email fetch failed for {AccountId} — continuing without email", accountId);
+            return null;
+        }
     }
 }

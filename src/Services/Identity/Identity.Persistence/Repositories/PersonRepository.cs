@@ -11,8 +11,14 @@ public class PersonRepository(IdentityDbContext db)
     public async Task<Person?> GetByExternalIdAsync(string externalId, CancellationToken ct = default) =>
         await db.Persons.SingleOrDefaultAsync(p => p.ExternalId == externalId, ct);
 
-    public async Task<Person?> GetByExternalIdAndSourceAsync(string externalId, string source, CancellationToken ct = default) =>
-        await db.Persons.SingleOrDefaultAsync(p => p.ExternalId == externalId && p.Source.ToString() == source, ct);
+    public async Task<Person?> GetByExternalIdAndSourceAsync(string externalId, string source, CancellationToken ct = default)
+    {
+        // Parse the string to the enum first so EF translates the comparison server-side (M3).
+        // Avoids client-side evaluation that would load all Persons.
+        if (!Enum.TryParse<PersonSource>(source, ignoreCase: true, out var src))
+            return null;
+        return await db.Persons.SingleOrDefaultAsync(p => p.ExternalId == externalId && p.Source == src, ct);
+    }
 
     public async Task AddAsync(Person person, CancellationToken ct = default) =>
         await db.Persons.AddAsync(person, ct);

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Blocks.Contracts.Grpc;
 using Blocks.Contracts.Grpc.DataContracts;
+using Grpc.Core;
 using Identity.Persistence;
 using Identity.Persistence.Repositories;
 using Microsoft.AspNetCore.Authentication;
@@ -95,7 +96,7 @@ public static class AuthConfiguration
     /// Handles the invite-token branch. Always completes the response (error redirect or cookie sign-in).
     /// Never returns without writing a response — caller must return immediately after awaiting this.
     /// </summary>
-    private static async Task<bool> HandleInviteRedemptionAsync(
+    private static async Task HandleInviteRedemptionAsync(
         TicketReceivedContext context,
         IServiceProvider sp,
         PersonRepository personRepository,
@@ -107,33 +108,56 @@ public static class AuthConfiguration
         string? pictureUrl,
         string inviteToken)
     {
-        // Already-registered active user: ignore token and log in normally (Q5).
+        // Already-registered user path: never create a second User for the same PersonId (H2).
         var existingPerson = await personRepository.GetByExternalIdAsync(googleId)
                              ?? await personRepository.GetByEmailAsync(email);
         if (existingPerson is not null)
         {
             var existingUser = await userRepository.GetByPersonIdAsync(existingPerson.Id);
-            if (existingUser is not null && existingUser.IsActive)
+            if (existingUser is not null)
             {
-                existingPerson.UpdateFromGoogle(firstName, lastName, pictureUrl);
-                existingUser.RecordLogin();
-                await personRepository.SaveChangesAsync();
-                await SignInAsync(context, personRepository, existingUser);
-                return true;
+                if (existingUser.IsActive)
+                {
+                    // Active user with invite token: ignore token, log in normally (Q5).
+                    existingPerson.UpdateFromGoogle(firstName, lastName, pictureUrl);
+                    existingUser.RecordLogin();
+                    await personRepository.SaveChangesAsync();
+                    await SignInAsync(context, personRepository, existingUser);
+                    return;
+                }
+                else
+                {
+                    // Inactive user: do NOT silently reactivate via invite — reject deterministically.
+                    context.Response.Redirect("/invite/error?reason=account-inactive");
+                    context.HandleResponse();
+                    return;
+                }
             }
         }
 
         // Call Fokus's IInvitationService gRPC server atomically: validate + email-match + Accept.
         var invitationService = sp.GetRequiredService<IInvitationService>();
-        var result = await invitationService.RedeemAsync(
-            new RedeemInvitationRequest { Token = inviteToken, SigningInEmail = email });
+        RedeemInvitationResponse result;
+        try
+        {
+            result = await invitationService.RedeemAsync(
+                new RedeemInvitationRequest { Token = inviteToken, SigningInEmail = email });
+        }
+        catch (RpcException)
+        {
+            // Transport or server failure — redirect to a safe error page; never let an exception
+            // escape the OAuth callback (M1).
+            context.Response.Redirect("/invite/error?reason=error");
+            context.HandleResponse();
+            return;
+        }
 
         if (result.Outcome != InvitationRedeemOutcome.Success)
         {
             var reason = OutcomeToReason(result.Outcome);
             context.Response.Redirect($"/invite/error?reason={reason}");
             context.HandleResponse();
-            return true;
+            return;
         }
 
         // Provision the user with the invitation's role.
@@ -150,7 +174,6 @@ public static class AuthConfiguration
         await personRepository.SaveChangesAsync();
 
         await SignInAsync(context, personRepository, user);
-        return true;
     }
 
     private static async Task<Identity.Domain.Users.User> HandleBootstrapAsync(

@@ -16,7 +16,15 @@ public class RevokeInvitationEndpoint(InvitationRepository invitationRepository)
         }
 
         invitation.Revoke();
-        await invitationRepository.SaveChangesAsync(ct);
+        try
+        {
+            await invitationRepository.SaveChangesAsync(ct);
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
+        {
+            await Send.Results(Microsoft.AspNetCore.Http.Results.Conflict(), ct);
+            return;
+        }
 
         await Send.NoContentAsync(ct);
     }

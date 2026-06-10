@@ -14,7 +14,7 @@ Order is dependency-driven (skills before the domain work that applies them; mec
 | 3c-A | adhoc-Pass3c-ComputationToDomain | ComputationToDomain — Sprint core: SprintSummary/QaMetrics/TestTimeline calculators + 4 static helpers + gRPC adaptation (ADR-005/010) | **Done** | Pass 3b ✓ |
 | 3c-B | adhoc-Pass3c-B-DeliveryMetrics | CarryOver, ScopeChange, CycleTime, BugRatio, Leaderboard calculators (ADR-005/010) | **Done** | Pass 3c-A ✓ |
 | 3c-C | adhoc-Pass3c-C-DevEpicAnalytics | 7 dev/epic/QA calculators: DeveloperThroughput, DeveloperProgress, DeveloperDetail, DeveloperQuality, EpicProgress, QaWorkload, QaTrends (ADR-005/010) | **Done** | Pass 3c-A ✓ |
-| 4 | adhoc-Pass4-IdentityExtraction | Finish Fokus→Identity cut | Blocked | needs user scope (A2) |
+| 4 | adhoc-Pass4-IdentityExtraction | Finish Fokus→Identity cut — redemption-at-login + company-domain auto-seed + dual gRPC (Invitation redeem + Person upsert) | **Done** | scope (A2) ✓ resolved at launch |
 | 5 | adhoc-Pass5-EventCorrectness | Domain-event dispatch fixes — B1 retract (already-fixed), B2 `UserCreated` placeholder, B6 `Role` DB-default removal + migration, B7 `RepositoryBase` backing-field copy | **Done** | Pass 3c-B ✓ + 3c-C ✓ |
 
 **Pass 3 split (decided at the Pass 3a launch):** Pass 3 was ~3–4× Pass 2, so it was split into 3a/3b/3c, each its own pipeline run. 3a delivered (no-DTO-in-domain). Decisions for 3b/3c are locked in `docs/specs/adhoc-Pass3-DomainEnrichment/delivery/communication-log.md` + `summary.md` — those runs should not re-litigate scope (Q2=full ADR-005 migration; Q3=AppSettings VOs + Identity now; Fokus sync aggregates stay anemic per B3).
@@ -63,5 +63,5 @@ Root-cause arm: the skills that encode the patterns the later passes apply. **Sk
 - **Read first:** `docs/architecture/index.md` (→ `decisions.md`) and `.claude/rules/engineering-discipline.md`. They are binding.
 - **Decision order (ADR-003):** correct skill → reference project `<reference-repo>` → fix/create the skill. Every fix is a problem *class* (fix all instances).
 - **Pass 1 (skill repair)** — **Done.** `domain-service` shape reviewed interactively with the user (D-A general/multi-variant; D-B endpoint-owns-DTO; repo stays out of domain — handler loads). Skills committed to the plugin repo.
-- **Pass 4 (Identity extraction)** needs the user to define what stays in Fokus vs moves to Identity before planning.
+- **Pass 4 (Identity extraction)** — **Done.** Scope (A2) resolved at launch: Invitation stays in Fokus (L1); full cut delivered (redemption-at-login, company-domain auto-seed, dual gRPC). Jira→Person keyed on ExternalId (Jira Cloud hides email). See `docs/specs/adhoc-Pass4-IdentityExtraction/delivery/summary.md`. Follow-ups: NU1903 transitive-dep advisory; optional inactive-user reactivation policy; frontend invite pages (Q12 deferred).
 - Use the **nexus** pipeline agents (`/nexus:{agent}`), not OMC equivalents (per the `pipeline-guardrails` rule).

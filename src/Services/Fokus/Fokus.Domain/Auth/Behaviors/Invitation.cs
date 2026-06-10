@@ -36,6 +36,7 @@ public partial class Invitation
 
         Status = "Accepted";
         AcceptedAt = now;
+        ConcurrencyToken = Guid.NewGuid();
     }
 
     public void Revoke()
@@ -44,5 +45,6 @@ public partial class Invitation
             throw new DomainException("Only pending invitations can be revoked.");
 
         Status = "Revoked";
+        ConcurrencyToken = Guid.NewGuid();
     }
 }

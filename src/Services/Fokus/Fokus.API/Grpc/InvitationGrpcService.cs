@@ -1,6 +1,7 @@
 using Blocks.Contracts.Grpc;
 using Blocks.Contracts.Grpc.DataContracts;
 using Fokus.Persistence.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace Fokus.API.Grpc;
 
@@ -9,6 +10,10 @@ namespace Fokus.API.Grpc;
 /// Fokus = server (owns the Invitation domain). Identity = client (calls from the Google auth callback).
 /// One atomic call: validate usability, enforce case-insensitive email match,
 /// call Invitation.Accept(now) on success, return outcome + role.
+///
+/// Concurrency safety: Invitation carries an EF optimistic-concurrency token (ConcurrencyToken).
+/// Two simultaneous redemptions of the same token will race; the second save will throw
+/// DbUpdateConcurrencyException → translated to Used outcome (never a 500 across the gRPC boundary).
 /// </summary>
 public class InvitationGrpcService(InvitationRepository invitationRepository) : IInvitationService
 {
@@ -36,7 +41,16 @@ public class InvitationGrpcService(InvitationRepository invitationRepository) : 
 
         // All pre-checks passed — Accept will not throw.
         invitation.Accept(DateTime.UtcNow);
-        await invitationRepository.SaveChangesAsync(ct);
+
+        try
+        {
+            await invitationRepository.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Another request won the race — the invitation is now Accepted.
+            return Fail(InvitationRedeemOutcome.Used);
+        }
 
         return new RedeemInvitationResponse
         {

@@ -83,6 +83,17 @@
 ### Step 11 — Wire Fokus sync → IPersonService
 - `src/Services/Fokus/Fokus.API/Features/Sync/SprintIssueSyncService.cs` — injected `IPersonService`; added `UpsertPersonBestEffortAsync` (try/catch, gRPC failure swallowed/logged); called from both `SyncAsync` and `SyncEpicDiscoveryAsync` for each discovered developer. `DisplayName` split into FirstName/LastName by first space.
 
+### Fix cycle 1 — Review findings (H1, H2, M1-M5, L1, L2)
+- `src/Services/Fokus/Fokus.Domain/Auth/Invitation.cs` — added `ConcurrencyToken Guid` property (H1 — optimistic concurrency guard against replay).
+- `src/Services/Fokus/Fokus.Persistence/Configurations/InvitationConfiguration.cs` — configured `ConcurrencyToken` as `IsConcurrencyToken()` (H1).
+- `src/Services/Fokus/Fokus.API/Grpc/InvitationGrpcService.cs` — bumps `ConcurrencyToken` before save; catches `DbUpdateConcurrencyException` → returns `Used` outcome (H1: atomic single-use redemption).
+- `src/Services/Fokus/Fokus.Persistence/Migrations/...AddInvitationConcurrencyToken.cs` — Fokus migration adding `ConcurrencyToken` column to `Invitations` table (H1).
+- `src/Services/Identity/Identity.API/Auth/AuthConfiguration.cs` — `HandleInviteRedemptionAsync` now covers inactive user: if user exists (active OR inactive), never creates a second User for same PersonId; inactive → `/invite/error?reason=account-inactive` (H2); wraps `RedeemAsync` in `catch (RpcException)` → `/invite/error?reason=error` (M1); return type changed from `Task<bool>` to `Task` — all branches use `return;` (L2).
+- `src/Services/Fokus/Fokus.API/Features/Sync/SprintIssueSyncService.cs` — `FetchJiraEmailBestEffortAsync` helper added (wires the previously dead `GetUserAsync` — M2); called when developer email is null; `UpsertPersonBestEffortAsync` moved to AFTER `SaveChangesAsync` — Person reconciliation now only runs after Fokus data is committed (M4); same fix applied to `SyncEpicDiscoveryAsync`.
+- `src/Services/Identity/Identity.Persistence/Repositories/PersonRepository.cs` — `GetByExternalIdAndSourceAsync` uses `Enum.TryParse<PersonSource>` before the LINQ query, preventing client-side evaluation (M3); added `global using Identity.Domain.Enums` to `GlobalUsings.cs`.
+- `src/Services/Identity/Identity.Persistence/Migrations/20260609194823_MakePersonEmailOptional.cs` — `Down()` replaced with `throw InvalidOperationException` (M5: migration is non-reversible once null-email Persons exist).
+- `src/BuildingBlocks/Blocks.AspNetCore/Grpc/GrpcClientRegistrationExtensions.cs` — `AddScoped` → `AddSingleton` for gRPC channel + typed client (L1: channels are thread-safe and designed to be shared; avoids socket leak per DI resolution).
+
 ### Step 12 — Documentation
 - `src/Services/Identity/CLAUDE.md` — updated domain model (User promoted; Person.Email nullable; ExternalId for Jira); updated Auth section (three login paths); updated gRPC and integration events sections.
 - `src/Services/Fokus/CLAUDE.md` — updated purpose, gRPC client/server, integration events, MassTransit topology.
@@ -90,8 +101,10 @@
 
 ## Key Decisions
 - Used Identity.Persistence as both `-p` and `-s` for the Identity EF migrations because `Identity.API` lacks `Microsoft.EntityFrameworkCore.Design`. Persistence has both the Design package and a `DesignTimeDbContextFactory`.
-- `HandleInviteRedemptionAsync` always completes the response (no fall-through return path) — caller returns immediately after awaiting. Simplifies the control flow in `HandleTicketReceivedAsync`.
-- `UpsertPersonBestEffortAsync` is best-effort by design — gRPC failure must never abort a sprint sync. The Fokus data (Developer upsert) is saved before the gRPC call.
+- `HandleInviteRedemptionAsync` always completes the response (no fall-through return path) — caller returns immediately after awaiting. Return type is `Task` (no bool return value).
+- `UpsertPersonBestEffortAsync` runs AFTER Fokus `SaveChangesAsync` — a cross-module write failure never orphans committed Fokus data; the sync result is already durable.
+- Concurrency guard for invitation redemption: opted for EF `IsConcurrencyToken` on a `Guid` property rather than a raw `ExecuteUpdateAsync` WHERE clause — EF handles the optimistic locking pattern cleanly in SQLite; `DbUpdateConcurrencyException` maps to `Used` outcome without exposing an exception across the gRPC boundary.
+- `MakePersonEmailOptional` declared non-reversible: no backfill strategy exists for NULL-email Persons once Jira-sourced data exists; an unfiltered unique index restore would fail at runtime.
 - Single `AddMassTransit` lives in Fokus. Identity publishes via `IPublishEndpoint` resolved from the Host's shared DI container — no second bus registration needed.
 
 ## Carry-Over Findings
