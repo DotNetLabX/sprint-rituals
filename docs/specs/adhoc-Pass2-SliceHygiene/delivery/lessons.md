@@ -1,5 +1,12 @@
 # Pass 2 — SliceHygiene — Lessons
 
+> **Learner consolidation — 2026-06-08** (→ `<plugin-repo>`)
+> - `[APPLIED]` file list MUST equal the exact acceptance grep; definition-line not usage grep → **nexus** `create-implementation-plan` (Refactoring & Type-Move rules) — recurred in Pass 3c, 3c-B.
+> - `[APPLIED]` Mapster eligibility test (single-source + name-aligned only) → **nexus-dotnet** `create-feature` Mappings workflow.
+> - `[APPLIED]` `IgnoreNonMapped(true)` is a whitelist not a shield; `.Adapt(existing)` never nulls (the no-op-write erratum) → **nexus-dotnet** `persistence-patterns`.
+> - `[APPLIED]` wire-stability is a first-class plan concern when renaming contract types → **nexus** `create-implementation-plan` (rename table + invariants). *(2026-06-10: the "plan point that is genuinely the developer's call must say so" lesson below also fed the binding-vs-free rule promoted in the Plan Grounding & Deviation Rules section, with Pass 3c-C + Pass 4.)*
+> - `[TRACKED]` `EndpointWithoutRequest` are still split targets; camelCase TS-payload translation — context-specific.
+
 ## Architect Lessons
 
 - **Enumerate fat files with a definition-line grep, not a usage grep.** My first Step-3 list (14) was built from a broad `class .*(Request|Response|Validator|Dto)` scan that conflates *definitions* with *usages* (e.g. `EndpointWithoutRequest<MeResponse>` is a usage, not an inline definition) and also undercounted because I enumerated by memory of the files I'd read rather than a single authoritative grep. The correct count was 16. The precise pattern is `^\s*(public\s+)?(class|record)\s+\w+(Request|Response|Validator|Dto)\b`. The critic caught the 2-file gap (`GetDevelopers`, `GetCycleTimeBoundaries`). Lesson: for "split every file of class X" passes, derive the file list from the exact acceptance grep and make the two identical — never hand-curate the list separately from the check.

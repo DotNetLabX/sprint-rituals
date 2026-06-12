@@ -83,6 +83,16 @@ Both databases are created under `data/` relative to the Host working directory.
 
 All services publish host ports using an `{AA}XY` scheme. See `docs/conventions/project-rules.md` for full table. HTTP is mandatory; HTTPS and gRPC are opt-in.
 
+## Reference Projects (read-only, outside this repo)
+
+| Path | Role |
+|------|------|
+| `<fokus-repo>` | **Original Fokus project** — source of truth for ported business rules: architecture, product docs, feature specs, plans, populated `docs/kb/`, and original code |
+| `<reflekt-repo>` | **Original Reflekt project** — same artifact lineage; the Reflekt port into this repo is a future increment |
+| `<reference-repo>` | **Best-practices reference codebase** for .NET patterns |
+
+Use these when reverse-engineering business rules or verifying ported behavior: the original specs/plans attest *intent* independently of code. Never modify them from this repo.
+
 ## Guardrails
 
 See `docs/conventions/project-rules.md` for all architectural guardrails.

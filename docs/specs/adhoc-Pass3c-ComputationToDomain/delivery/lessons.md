@@ -1,5 +1,11 @@
 # Pass 3c — ComputationToDomain — Lessons
 
+> **Learner consolidation — 2026-06-08** (→ `<plugin-repo>`)
+> - `[APPLIED]` "grep before delete" must be a hard, numbered sub-step for shared-type deletions → **nexus** `create-implementation-plan` — recurred in Pass 3c-B.
+> - `[APPLIED]` cross-step shared wire/value-type ownership must drive split boundaries; grep all record consumers (incl. gRPC) before decomposing → **nexus** `create-implementation-plan` (enumerate-all-consumers rule).
+> - `[APPLIED]` explicit old→new rename table makes wire-stability checks deterministic → **nexus** `create-implementation-plan`.
+> - `[TRACKED]` static-method-on-injected-class → CS9113 unread param (1 occurrence) — "don't inject only to call statics"; promote if it recurs.
+
 ## Architect Lessons
 
 - **Multi-consumer response records need explicit decomposition contracts before planning.** `SprintSummaryService.cs` defines records consumed by both the HTTP endpoint and `SprintAnalyticsGrpcService`. When migrating to domain result records, both consumers need updating — overlooking the gRPC consumer would leave it broken mid-migration. Always grep for record usages across the codebase before scoping the response-record decomposition.

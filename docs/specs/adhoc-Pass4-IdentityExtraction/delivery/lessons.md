@@ -1,5 +1,11 @@
 # Identity Extraction (Pass 4) — Lessons
 
+> **Learner consolidation — 2026-06-10** (→ `<plugin-repo>`)
+> - `[APPLIED]` hedge-is-a-deferred-read (M1/M3/M4/L4 resolvable from disk) + trace cross-module contract fields to the actual source DTO (H1) → **nexus** `create-implementation-plan` (Plan Grounding & Deviation Rules) — recurred in Pass 3c-C, 5.
+> - `[APPLIED]` pre-sanctioned deviations (dependency graph + convention forks declared in the plan) → **nexus** `create-implementation-plan` — recurred in Pass 2, 3c-C.
+> - `[APPLIED]` promote-entity-to-aggregate skill gap → folded into **nexus-dotnet** `create-aggregate` ("Promote an Existing Entity… in place" section) per owner decision — also flagged in Pass 5 Q5.
+> - `[TRACKED]` PO spec rule: name transport + direction for every *synchronous* cross-boundary flow; critic Mode 1 maps each cross-boundary interaction to a named transport; `create-grpc-contract` client-infra prerequisites note; "the skill is the pattern, the repo is the truth" (reconcile Follow-step guidance against an in-repo example).
+
 ## Architect Lessons
 
 - **Phase 1 analysis surfaced a load-bearing cross-module gap the spec left implicit (Q13).** The spec names exactly two sanctioned cross-module mechanisms (integration event Identity→Fokus for the seed; gRPC `PersonGrpcService` Fokus→Identity for Person upsert) but the **synchronous Identity→Fokus invitation validate-and-accept** that redemption requires is covered by *neither*. The architecture (`suite-integration-architecture.md` §154) restricts cross-module access to gRPC or integration events, and only gRPC is synchronous — implying a **second gRPC contract** (`IInvitationService`, Fokus server / Identity client) the spec never named. This expands "the cross-module Person service (new)" into **two** new gRPC contracts in opposite directions. This is a scope decision for the PO/user, not an architect call. Lesson for the PO: when a spec says "bridge across the boundary" for a *synchronous* flow, name the exact mechanism and direction, the same way Q8/Q9 did for the other two seams.

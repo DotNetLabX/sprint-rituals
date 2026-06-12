@@ -29,8 +29,16 @@ logs/
 # OMC tooling state
 .omc/
 
-# Claude Code local settings
+# Claude Code local settings & runtime state
 .claude/settings.local.json
+.claude/.pipeline-state
+.claude/.current-agent
+.claude/.personas.json
+.claude/audit/
+
+# Generated audit telemetry (curated audit docs stay tracked)
+docs/audit/token-usage.jsonl
+docs/audit/tool-calls.log
 
 # OS
 .DS_Store

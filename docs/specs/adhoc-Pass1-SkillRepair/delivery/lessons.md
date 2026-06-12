@@ -1,5 +1,13 @@
 # Pass 1 — SkillRepair — Lessons
 
+> **Learner consolidation — 2026-06-08** (→ `<plugin-repo>`)
+> - `[APPLIED]` in-context critic must be disclosed; code-grounded review is the load-bearing gate for shared/external-artifact passes → **nexus** `architect.md` (Phase-2 review) — recurred in Pass 3, 3b.
+> - `[APPLIED]` two-repo gate blind spot (deliverables in a foreign repo) → **nexus** `agents-workflow.md` (Pipeline State) — recurred in Pass 3b, 3c-B.
+> - `[APPLIED]` `\badapt\b` anti-pattern grep false-positives on Mapster `.Adapt<T>()` → folded into the **nexus** `create-implementation-plan` "replace all" homonym carve-out.
+> - `[APPLIED]` skill gaps (domain-service, CPM, framework-currency) → created in nexus-dotnet 1.0.0.
+> - `[TRACKED]` two-repo plan-headlining discipline; "verify proposal-era defects against the installed skill version" — pass-shape-specific, kept as record.
+> - `[TRACKED→proposal]` make `pipeline-gate.js` two-repo-aware (watch a declared foreign path / honor a phase marker) — a runtime behavior change, flagged for owner approval, NOT auto-applied.
+
 ## Architect Lessons
 
 - **A "skill repair" pass has no in-repo artifact when the project is plugin-canonical.** This project removed all local `.claude/skills/` and relies on the shared, versioned plugin cache (`nexus-dotnet/0.1.1`). The pipeline (developer→repo, reviewer→repo diff, team-lead→repo commit) has nothing to operate on if the target skills live in the cache. Phase 1 must surface this as a blocker (Q1) before any plan — a plan that "edits the skills" would silently send the developer to write outside the repo, outside git, affecting every project on the machine. Decision-order: ask the user where the work lands before scoping it.

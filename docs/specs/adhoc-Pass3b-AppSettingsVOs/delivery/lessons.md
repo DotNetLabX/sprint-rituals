@@ -1,5 +1,14 @@
 # Pass 3b — AppSettings VOs + Identity Encapsulation — Lessons
 
+> **Learner consolidation — 2026-06-08** (→ `<plugin-repo>`)
+> - `[APPLIED]` `required` + `private set` = CS9032 (build-breaking → promoted at 1 occurrence) → **nexus-dotnet** `conventions/csharp.md`.
+> - `[APPLIED]` EF migration drop+add destroys data → hand-edit `RenameColumn` (data-loss → promoted at 1 occurrence) → **nexus-dotnet** `conventions/ef-core.md`.
+> - `[APPLIED]` explicit member assignment over `req.Adapt(existing)` for tracked entities with `ComplexProperty` VOs; write-funnel `SetValues` doesn't deep-copy owned members → **nexus-dotnet** `persistence-patterns`.
+> - `[APPLIED]` anchor VO-grouping verification grep on the member name, not a `settings.` variable prefix → **nexus-dotnet** `create-feature` Mappings workflow.
+> - `[APPLIED]` pipeline-gate Bash-`printf` bypass is not the fix; team lead advances the token → **nexus** `agents-workflow.md` (no-self-advance rule).
+> - `[APPLIED]` critic spawn unavailable disclosure → **nexus** `architect.md`.
+> - `[TRACKED]` skill gap `group-scalars-into-value-object` — refactoring-skill family; folded into existing skills per owner decision.
+
 ## Architect Lessons
 
 - **Phase 1 (analysis):** The dominant cost of AppSettings VO grouping is not the VO creation — it's the **~40 internal `settings.X` read-site rewrites across ~25 files** (analytics services, gRPC, sync, Xray, Settings endpoints). The VO definitions are trivial; the blast radius is the read sites. The plan must enumerate the read-site sweep as an explicit, grep-verified step, not bury it in the VO step.

@@ -1,5 +1,13 @@
 # adhoc-Pass3c-B-DeliveryMetrics — Lessons
 
+> **Learner consolidation — 2026-06-08** (→ `<plugin-repo>`)
+> - `[APPLIED]` "replace all X" with a non-call homonym (the `"neutral"` literal in a `*DeltaPolarity` field position) needs file:line + DO-NOT-TOUCH → **nexus** `create-implementation-plan`.
+> - `[APPLIED]` mode-wrapper `{Mode, Multi?, Single?}` `*Response` envelopes are wire-only; endpoint assembles → **nexus-dotnet** `domain-service` + `analytics-computation-service`.
+> - `[APPLIED]` grep every DI-registered service's type name across the whole API project to enumerate ALL injection sites → **nexus** `create-implementation-plan`.
+> - `[APPLIED]` Windows `cd /d` build bite → **nexus-dotnet** `conventions/csharp.md`.
+> - `[APPLIED]` pipeline-gate classifies phase by original dispatch verb, not inline user override; team lead must re-advance the token → **nexus** `agents-workflow.md`.
+> - `[TRACKED]` shared domain-type proliferation vs DRY (per-calculator `*MetricCardData`) — a design tension to lock per-pass (Q before plan), not a mechanical rule.
+
 ## Architect Lessons
 
 - **Shape-compatibility must be verified before a "maximize sharing" directive can be planned:** The user overruled my initial per-calculator isolation recommendation and mandated maximal sharing of metric-card records + delta helpers, *provided shapes are compatible*. Verification against source revealed the 6 base card fields ARE byte-identical everywhere, but the two 3c-A cards each carry a typed `Sparkline` + `Rag` that the 3c-B cards lack — and the two 3c-A sparklines differ from each other (`List<SprintSparklinePoint>` vs `IReadOnlyList<QaSparklinePoint>`). So the record collapse is partial: the 6-field `MetricCardData` unifies the 3c-B cards, but the 3c-A cards stay isolated (collapsing would lose `Sparkline`/`Rag`). The *kernel* (delta direction/polarity) unifies fully across all 7 calculators. Lesson: "maximize sharing" resolves to "share the largest common substructure that loses no data," not "one type to rule them all" — and you cannot determine that substructure without reading every card's actual shape and builder.

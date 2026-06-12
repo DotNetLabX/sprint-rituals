@@ -1,5 +1,12 @@
 # Pass 3 — DomainEnrichment — Lessons
 
+> **Learner consolidation — 2026-06-08** (→ `<plugin-repo>`)
+> - `[APPLIED]` adhoc passes gate on ADR register + triage (cross-check every ADR vs its triage verdict) → **nexus** `architect.md` — recurred in Pass 0, 1.
+> - `[APPLIED]` critic spawn unavailable → honest self-review + escalate the independent pass (never call in-context "independent") → **nexus** `architect.md`.
+> - `[APPLIED]` project-reference removal must grep dependent `GlobalUsings` + property/field/return types, not just `.csproj` → **nexus** `create-implementation-plan`.
+> - `[TRACKED]` directive-count-right-but-mechanism-needs-splitting (Group-1/Group-2 Mapster); identical-enums-in-two-namespaces drift → context-specific.
+> - `[TRACKED]` skill gap `relocate-domain-dto-factory` — refactoring-skill family; folded the Mapster facts into existing skills per owner decision rather than creating a new skill.
+
 ## Architect Lessons
 
 - **Adhoc passes have no spec.md — the binding input is the ADR register + triage.** Pass 3's scope is `decisions.md` ADR-004/005/006/007 + `refactor-triage.md` #1d/#4/#5/#6, surfaced via `communication-log.md` and `backlog.md`. The gate "spec exists with Status: Ready" is satisfied by the backlog row "Ready" + the ADRs, not a definition/spec.md. Confirmed this matches Pass 2's precedent (it also had `Feature Spec: None`).

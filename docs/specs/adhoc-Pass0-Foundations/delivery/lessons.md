@@ -1,5 +1,12 @@
 # Lessons — adhoc-Pass0-Foundations
 
+> **Learner consolidation — 2026-06-08** (→ `<plugin-repo>`)
+> - `[APPLIED]` Windows `cd /d` build bite → **nexus-dotnet** `conventions/csharp.md` (Build Verification) — recurred in Pass 3c-B.
+> - `[APPLIED]` "replace all" needs false-positive guards (HttpClient/SignalR `SendAsync`) → **nexus** `create-implementation-plan` (Refactoring & Type-Move rules); .NET `SendAsync` specifics already in **nexus-dotnet** `framework-currency`.
+> - `[APPLIED]` adhoc passes review against ADR register, not a spec → **nexus** `architect.md` (Feature Spec Workflow).
+> - `[APPLIED]` CPM + framework-currency skill gaps → created in nexus-dotnet 1.0.0.
+> - `[TRACKED]` behavior-preserving side-effect enumeration; problem-class boundary-drawing — sound practice, not yet at the 2-feature promotion bar as a standalone rule.
+
 ## Architect Lessons
 
 - **Ad-hoc refactoring passes have no spec — review against the binding doc, not a spec.** Pass 0's requirements live in `docs/backlog.md` + `docs/architecture/decisions.md` (ADRs). The plan-vs-spec critic (Mode 2) has nothing to diff against; the correct gate is a self-review cross-referencing plan steps to ADR acceptance criteria. Recommend this explicitly so the team-lead doesn't spawn a critic with no artifact.

@@ -1,5 +1,11 @@
 # adhoc-Pass5-EventCorrectness — Lessons
 
+> **Learner consolidation — 2026-06-10** (→ `<plugin-repo>`)
+> - `[APPLIED]` re-verify aged findings (triage verdicts, proposal-era defect lists) against current source before planning a fix → **nexus** `architect.md` (adhoc-pass section) — promotes Pass 1's tracked item (2 occurrences).
+> - `[APPLIED]` B7 improvement proposal: `UpsertAsync` copies via EF `PropertyValues`, never `SetValues(object)` (backing-field shallow-copy hazard) → **nexus-dotnet** `persistence-patterns` — promoted at 1 occurrence (silent-data-bug class, same precedent as the Mapster no-op erratum).
+> - `[APPLIED]` method-hiding sweep (`public new {Method}` + call-site static types) appended to the enumerate-all-consumers rule → **nexus** `create-implementation-plan`.
+> - `[TRACKED]` user-override fixes still need honest value framing; EF migration startup project must carry the Design package (already fixed in-repo: `project-rules.md`, commit 0ad86be).
+
 ## Architect Lessons
 
 - **A triage `confirm` verdict must be re-verified against current source before planning a "fix."** B1 was logged `real (confirm)` against `Person.cs:30` ("RaiseCreated after SaveChangesAsync → never dispatches"). The current code (`AuthConfiguration.cs:106-107`) had already been restructured to raise-then-save-again, so `PersonCreated` dispatches today. Planning a "fix" for an already-fixed finding would have produced a no-op or a regression. Read the cited file AND its callers before trusting an aged triage line.

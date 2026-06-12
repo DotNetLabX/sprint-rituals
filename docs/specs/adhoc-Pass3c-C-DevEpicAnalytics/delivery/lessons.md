@@ -1,5 +1,11 @@
 # Pass 3c-C: DevEpicAnalytics — Lessons
 
+> **Learner consolidation — 2026-06-10** (→ `<plugin-repo>`)
+> - `[APPLIED]` plan-cited counts come from a grep at plan time, never memory (LOW-1) → **nexus** `create-implementation-plan` (Plan Grounding & Deviation Rules) — recurred with Pass 4, 5.
+> - `[APPLIED]` binding-contract scoping (public/wire identifiers binding, internal names free) → **nexus** `create-implementation-plan` — recurred in Pass 2, 4.
+> - `[APPLIED]` mixed-suffix domain folder → owner decision: retro-rename backlogged as `adhoc-Pass6-AnalyticsSuffixAlign` (backlog row 6).
+> - `[TRACKED]` cross-slice shared wire-record file (duplicate vs share) guidance gap; "wire-only kept" vs "dead, deleted" rename-table disposition; check prior-pass precedent before deferring to a question; weight slice-purity vs no-duplication more evenly.
+
 ## Architect Lessons
 
 - **Phase 1 (analyze) findings recorded before plan written.** This pass is the third sibling of the 3c-A/3c-B clean-break migration (computation → Domain, ADR-005/010). The shared kernel (`MetricCardData`, `MetricCardBuilder`) and shared wire types (`MetricCard`, `SparklinePoint` in `GetSprintSummary`; `SprintSummaryItem` in `DeveloperThroughputService`) already exist — 3c-C **consumes** them, creates nothing shared.
