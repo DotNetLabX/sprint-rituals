@@ -14,3 +14,4 @@ Project-specific architectural boundaries that the boy-scout skill must respect:
 @vue.md
 @ef-core.md
 @testing.md
+@mutation-testing.md
