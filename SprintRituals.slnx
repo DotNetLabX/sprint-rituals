@@ -17,8 +17,10 @@
     <Project Path="src/Modules/Xray/Xray.Contracts/Xray.Contracts.csproj" />
     <Project Path="src/Modules/Xray/Xray.GraphQL/Xray.GraphQL.csproj" />
   </Folder>
+  <Folder Name="/Services/" />
   <Folder Name="/Services/Fokus/">
     <Project Path="src/Services/Fokus/Fokus.API/Fokus.API.csproj" />
+    <Project Path="src/Services/Fokus/Fokus.Domain.Tests/Fokus.Domain.Tests.csproj" />
     <Project Path="src/Services/Fokus/Fokus.Domain/Fokus.Domain.csproj" />
     <Project Path="src/Services/Fokus/Fokus.Persistence/Fokus.Persistence.csproj" />
   </Folder>

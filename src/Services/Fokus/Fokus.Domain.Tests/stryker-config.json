@@ -1,0 +1,9 @@
+{
+  "stryker-config": {
+    "project": "Fokus.Domain.csproj",
+    "test-runner": "mtp",
+    "coverage-analysis": "off",
+    "reporters": ["progress", "html"],
+    "mutation-level": "standard"
+  }
+}

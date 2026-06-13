@@ -152,6 +152,23 @@ residual deltas:
 
 Smoke-test status remains **go/no-go**; scope is now the four deltas above, not the full stack.
 
+**Pass-1 result — GO (2026-06-13, `adhoc-StrykerSmokeTest`).** Ran on `Fokus.Domain` with a minimal
+xUnit v3 fixture (`HealthScoreCalculator`, 17 boundary tests) inside the real `SprintRituals.slnx` + CPM.
+Stryker.NET 4.14.2 **killed 32 mutants** on the tested class → the mutation kill-loop works. Per-delta:
+
+| Delta | Verdict | Note |
+|---|---|---|
+| xunit.v3 under Stryker 4.14+ | ✅ — **only via Stryker's MTP runner** | The default **VSTest** runner is broken for xUnit v3 → 0 kills ([stryker-net #3117](https://github.com/stryker-mutator/stryker-net/issues/3117), open). Must run `--test-runner mtp`. |
+| Microsoft.Testing.Platform runner | ✅ (preview) | Shipped in Stryker 4.13; required for xUnit v3. Preview — per-test coverage incomplete, so use `coverage-analysis: off` (or `all`), not `perTest`. |
+| Real solution + CPM + analyzers | ✅ | Test project builds in the real solution under central package management. |
+| `--with-baseline` PR-delta | ✅ (mechanically) | Baseline created + reused; works. |
+
+**Net config that works:** a `stryker-config.json` with `"test-runner": "mtp"` + `"coverage-analysis": "off"`.
+**Do NOT** add a repo-root `global.json` with `{ "test": { "runner": "Microsoft.Testing.Platform" } }` —
+it crashes the .NET 10.0.301 SDK MTP handshake (`KeyNotFoundException: key '8'`); Stryker's flag works without it.
+**Residual risk:** the MTP runner is preview ([#3424](https://github.com/stryker-mutator/stryker-net/issues/3424));
+xUnit v2 + VSTest is the rock-solid fallback if it destabilizes.
+
 ## Decisions (user, 2026-06-11)
 
 1. **Test stack confirmed** (table above) — with the binding constraint that the architecture stays language-flexible (see Language-Agnostic Architecture). The stack is the first Language Adapter, not the harness.
@@ -170,7 +187,7 @@ Smoke-test status remains **go/no-go**; scope is now the four deltas above, not 
 
 ## Open Questions (remaining)
 
-1. ~~Mutation proof mechanics~~ → answered: Stryker.NET + ACH workflow, pending the .NET 10 smoke test.
+1. ~~Mutation proof mechanics~~ → answered: Stryker.NET + ACH workflow. **.NET 10 smoke test passed (GO, 2026-06-13)** — xUnit v3 via Stryker's MTP runner (VSTest broken); see Pass-1 result above.
 2. Run cadence — on-demand per module vs recurring (e.g., after each pipeline close) + the per-PR rule-rot hook.
 
 ## Roadmap (agreed direction, 2026-06-11)

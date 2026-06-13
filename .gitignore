@@ -3,6 +3,14 @@
 [Oo]bj/
 [Pp]ublish/
 
+# Stryker.NET mutation run output (reports are regenerated per run)
+**/StrykerOutput/
+
+# Secrets — never commit
+google-ai-studio-api-key.txt
+*api-key*.txt
+*.key
+
 # Visual Studio
 .vs/
 *.user
