@@ -1,7 +1,27 @@
 # Golden Set — FROZEN (held-out harness benchmark)
 
 **Status:** Frozen — confirmed by user 2026-06-11 (the 20 primary candidates, alternates not needed)
-**⚠ HARNESS-EXCLUDED:** This file must NEVER be provided as input to the BR-coverage loop harness (miner, verifier, or test-writer agents). It is the answer key for measuring harness recall/precision. Promotion of these rules into `docs/kb/` happens only AFTER the first measured pilot run (see proposal roadmap, step 3).
+**⚠ HARNESS-EXCLUDED (sequestered tier):** This file must NEVER be provided as input to the BR-coverage
+loop harness (miner, verifier, or test-writer agents). It is the answer key for measuring harness
+recall/precision. Promotion of these rules into `docs/kb/` happens only AFTER the first measured pilot
+run (see proposal roadmap, step 3).
+
+Two-layer enforcement (adoption #4 — *schema = method — working copy → candidate for a nexus
+golden-set-schema skill once the pilot proves it*; see nexus boundary:
+`docs/proposals/br-coverage-harness-evaluation.md §Boundary & sequencing`):
+
+1. **Placement:** this file must live outside any directory visible to harness agents (`docs/audit/` is
+   not an editable or optimize-tier surface — never move it to `src/`, `docs/kb/`, or any path the
+   harness is given write or read access to).
+2. **Tripwire (pre-run/CI assertion):** before each harness run and in CI, a cheap mechanical check
+   must assert that the path of this file (`docs/audit/golden-set.md`) appears in NO harness input
+   context (agent prompts, campaign config, editable-surface declarations, or `surfaces()` output).
+   Implementation: a CI grep / pre-run script that exits non-zero if `golden-set.md` appears in any
+   harness-generated artifact under `tasks/` or in the campaign config. This is a tripwire for
+   accidental leakage — it catches the most common failure mode. It does NOT prevent a determined
+   agent with shell access from reading the file directly (the harness's own audit-hook enforcement is
+   same-process and can be bypassed). Placement + tripwire together; not placement alone.
+
 **Source:** curated via source-laddering — original Fokus docs (`<fokus-repo>\docs\`) attest intent; sprint-rituals code attests implementation. Both attestations verified per rule. Draft + methodology: `docs/proposals/br-coverage-golden-set-draft.md`.
 
 ## The 20 rules

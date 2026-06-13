@@ -57,6 +57,22 @@ Single-pass LLM extraction caps at ~71.6% accuracy with fabrication as the domin
 - **Characterization-vs-specification rule:** when code behavior and apparent intent diverge, the harness never decides. Pin current behavior + escalate as candidate bug. A green test proves rule-implementation *consistency*, not business *correctness* — extracted rules inherit implementation bugs, so the human gate on rule intent is permanent.
 - **Bootstrap (Pass 0, time-limited):** Verify snapshot tests as a non-regression scaffold before rule-encoding tests exist — with an explicit expiry/replacement plan (snapshots cement bugs if not retired).
 
+**Adoption #3 — 5-gate battery (*method — working copy → candidate for a nexus(-dotnet) skill once the pilot proves it*).** the harness's coverage flavor defines and mechanically enforces a 5-gate honesty battery (`measure.py:170-181`). Adopt these engineered, validated gate forms:
+
+| Gate | What it checks | the harness source |
+|------|---------------|------------|
+| `suite_green` | All tests pass (both double-runs) | `measure.py:171` |
+| `no_flaky` | Identical pass/fail counts across the two runs | `measure.py:172-174` |
+| `mutation_floor` | Sampled kill-rate ≥ floor (per experiment); full-scope at certify | `measure.py:183-201` |
+| `no_new_skips` | Skip count must not increase vs SOTA baseline | `measure.py:176` |
+| `char_pin` | Prod-source touch: test-count-didn't-shrink proxy (**caveat:** this is a proxy — `baseline suite_green AND collected >= base_collected` at `measure.py:179-181`; NOT a manifest pin-check; a real characterization-pin must be reimplemented for the BR flavor) | `measure.py:178-181` |
+
+The `dotnet-xunit.yaml` command and glob shapes are directly reusable:
+- Coverage: `dotnet test --nologo --collect:"XPlat Code Coverage"` → `**/TestResults/**/coverage.cobertura.xml`
+- Mutation: `dotnet stryker --mutate {targets} --reporter json` → `**/StrykerOutput/**/mutation-report.json`
+
+See nexus boundary: `docs/proposals/br-coverage-harness-evaluation.md §Boundary & sequencing`.
+
 ### Phase D — Discover (the loop's value)
 - Boundary analysis per covered rule: empty collections, off-by-one, null/missing domain values, timezone, rounding in metric formulas, partial-failure paths.
 - Each discovery is a *candidate BR* → feeds back into Phase B at the Roslyn-grounding step. No discovery skips verification.
@@ -77,7 +93,7 @@ Single-pass LLM extraction caps at ~71.6% accuracy with fabrication as the domin
 | 3 | Confidence gating (verbalized H/M/L) | **Weakest gate as originally designed** — ECE ≈ 0.10 overconfidence | Semantic consistency over 3–5 samples + post-hoc signals; verbalized = secondary |
 | 4 | Mutation proof | **Strongest gate** — structural, not statistical (Meta ACH, production scale) | Keep; add comment-stripping equivalence pre-filter |
 | 5 | Contradictions → human | Correctly designed — 16–25% escalation is the production norm | Add queue engineering: P0/P1/P2 lanes, context-complete packages |
-| + | (new) Reward-hacking defenses | Uninstructed reward hacking is empirically real | Agent gets **no write access** to Stryker config, ledger schema, or eval infra; holdout bug set; eval-edit monitoring |
+| + | (new) Reward-hacking defenses | Uninstructed reward hacking is empirically real | Agent gets **no write access** to Stryker config, ledger schema, or eval infra; holdout bug set; eval-edit monitoring. **Adoption #2** (*method — working copy → candidate for a nexus(-dotnet) skill once the pilot proves it*): the harness's `prd.md §3` enumerates 7 named attacks (scope exclusion, assertion-free tests, flaky tests, silent behavior change, skipping tests, denominator shrink, no-mutation-tool stack); `cookbook.md §TRAPS` adds 13 rows (coverage-as-target, %-gate-gaming, aggregate blindness, change-detector/over-mocked tests, 100%-kill chasing, size-confounded confidence, and more). Use as the red-team checklist for this loop's defenses. See nexus boundary: `docs/proposals/br-coverage-harness-evaluation.md §Boundary & sequencing`. |
 | + | (new) No LLM self-judgment | Self-correction without external feedback degrades output | All correction grounded in `dotnet test` / Stryker output (CRITIC pattern) |
 
 ## State & Artifacts
@@ -120,6 +136,22 @@ TUnit excluded (preview APIs, Coverlet-incompatible, thin LLM training data); re
 
 **Mandatory pre-start verification:** Stryker.NET smoke test against a .NET 10 `.Domain` project before committing to the stack.
 
+**Pass-1 smoke test — re-scoped (adoption #1, *instance/test-run — stays project*).** the harness's coverage
+flavor validated .NET 10 live: coverlet cobertura + Stryker.NET 4.14 on a **fixture classlib**
+(`dotnet-xunit.yaml:1`, `prd.md §4`). Its `dotnet-xunit.yaml` ships working command shapes (`dotnet
+test --nologo --collect:"XPlat Code Coverage"`, `dotnet stryker --mutate {targets} --reporter json`)
+and report globs. This narrows but does not retire the hard risk. Re-scope the smoke test to the four
+residual deltas:
+
+| Delta to verify on Fokus.Domain itself | Why it can still fail |
+|---|---|
+| xunit.**v3** under Stryker 4.14+ | the harness fixture likely used xunit v2; 3 majors in 6 months |
+| **Microsoft.Testing.Platform** runner | Stryker and coverlet-collector have historically lagged MTP; the harness's `test_cmd` is plain `dotnet test` |
+| Real solution shape | Multi-project refs, central package management, analyzers — fixture was a single classlib |
+| `--with-baseline` PR-delta mode | Not exercised by the harness's validation |
+
+Smoke-test status remains **go/no-go**; scope is now the four deltas above, not the full stack.
+
 ## Decisions (user, 2026-06-11)
 
 1. **Test stack confirmed** (table above) — with the binding constraint that the architecture stays language-flexible (see Language-Agnostic Architecture). The stack is the first Language Adapter, not the harness.
@@ -127,6 +159,14 @@ TUnit excluded (preview APIs, Coverlet-incompatible, thin LLM training data); re
 3. **Escalation queue is async and non-blocking** — an escalated rule is parked (`status: disputed`), only that rule and its dependents freeze; the loop continues on all other rules. Human reviews in batches at their own cadence; the user is never a blocker for loop progress.
 4. **Golden set = ~20 hand-confirmed business rules** used as a held-out benchmark for the harness's own precision/recall (the loop never sees them). Process: architect drafts candidates; user confirms/rejects (~30 min, once).
    **Source-laddering methodology (user direction):** golden rules are attested across the original project lineage in confidence-increasing order — original architecture/spec → feature-specs → feature-plans → current code (reverse-engineering). A rule attested at multiple independent layers gets higher confidence; spec-attested but code-absent = porting gap (candidate bug); code-only = incidental candidate, lower confidence. Original sources (read-only, recorded in CLAUDE.md): `<fokus-repo>` (architecture, product, feature specs, plans, populated `docs/kb/`), `<reflekt-repo>` (same lineage, port pending), `<reference-repo>` (best-practices reference). This laddering also generalizes to the harness itself: spec-lineage artifacts are intent sources independent of code, mitigating the "extracted rules inherit code bugs" risk for ported codebases.
+
+5. **the harness ownership resolved — team template harness; Pass-4 substrate candidate** (2026-06-13).
+   `HANDS-ON.md:1-4` confirms the attendee is the owner; `CLAUDE.md:27` names `employer-internal-harness`
+   as the team's template harness to co-evolve. §6.5 risk in the evaluation is retired. the harness remains
+   the leading Pass-4 substrate candidate; decision deferred to the Pass-3 checkpoint against the
+   criteria in the evaluation §6. Three-layer boundary: method → nexus(-dotnet) plugin skills (promotion
+   candidate, gated on this pilot); instance data → this project (`sprint-rituals`); loop orchestration
+   → the harness flavor. See `docs/proposals/br-coverage-harness-evaluation.md §Boundary & sequencing`.
 
 ## Open Questions (remaining)
 
@@ -138,7 +178,7 @@ TUnit excluded (preview APIs, Coverlet-incompatible, thin LLM training data); re
 | # | Pass | Content | Output |
 |---|------|---------|--------|
 | 0 | Freeze | Confirmed golden set → `docs/audit/golden-set.md` (harness-excluded); DIV-1..4 user rulings applied; DIV-5..7 → backlog BUG/GAP rows | Frozen benchmark |
-| 1 | Foundations (adhoc) | First test project (xunit.v3 + MTP + FsCheck + FluentAssertions), **Stryker.NET .NET 10 smoke test (go/no-go)**, KB scaffold (`docs/kb/index.md` + schema) | Test convention + validated tooling + KB skeleton |
+| 1 | Foundations (adhoc) | First test project (xunit.v3 + MTP + FsCheck + FluentAssertions), **Stryker.NET .NET 10 smoke test (go/no-go — re-scoped to four residual deltas, see below)**, KB scaffold (`docs/kb/index.md` + schema) | Test convention + validated tooling + KB skeleton |
 | 2 | Pilot — one MANUAL loop iteration (adhoc) | Mine → Verify (Codex refutation + consistency sampling) → Cover ~10 rules mutation-gated → Discover; measured against golden set | Calibration: recall/precision, escalation rate, cost/rule, Stryker runtime |
 | 3 | Evaluate (checkpoint) | Tune thresholds, batch sizes, `break-at`; go/no-go for automation | Tuned gate parameters |
 | 4 | Automate | Workflow script (loop-until-dry, budget cap, mutation ratchet) + per-PR rule-rot CI hook | Push-button harness |
