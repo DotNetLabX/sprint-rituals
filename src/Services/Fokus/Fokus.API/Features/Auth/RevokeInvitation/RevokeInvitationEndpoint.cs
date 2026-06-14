@@ -22,7 +22,7 @@ public class RevokeInvitationEndpoint(InvitationRepository invitationRepository)
         }
         catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
         {
-            await Send.Results(Microsoft.AspNetCore.Http.Results.Conflict(), ct);
+            await Send.ResponseAsync((object?)null, 409, ct);
             return;
         }
 

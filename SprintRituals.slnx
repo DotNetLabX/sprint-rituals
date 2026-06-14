@@ -18,6 +18,11 @@
     <Project Path="src/Modules/Xray/Xray.GraphQL/Xray.GraphQL.csproj" />
   </Folder>
   <Folder Name="/Services/" />
+  <Folder Name="/Services/Reflekt/">
+    <Project Path="src/Services/Reflekt/Reflekt.API/Reflekt.API.csproj" />
+    <Project Path="src/Services/Reflekt/Reflekt.Domain/Reflekt.Domain.csproj" />
+    <Project Path="src/Services/Reflekt/Reflekt.Persistence/Reflekt.Persistence.csproj" />
+  </Folder>
   <Folder Name="/Services/Fokus/">
     <Project Path="src/Services/Fokus/Fokus.API/Fokus.API.csproj" />
     <Project Path="src/Services/Fokus/Fokus.Domain.Tests/Fokus.Domain.Tests.csproj" />

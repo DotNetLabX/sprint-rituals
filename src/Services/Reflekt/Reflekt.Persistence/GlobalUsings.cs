@@ -1,0 +1,9 @@
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.EntityFrameworkCore.Metadata.Builders;
+global using Blocks.Domain.Entities;
+global using Blocks.Domain.Events;
+global using Blocks.EntityFrameworkCore;
+global using Blocks.EntityFrameworkCore.EntityConfigurations;
+global using Blocks.EntityFrameworkCore.Interceptors;
+global using Blocks.EntityFrameworkCore.Repositories;
+global using Reflekt.Domain;

@@ -1,0 +1,72 @@
+using Microsoft.AspNetCore.Authorization;
+using Reflekt.API.Auth;
+using Microsoft.AspNetCore.SignalR;
+using Reflekt.API.Features.PhaseActions;
+using Reflekt.API.Hubs;
+using Reflekt.Domain.CardGroups;
+using Reflekt.Domain.Cards;
+using Reflekt.Domain.Sprints;
+using Reflekt.Persistence.Repositories;
+using AuthPolicies = Reflekt.API.Auth.Policies;
+
+namespace Reflekt.API.Features.CardGroups.DissolveGroup;
+
+public sealed record DissolveGroupRequest(int SprintId, int GroupId);
+
+[Authorize(Policy = AuthPolicies.ScrumMaster)]
+[HttpDelete("/api/sprints/{sprintId}/card-groups/{groupId}")]
+[Tags("CardGroups")]
+public sealed class DissolveGroupEndpoint(
+    SprintRepository sprintRepository,
+    TeamRepository teamRepository,
+    CardRepository cardRepository,
+    CardGroupRepository cardGroupRepository,
+    PhaseActionCache phaseActionCache,
+    IHubContext<SprintHub> hubContext)
+    : Endpoint<DissolveGroupRequest>
+{
+    public override async Task HandleAsync(DissolveGroupRequest req, CancellationToken ct)
+    {
+        var userId = User.GetUserId();
+
+        var sprint = await sprintRepository.GetByIdAsync(req.SprintId, ct);
+        if (sprint is null) { await Send.NotFoundAsync(ct); return; }
+
+        var team = await teamRepository.GetByIdAsync(sprint.TeamId, ct);
+        if (team is null || team.OwnerId != userId)
+        {
+            await Send.ForbiddenAsync(ct);
+            return;
+        }
+
+        if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, SprintAction.UngroupCards))
+            ThrowError($"{SprintAction.UngroupCards} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
+
+        var group = await cardGroupRepository.GetByIdAsync(req.GroupId, ct);
+        if (group is null || group.SprintId != req.SprintId) { await Send.NotFoundAsync(ct); return; }
+
+        var groupCards = (await cardRepository.GetBySprintIdAsync(req.SprintId, ct))
+            .Where(c => c.GroupId == req.GroupId)
+            .ToList();
+
+        if (groupCards.Count < 2)
+            ThrowError("Cannot dissolve a solo group.", StatusCodes.Status400BadRequest);
+
+        foreach (var card in groupCards)
+        {
+            var soloGroup = CardGroup.Create(req.SprintId, card.ColumnType);
+            soloGroup.ClearDomainEvents();
+            await cardGroupRepository.AddAsync(soloGroup, ct);
+            await cardGroupRepository.SaveChangesAsync(ct);
+            card.SetGroupId(soloGroup.Id);
+        }
+
+        cardGroupRepository.Remove(group);
+        await cardGroupRepository.SaveChangesAsync(ct);
+
+        await hubContext.Clients.Group($"sprint:{req.SprintId}")
+            .SendAsync("GroupDissolved", new { groupId = req.GroupId }, ct);
+
+        await Send.NoContentAsync(ct);
+    }
+}

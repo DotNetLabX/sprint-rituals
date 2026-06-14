@@ -1,0 +1,37 @@
+using Microsoft.AspNetCore.Authorization;
+using Reflekt.API.Auth;
+using Reflekt.Persistence.Repositories;
+using AuthPolicies = Reflekt.API.Auth.Policies;
+
+namespace Reflekt.API.Features.Sprints.UpdateColumns;
+
+[Authorize(Policy = AuthPolicies.ScrumMaster)]
+[HttpPut("/api/sprints/{sprintId}/columns")]
+[Tags("Sprints")]
+public sealed class UpdateColumnsEndpoint(TeamRepository teamRepository, SprintRepository sprintRepository)
+    : Endpoint<UpdateColumnsCommand, SprintResponse>
+{
+    public override async Task HandleAsync(UpdateColumnsCommand command, CancellationToken ct)
+    {
+        var userId = User.GetUserId();
+
+        var sprint = await sprintRepository.GetByIdAsync(command.SprintId, ct);
+        if (sprint is null) { await Send.NotFoundAsync(ct); return; }
+
+        var team = await teamRepository.GetByIdAsync(sprint.TeamId, ct);
+        if (team is null || team.OwnerId != userId)
+        {
+            await Send.ForbiddenAsync(ct);
+            return;
+        }
+
+        sprint.UpdateColumnConfig(
+            command.Column1Name, command.Column1Color,
+            command.Column2Name, command.Column2Color,
+            command.Column3Name, command.Column3Color);
+
+        await sprintRepository.SaveChangesAsync(ct);
+
+        await Send.OkAsync(sprint.Adapt<SprintResponse>(), ct);
+    }
+}

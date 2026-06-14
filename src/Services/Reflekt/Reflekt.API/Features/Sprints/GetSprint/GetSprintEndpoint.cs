@@ -1,0 +1,32 @@
+using Microsoft.AspNetCore.Authorization;
+using Reflekt.API.Auth;
+using Reflekt.Persistence.Repositories;
+using AuthPolicies = Reflekt.API.Auth.Policies;
+
+namespace Reflekt.API.Features.Sprints.GetSprint;
+
+[Authorize(Policy = AuthPolicies.ScrumMaster)]
+[HttpGet("/api/teams/{teamId}/sprints/{sprintId}")]
+[Tags("Sprints")]
+public sealed class GetSprintEndpoint(TeamRepository teamRepository, SprintRepository sprintRepository)
+    : Endpoint<SprintRouteRequest, SprintResponse>
+{
+    public override async Task HandleAsync(SprintRouteRequest request, CancellationToken ct)
+    {
+        var userId = User.GetUserId();
+
+        var team = await teamRepository.GetByIdAsync(request.TeamId, ct);
+        if (team is null) { await Send.NotFoundAsync(ct); return; }
+
+        if (team.OwnerId != userId)
+        {
+            await Send.ForbiddenAsync(ct);
+            return;
+        }
+
+        var sprint = await sprintRepository.GetByIdAsync(request.SprintId, ct);
+        if (sprint is null || sprint.TeamId != request.TeamId) { await Send.NotFoundAsync(ct); return; }
+
+        await Send.OkAsync(sprint.Adapt<SprintResponse>(), ct);
+    }
+}
