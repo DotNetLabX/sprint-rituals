@@ -23,7 +23,7 @@ public sealed class FocusGroupEndpoint(
 {
     public override async Task HandleAsync(FocusGroupRequest req, CancellationToken ct)
     {
-        var userId = User.GetUserId();
+        var userId = User.GetPersonId();
 
         var sprint = await sprintRepository.GetByIdAsync(req.SprintId, ct);
         if (sprint is null) { await Send.NotFoundAsync(ct); return; }

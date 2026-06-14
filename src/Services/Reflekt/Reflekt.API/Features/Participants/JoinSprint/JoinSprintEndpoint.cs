@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Reflekt.API.Auth;
 using Reflekt.Domain.Participants;
 using Reflekt.Domain.Sprints;
 using Reflekt.Persistence.Repositories;
@@ -22,7 +23,11 @@ public sealed class JoinSprintEndpoint(SprintRepository sprintRepository, Partic
         if (await participantRepository.ExistsByDisplayNameAsync(command.SprintId, command.DisplayName, ct))
             ThrowError("Name already taken.", StatusCodes.Status409Conflict);
 
-        var participant = Participant.Join(command.DisplayName, command.SprintId);
+        // Optional cookie claim: suite members (Identity cookie) carry person_id → PersonId set;
+        // guests have no cookie → null (ADR-022). Endpoint stays [AllowAnonymous] either way.
+        // Seam (ADR-021): a future SM-approval gate slots in before this single Join call.
+        var personId = User.GetPersonIdOrNull();
+        var participant = Participant.Join(command.DisplayName, command.SprintId, personId);
         await participantRepository.AddAsync(participant, ct);
         await participantRepository.SaveChangesAsync(ct);
 

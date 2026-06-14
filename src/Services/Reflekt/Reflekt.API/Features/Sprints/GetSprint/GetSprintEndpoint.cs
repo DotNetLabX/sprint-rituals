@@ -13,7 +13,7 @@ public sealed class GetSprintEndpoint(TeamRepository teamRepository, SprintRepos
 {
     public override async Task HandleAsync(SprintRouteRequest request, CancellationToken ct)
     {
-        var userId = User.GetUserId();
+        var userId = User.GetPersonId();
 
         var team = await teamRepository.GetByIdAsync(request.TeamId, ct);
         if (team is null) { await Send.NotFoundAsync(ct); return; }

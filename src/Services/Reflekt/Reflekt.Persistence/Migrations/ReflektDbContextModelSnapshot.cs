@@ -205,10 +205,10 @@ namespace Reflekt.Persistence.Migrations
                     b.Property<DateTime?>("LastModifiedOn")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("SprintId")
+                    b.Property<int?>("PersonId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("UserId")
+                    b.Property<int>("SprintId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
@@ -216,13 +216,13 @@ namespace Reflekt.Persistence.Migrations
                     b.HasIndex("GuestToken")
                         .IsUnique();
 
+                    b.HasIndex("PersonId");
+
                     b.HasIndex("SprintId");
 
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("SprintId", "UserId")
+                    b.HasIndex("SprintId", "PersonId")
                         .IsUnique()
-                        .HasFilter("\"UserId\" IS NOT NULL");
+                        .HasFilter("\"PersonId\" IS NOT NULL");
 
                     b.ToTable("Participants", (string)null);
                 });
@@ -497,52 +497,6 @@ namespace Reflekt.Persistence.Migrations
                     b.ToTable("Teams", (string)null);
                 });
 
-            modelBuilder.Entity("Reflekt.Domain.Users.User", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CreatedById")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("CreatedOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("TEXT")
-                        .UseCollation("NOCASE");
-
-                    b.Property<string>("GivenName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("LastModifiedById")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Email")
-                        .IsUnique()
-                        .HasDatabaseName("IX_Users_Email");
-
-                    b.ToTable("Users", (string)null);
-                });
-
             modelBuilder.Entity("Reflekt.Domain.Votes.Vote", b =>
                 {
                     b.Property<int>("Id")
@@ -629,11 +583,6 @@ namespace Reflekt.Persistence.Migrations
                         .HasForeignKey("SprintId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Reflekt.Domain.Users.User", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("Reflekt.Domain.Sprints.Sprint", b =>
@@ -642,15 +591,6 @@ namespace Reflekt.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("TeamId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Reflekt.Domain.Teams.Team", b =>
-                {
-                    b.HasOne("Reflekt.Domain.Users.User", null)
-                        .WithMany()
-                        .HasForeignKey("OwnerId")
-                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 

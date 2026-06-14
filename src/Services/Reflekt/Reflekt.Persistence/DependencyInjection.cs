@@ -23,7 +23,6 @@ public static class DependencyInjection
             options.AddInterceptors(sp.GetRequiredService<ISaveChangesInterceptor>());
         });
 
-        services.AddScoped<UserRepository>();
         services.AddScoped<TeamRepository>();
         services.AddScoped<SprintRepository>();
         services.AddScoped<ParticipantRepository>();
@@ -47,6 +46,6 @@ public static class DependencyInjection
         var config = sp.GetRequiredService<IConfiguration>();
 
         if (config.GetValue<bool>("Seed:Enabled"))
-            await DbInitializer.SeedAsync(db, config);
+            await DbInitializer.SeedAsync(db);
     }
 }

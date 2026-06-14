@@ -42,8 +42,8 @@ public sealed class EditCardEndpoint(
         else
         {
             var team = await teamRepository.GetByIdAsync(sprint.TeamId, ct);
-            var userId = User.GetUserId();
-            if (team is null || team.OwnerId != userId)
+            var personId = User.GetPersonId();
+            if (team is null || team.OwnerId != personId)
             {
                 await Send.ForbiddenAsync(ct);
                 return;
@@ -56,7 +56,10 @@ public sealed class EditCardEndpoint(
 
         if (sprint.CurrentPhase == SprintPhase.Discussing && card.CardType == CardType.ActionItem)
         {
-            if (User.FindFirstValue(ClaimTypes.NameIdentifier) is null)
+            // Presence check: only a cookie-authenticated suite user may edit an action item in
+            // Discussing. Any Identity cookie carries person_id (RA2), so this is behavior-equivalent
+            // to the former NameIdentifier check.
+            if (User.FindFirstValue("person_id") is null)
             {
                 await Send.ForbiddenAsync(ct);
                 return;

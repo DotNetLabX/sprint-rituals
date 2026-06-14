@@ -15,7 +15,7 @@ public sealed class DeleteTeamEndpoint(TeamRepository teamRepository, SprintRepo
 {
     public override async Task HandleAsync(DeleteTeamCommand command, CancellationToken ct)
     {
-        var userId = User.GetUserId();
+        var userId = User.GetPersonId();
 
         var team = await teamRepository.GetByIdAsync(command.TeamId, ct);
         if (team is null) { await Send.NotFoundAsync(ct); return; }

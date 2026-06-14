@@ -287,6 +287,7 @@ public static class AuthConfiguration
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new("person_id", user.PersonId.ToString()),
             new(ClaimTypes.Email, claimPerson.Email ?? string.Empty),
             new(ClaimTypes.Name, claimPerson.FullName),
             new(ClaimTypes.Role, user.Role)

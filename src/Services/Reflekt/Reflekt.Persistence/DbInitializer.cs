@@ -1,42 +1,26 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Reflekt.Domain.CardGroups;
 using Reflekt.Domain.Cards;
 using Reflekt.Domain.Participants;
 using Reflekt.Domain.Sprints;
 using Reflekt.Domain.Teams;
-using Reflekt.Domain.Users;
 using Reflekt.Domain.Votes;
 
 namespace Reflekt.Persistence;
 
 internal static class DbInitializer
 {
-    public static async Task SeedAsync(ReflektDbContext db, IConfiguration config, CancellationToken ct = default)
+    // Dev-only placeholder Person id. NOT guaranteed to match any real Identity Person
+    // (RA2 has no Identity↔Reflekt seed handshake). The seed Team exists only so the dev
+    // reflekt.db has a demo board; see questions.md Q5 / plan Step 7.
+    private const int SeedOwnerPersonId = 1;
+
+    public static async Task SeedAsync(ReflektDbContext db, CancellationToken ct = default)
     {
-        var seedEmail = config["Seed:SeedUserEmail"] ?? "dev@localhost";
-
-        // Ensure seed user exists
-        User user;
-        var existingUser = await db.Users
-            .FirstOrDefaultAsync(u => EF.Functions.Collate(u.Email, "NOCASE") == seedEmail, ct);
-
-        if (existingUser is null)
-        {
-            user = User.Create(seedEmail, seedEmail, seedEmail);
-            user.ClearDomainEvents();
-            db.Users.Add(user);
-            await db.SaveChangesAsync(ct);
-        }
-        else
-        {
-            user = existingUser;
-        }
-
         Team team;
         if (!await db.Teams.AnyAsync(ct))
         {
-            team = Team.Create("Dev Team", user.Id);
+            team = Team.Create("Dev Team", SeedOwnerPersonId);
             team.ClearDomainEvents();
             db.Teams.Add(team);
             await db.SaveChangesAsync(ct);

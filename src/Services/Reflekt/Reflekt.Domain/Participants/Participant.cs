@@ -9,5 +9,7 @@ public sealed partial class Participant : AggregateRoot
     public required string DisplayName { get; init; }
     public required string GuestToken { get; init; }
     public required DateTime JoinedAt { get; init; }
-    public int? UserId { get; init; }
+
+    /// <summary>Identity <c>Person</c> id for an authenticated participant; null for guests (ADR-022). RA2/ADR-016.</summary>
+    public int? PersonId { get; init; }
 }

@@ -21,12 +21,15 @@ public sealed class GetSprintSummaryEndpoint(SprintRepository sprintRepository, 
         var participants = await participantRepository.GetBySprintIdAsync(request.SprintId, ct);
         var participantDtos = participants.Select(p => new SprintSummaryParticipant(p.DisplayName)).ToList();
 
+        // Owner comparison keys on the Identity Person id (Team.OwnerId is a Person id after RA2),
+        // read from the person_id cookie claim — NOT NameIdentifier (the User id), which would
+        // compare Person-id ↔ User-id and silently set isScrumMaster=false for the real owner.
         var isScrumMaster = false;
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userIdClaim is not null && int.TryParse(userIdClaim, out var userId))
+        var personIdClaim = User.FindFirstValue("person_id");
+        if (personIdClaim is not null && int.TryParse(personIdClaim, out var personId))
         {
             var team = await teamRepository.GetByIdAsync(sprint.TeamId, ct);
-            isScrumMaster = team is not null && team.OwnerId == userId;
+            isScrumMaster = team is not null && team.OwnerId == personId;
         }
 
         await Send.OkAsync(new SprintSummaryResponse(

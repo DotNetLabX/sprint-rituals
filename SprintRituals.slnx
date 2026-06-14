@@ -34,4 +34,12 @@
     <Project Path="src/Services/Identity/Identity.Domain/Identity.Domain.csproj" />
     <Project Path="src/Services/Identity/Identity.Persistence/Identity.Persistence.csproj" />
   </Folder>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Services/" />
+  <Folder Name="/src/Services/Identity/">
+    <Project Path="src/Services/Identity/Identity.API.Tests/Identity.API.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Reflekt/">
+    <Project Path="src/Services/Reflekt/Reflekt.Domain.Tests/Reflekt.Domain.Tests.csproj" />
+  </Folder>
 </Solution>

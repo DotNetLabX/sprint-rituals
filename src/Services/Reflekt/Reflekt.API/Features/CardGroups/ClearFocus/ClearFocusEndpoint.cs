@@ -23,7 +23,7 @@ public sealed class ClearFocusEndpoint(
 {
     public override async Task HandleAsync(ClearFocusRequest req, CancellationToken ct)
     {
-        var userId = User.GetUserId();
+        var userId = User.GetPersonId();
 
         var sprint = await sprintRepository.GetByIdAsync(req.SprintId, ct);
         if (sprint is null) { await Send.NotFoundAsync(ct); return; }

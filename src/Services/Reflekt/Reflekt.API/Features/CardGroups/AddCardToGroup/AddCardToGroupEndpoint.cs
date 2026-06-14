@@ -24,7 +24,7 @@ public sealed class AddCardToGroupEndpoint(
 {
     public override async Task HandleAsync(AddCardToGroupRequest req, CancellationToken ct)
     {
-        var userId = User.GetUserId();
+        var userId = User.GetPersonId();
 
         var sprint = await sprintRepository.GetByIdAsync(req.SprintId, ct);
         if (sprint is null) { await Send.NotFoundAsync(ct); return; }

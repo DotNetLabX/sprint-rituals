@@ -192,8 +192,11 @@ public class SprintHub(
 
         var participant = await participantRepo.GetByIdAsync(participantId, Context.ConnectionAborted);
 
-        int? resolvedUserId = participant?.UserId;
-        if (resolvedUserId is null)
+        // Resolve the actor as an Identity Person id (Team.OwnerId is a Person id after RA2).
+        // Participant.PersonId is set for authenticated joiners; otherwise fall back to the
+        // cookie's person_id claim so a suite member without a participant row still resolves.
+        int? resolvedPersonId = participant?.PersonId;
+        if (resolvedPersonId is null)
         {
             var httpContext = Context.GetHttpContext();
             if (httpContext is not null)
@@ -201,14 +204,14 @@ public class SprintHub(
                 var cookieResult = await httpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
                 if (cookieResult.Succeeded)
                 {
-                    var userIdClaim = cookieResult.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
-                    if (int.TryParse(userIdClaim, out var cookieUserId))
-                        resolvedUserId = cookieUserId;
+                    var personIdClaim = cookieResult.Principal?.FindFirstValue("person_id");
+                    if (int.TryParse(personIdClaim, out var cookiePersonId))
+                        resolvedPersonId = cookiePersonId;
                 }
             }
         }
 
-        if (resolvedUserId is null)
+        if (resolvedPersonId is null)
             throw new HubException("Only the Scrum Master can control the timer.");
 
         var sprint = await sprintRepo.GetByIdAsync(sprintId, Context.ConnectionAborted);
@@ -216,7 +219,7 @@ public class SprintHub(
             throw new HubException("Sprint not found.");
 
         var team = await teamRepo.GetByIdAsync(sprint.TeamId, Context.ConnectionAborted);
-        if (team is null || team.OwnerId != resolvedUserId.Value)
+        if (team is null || team.OwnerId != resolvedPersonId.Value)
             throw new HubException("Only the Scrum Master can control the timer.");
     }
 

@@ -13,7 +13,7 @@ public sealed class UpdateColumnsEndpoint(TeamRepository teamRepository, SprintR
 {
     public override async Task HandleAsync(UpdateColumnsCommand command, CancellationToken ct)
     {
-        var userId = User.GetUserId();
+        var userId = User.GetPersonId();
 
         var sprint = await sprintRepository.GetByIdAsync(command.SprintId, ct);
         if (sprint is null) { await Send.NotFoundAsync(ct); return; }

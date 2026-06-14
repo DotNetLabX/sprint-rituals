@@ -8,7 +8,9 @@ public class ParticipantMappings : IRegister
 {
     public void Register(TypeAdapterConfig config)
     {
-        config.NewConfig<Participant, JoinSprintResponse>();
+        // Wire-stable: response field stays `UserId` (frontend contract), sourced from PersonId (RA2 Step 3).
+        config.NewConfig<Participant, JoinSprintResponse>()
+            .Map(dest => dest.UserId, src => src.PersonId);
         config.NewConfig<Participant, ParticipantResponse>();
     }
 }

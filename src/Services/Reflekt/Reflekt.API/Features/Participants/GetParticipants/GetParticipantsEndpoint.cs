@@ -34,7 +34,7 @@ public sealed class GetParticipantsEndpoint(
         }
         else
         {
-            var userId = User.GetUserId();
+            var userId = User.GetPersonId();
             var team = await teamRepository.GetByIdAsync(sprint.TeamId, ct);
             if (team is null || team.OwnerId != userId)
             {

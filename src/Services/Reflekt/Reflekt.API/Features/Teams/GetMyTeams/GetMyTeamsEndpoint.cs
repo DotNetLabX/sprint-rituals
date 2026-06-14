@@ -21,7 +21,7 @@ public sealed class GetMyTeamsEndpoint(TeamRepository teamRepository)
 {
     public override async Task HandleAsync(CancellationToken ct)
     {
-        var userId = User.GetUserId();
+        var userId = User.GetPersonId();
         var summaries = await teamRepository.GetTeamSummariesByOwnerAsync(userId, ct);
         var result = summaries
             .Select(s => new TeamSummary(s.Id, s.Name, s.CreatedAt, s.SprintCount, s.LastSprintDate, s.HasActiveSprint))

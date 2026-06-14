@@ -17,7 +17,7 @@ public sealed class CreateTeamEndpoint(
 {
     public override async Task HandleAsync(CreateTeamCommand command, CancellationToken ct)
     {
-        var userId = User.GetUserId();
+        var userId = User.GetPersonId();
         var limit = teamSettings.Value.MaxTeamsPerUser;
 
         var count = await teamRepository.CountByOwnerIdAsync(userId, ct);

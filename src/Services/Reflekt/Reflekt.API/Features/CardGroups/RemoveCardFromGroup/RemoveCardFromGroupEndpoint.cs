@@ -24,7 +24,7 @@ public sealed class RemoveCardFromGroupEndpoint(
 {
     public override async Task HandleAsync(RemoveCardFromGroupRequest req, CancellationToken ct)
     {
-        var userId = User.GetUserId();
+        var userId = User.GetPersonId();
 
         var sprint = await sprintRepository.GetByIdAsync(req.SprintId, ct);
         if (sprint is null) { await Send.NotFoundAsync(ct); return; }

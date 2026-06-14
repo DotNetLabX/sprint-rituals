@@ -15,7 +15,7 @@ public sealed class GetTeamSprintsEndpoint(TeamRepository teamRepository, Sprint
 {
     public override async Task HandleAsync(GetTeamSprintsRequest request, CancellationToken ct)
     {
-        var userId = User.GetUserId();
+        var userId = User.GetPersonId();
 
         var team = await teamRepository.GetByIdAsync(request.TeamId, ct);
         if (team is null) { await Send.NotFoundAsync(ct); return; }
