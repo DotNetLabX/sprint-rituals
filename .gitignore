@@ -34,9 +34,6 @@ src/Host/wwwroot/
 *.log
 logs/
 
-# OMC tooling state
-.omc/
-
 # Claude Code local settings & runtime state
 .claude/settings.local.json
 .claude/.pipeline-state

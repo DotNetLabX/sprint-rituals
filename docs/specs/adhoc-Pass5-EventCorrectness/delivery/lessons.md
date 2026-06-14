@@ -6,6 +6,9 @@
 > - `[APPLIED]` method-hiding sweep (`public new {Method}` + call-site static types) appended to the enumerate-all-consumers rule → **nexus** `create-implementation-plan`.
 > - `[TRACKED]` user-override fixes still need honest value framing; EF migration startup project must carry the Design package (already fixed in-repo: `project-rules.md`, commit 0ad86be).
 
+> **Learner addendum — 2026-06-12** (com-log Runtime/Plugin Issues Log R1–R7, logged 2026-06-09)
+> - `[APPLIED]` R1–R7 (critic file-write failure, `TaskOutput` not-found, developer two-phase collapse + gate fabrication, Codex bare ack, stale `index.lock`, stale notification labels) — addressed at plugin HEAD by the maintainer's enforcement/relay workstream (nexus 1.4.0 enforcement+relay, 1.5.0 F16 remediation; TL recovery order incl. `salvage-transcript`, malfunction-logging rule in `team-lead.md:279/361`). Exception per critic MEDIUM-1: R2 is *mitigated*, not fixed — `TaskOutput` unreliability is a platform defect; the recovery order prefers the artifact. Verified against plugin source 2026-06-12; no further learner action.
+
 ## Architect Lessons
 
 - **A triage `confirm` verdict must be re-verified against current source before planning a "fix."** B1 was logged `real (confirm)` against `Person.cs:30` ("RaiseCreated after SaveChangesAsync → never dispatches"). The current code (`AuthConfiguration.cs:106-107`) had already been restructured to raise-then-save-again, so `PersonCreated` dispatches today. Planning a "fix" for an already-fixed finding would have produced a no-op or a regression. Read the cited file AND its callers before trusting an aged triage line.

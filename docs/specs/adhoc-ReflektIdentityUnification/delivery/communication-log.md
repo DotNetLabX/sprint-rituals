@@ -27,6 +27,10 @@
 ## Runtime / Plugin Issues Log
 
 - Pre-existing `violations.log` entries from the prior RA1 (`adhoc-ReflektLiftAndShift`) run (2026-06-14T10:20–10:23): that developer self-spawned reviewer+developer (ADR-21) and triggered same-round re-read caps. Historical, already committed as `4d93287`, **out of scope** for this RA2 run. Recorded for awareness; no action.
+- **Artifact stranding (recurring, every agent this run):** developer/architect/critic all returned thin inline notices + (where reachable) `TaskOutput` behind lifecycle closers ("Idle…", "Stopped.", "Complete. REJECT — findings delivered", "Ready."). Real deliverables recovered from the durable artifact each time (questions.md, lessons.md, review.md). Matches the known MEMORY note on subagent finding-stranding. Mitigation worked; flagged as the dominant runtime friction this run.
+- **`TaskOutput` "no task found"** for the completed developer Phase-1 agent (a587…) — fell back to the artifact per Relay Contract. Known best-effort failure.
+- **`salvage-transcript.js` failed on the spawn `output_file`** (0 bytes) with "no assistant text" — the `--file <output_file>` path did NOT auto-resolve the real platform transcript by agentId as the contract implies. Recovered by locating `subagents/agent-{id}.jsonl` manually and salvaging that; the critic's full review (msg #13, 17 KB) was behind a lifecycle closer and only the direct JSONL extraction surfaced it. **Tooling gap: salvage should resolve the real transcript when handed the 0-byte output_file.**
+- No new `violations.log` entries from any RA2 agent (developer/architect/critic/reviewer/codex). No rogue commits — HEAD stayed at the team-lead commit throughout; both commits (aa1e9a6, f114df1) are team-lead-authored.
 
 ## Messages
 

@@ -82,3 +82,26 @@ Root-cause arm: the skills that encode the patterns the later passes apply. **Sk
 - **Pass 1 (skill repair)** — **Done.** `domain-service` shape reviewed interactively with the user (D-A general/multi-variant; D-B endpoint-owns-DTO; repo stays out of domain — handler loads). Skills committed to the plugin repo.
 - **Pass 4 (Identity extraction)** — **Done.** Scope (A2) resolved at launch: Invitation stays in Fokus (L1); full cut delivered (redemption-at-login, company-domain auto-seed, dual gRPC). Jira→Person keyed on ExternalId (Jira Cloud hides email). See `docs/specs/adhoc-Pass4-IdentityExtraction/delivery/summary.md`. Follow-ups: NU1903 transitive-dep advisory; optional inactive-user reactivation policy; frontend invite pages (Q12 deferred).
 - Use the **nexus** pipeline agents (`/nexus:{agent}`), not OMC equivalents (per the `pipeline-guardrails` rule).
+
+---
+
+# Reflekt Integration Program
+
+Bring Reflekt (real-time collaborative retro tool, `<reflekt-repo>`) into the monolith as a module. **Binding constraints:** `docs/architecture/decisions.md` ADR-016…020 (+ the full register) and `.claude/rules/engineering-discipline.md`. Design narrative: `docs/proposals/suite-integration-architecture.md` (ADRs win on conflict).
+
+**Strategy (owner-decided 2026-06-14):** lift-and-shift first, then refactor/integrate — keep the mechanical move bisectable from semantic change, same mechanical-before-deep order as the refactor suite. Reflekt already matches the stack and the API/Domain/Persistence layout, so the lift is low-risk.
+
+| ID | Slug | Type | Status | Depends on | Scope |
+|----|------|------|--------|-----------|-------|
+| RA0 | architecture capture | architect doc work | **Done** (2026-06-14) | — | ADR-016…020; `src/Services/Reflekt/CLAUDE.md`; proposal stamp. Not a pipeline pass. |
+| RA1 | adhoc-ReflektLiftAndShift | adhoc / mechanical | Ready to plan | RA0 ✓ | Move `Services/Reflekt` + BuildingBlocks deltas in; CPM; in-memory MassTransit (not RabbitMQ); `AddReflektModule`/`MapReflektEndpoints` in Host; `reflekt.db` via `app.Migrate<T>()`; green `dotnet build`. Auth conflicts stubbed minimally to compile — no semantic change. |
+| RA2 | adhoc-ReflektIdentityUnification | adhoc | ✓ **Done** (2026-06-14) — impl + critic + reviewer + Codex; accepted (2 carry-overs) | RA1 | **Plumbing only.** Remove Reflekt `User`/repo/config + Google ticket handler; keep guest scheme; `Participant.PersonId` set from the Identity cookie for **authenticated participants only** (no Person for guests — ADR-022); scope `ActiveUserPreProcessor` off Reflekt; leave the SM-approval gate as an **unbuilt seam** (ADR-021). Mirrors Pass 4 (ADR-016). |
+| RA3 | adhoc-ReflektSprintOwnership | adhoc | Blocked → RA1 | RA1 (RA2 preferred) | Rename `Sprint`→`RetroSession`; add 1..N Fokus-sprint reference; `FokusSprintSnapshot` projection; consume `SprintSynced`; drop standalone sprint creation (ADR-017/018/019). |
+| RA4 | adhoc-SprintContextPanel | feature (spec + plan) | Blocked → RA3 | RA3 | `ISprintAnalyticsService`/`AnonymizedSprintSummary` gRPC (Fokus server, Reflekt client) + the slide-out anonymized sprint-context panel. PO writes `spec.md`. Integration payoff (ADR-019, proposal §9). |
+| RA5 | adhoc-ReflektFrontendMerge | adhoc | Blocked → RA1 | RA1 | Unify the two Vue SPAs under one routing shell — `/retro/*` (Reflekt), `/dashboard/*` (Fokus), `/settings/*` (shared). Build topology (one Vite app vs two) decided here (ADR-020). |
+| RW | adhoc-RetroWaitingRoom | feature (spec + plan) | Later — needs spec | RA2 | SM waiting-room access gate (ADR-021): pending-join state, SM approve/reject + SignalR, joiner + SM UI. Open for the spec: per-retro approval vs approve-once-per-suite; `JoinRequest` entity vs `Participant` status. Deliberate departure from proposal §10's zero-friction guest framing. |
+
+**Notes:**
+- RA2/RA3/RA5 depend only on RA1's green build and can run in any order after it. RA3 reads cleaner if RA2 lands first (auth/Person wiring in place) but it is not a hard dependency. RA4 is the only one that needs RA3 — it renders the snapshot the sprint-ownership pass introduces.
+- Reflekt is newer than pre-refactor Fokus and already follows ADR-008/009 (2-file split, `Command`/`Query` naming), so the ADR-alignment burden (Send.* currency, thin composition root, VOs) is light — folded into RA1 where it diverges, not a separate pass.
+- The Reflekt source carries its own design provenance under `<reflekt-repo>\ai-coding\plans\` (~25 feature plans/lessons) — use it to attest intent when porting behavior.

@@ -17,6 +17,21 @@ These are NOT source files (agents may read/write them freely):
 - `client/index.html`, `client/*.config.*` — frontend build config
 - Root config files (`*.slnx`, `docker-compose.*`, `*.json`, `*.md`)
 
+## Document Lifecycle — Proposals vs Plans (binding)
+
+A **proposal** and a **plan** are different artifacts at different lifecycle stages. Do not conflate them, and never call a draft a "plan."
+
+| Term | Meaning | Home | State |
+|------|---------|------|-------|
+| **Proposal** | A draft idea, research, or evaluation that **must be refined** before it can be built | `docs/proposals/` | Not actionable — needs shaping (PO → spec) or a decision first |
+| **Plan** | An implementation plan that is **ready to be built** | `docs/specs/{slug}/delivery/plan.md` | Actionable — the word "plan" means "go build this" |
+
+Rules:
+- **All plans live in a slug** (`docs/specs/{slug}/delivery/plan.md`). A plan never lives in `docs/proposals/`.
+- When you say **"plan," it is ready to implement.** If it still needs refining, it is a **proposal**, not a plan.
+- The `{slug}` is assigned by the team lead or PO (see agents-workflow); agents never derive it. A proposal graduates into a slug's `plan.md` when the work is scheduled.
+- Idea/research/evaluation docs (e.g. the BR-coverage proposal, research, golden-set draft, the harness evaluation) correctly stay in `docs/proposals/` — they are proposals, not plans.
+
 ## Guardrails — DO NOT
 
 - **No entity-wrapper service classes** (e.g. `ArticleService`, `SprintService`) — classes that accumulate business logic around a single entity. Focused operation services scoped to a feature area (e.g. `SprintIssueSyncService`) are allowed.

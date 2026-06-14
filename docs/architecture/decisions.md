@@ -72,5 +72,36 @@ Completing the Fokus → Identity extraction (move/retire `Fokus.API/Features/Au
 
 ---
 
+## Reflekt integration ADRs
+
+> Promote `proposals/suite-integration-architecture.md` (Decided, 2026-05-16) into the binding register. Previously only §1 was ratified (ADR-001); the Reflekt-specific decisions below lived only in the proposal and were therefore unenforceable. Port **sequencing** (lift-and-shift first, then refactor/integrate) is a program decision in `docs/backlog.md`, not an ADR.
+
+## ADR-016 — Reflekt joins as a module; Identity owns Person/User
+Reflekt is ported in as a module (`src/Services/Reflekt/{API,Domain,Persistence}`, `reflekt.db`), composed by the Host like Identity and Fokus. **Identity owns Person and User** (ADR-001 boundary): Reflekt does **not** keep its own `User` aggregate or its own Google/cookie authentication — it relies on the Identity cookie, exactly as Fokus does. Reflekt **retains** its guest-token authentication for anonymous retro participants. A Reflekt `Participant` carries an **optional FK to Person**; cross-module Person create/lookup uses the existing `IPersonService` gRPC (Reflekt becomes a second client alongside Fokus). Retro access control is set by **ADR-021** (open + SM waiting room); the participant↔Person mapping, including the guest case, by **ADR-022** (no Person for guests). (Promotes §3, §10.)
+**Timing (owner-ratified 2026-06-14):** Reflekt becomes the second `IPersonService` gRPC client with `adhoc-RetroWaitingRoom` (when it must *mint* Persons for not-yet-known Google participants), **not** in RA2 (`adhoc-ReflektIdentityUnification`). RA2 only *reads* the Person id from a `person_id` cookie claim — no gRPC client.
+
+## ADR-017 — Fokus owns sprint data; Reflekt references it
+Fokus is the source of truth for Jira sprints and all sprint analytics. Reflekt does **not** create or own Jira sprints. A retro references Fokus sprint(s) by ID and never holds sprint metadata as authoritative state. (Promotes §4.)
+
+## ADR-018 — RetroSession aggregate; one retro spans 1..N Fokus sprints
+Reflekt's retro aggregate is named **`RetroSession`** — not `Sprint`. A retro is not a Jira sprint, and a single retro **occasionally covers more than one sprint** (when a retro is skipped, the next one covers two). A `RetroSession` therefore references **1..N Fokus sprints**; the common single-sprint case is a one-element set. Reflekt stores a **`FokusSprintSnapshot`** read-projection — one row per referenced Fokus sprint, overwritten on re-sync. The rename from the current `Sprint` aggregate and the 1:N link land in the sprint-ownership pass, not the mechanical lift. (Refines §4; new decision, owner 2026-06-14.)
+
+## ADR-019 — Fokus → Reflekt data flow is one-directional and anonymized
+Cross-module data flows **Fokus → Reflekt only**:
+- **gRPC on demand** — Reflekt calls Fokus for anonymized sprint metrics (`ISprintAnalyticsService` / `AnonymizedSprintSummary`) when the sprint-context panel loads; cached per retro session.
+- **Integration event** — `SprintSynced` (already published by Fokus) is consumed by Reflekt to refresh the `FokusSprintSnapshot` projection.
+Privacy is enforced **at the contract**: only anonymized aggregates cross the boundary — no per-developer metrics, no individual ticket assignments. **Reflekt → Fokus is deferred** — no concrete metric Fokus can derive from retro data yet. (Promotes §5, §6, §9.)
+
+## ADR-020 — Frontend: one routing shell, module-isolated SPAs
+The client is one routing shell composing module-isolated Vue apps: `/retro/*` (Reflekt), `/dashboard/*` (Fokus), `/settings/*` (shared / Identity). Each module owns its Pinia stores, components, and views; the shared layer is routing + Google-auth state (read from the cookie) + a thin UI kit. The build topology (single Vite app vs. two builds into `Host/wwwroot`) is **deferred** to the frontend-merge pass. (Promotes §8.)
+
+## ADR-021 — Reflekt retro access: open participation, SM waiting room
+Retro access is **open but Scrum-Master-gated**, not invitation-gated. Anyone may attempt to join a retro; the SM approves entry via a **waiting room**. Participants already known to Identity (an existing `Person`/`User` for that Google account) skip the room; **guests (no account) and Google users not yet in Identity** wait for SM approval. This replaces Identity's suite-login invitation gate *for Reflekt* — the global `ActiveUserPreProcessor` is **scoped** so it does not 401 Reflekt's retro endpoints (a retro participant is a `Person`-or-guest, not necessarily a suite `User`). **The waiting room is a separate, later feature** (`adhoc-RetroWaitingRoom`, `docs/backlog.md`), not part of RA2; RA2 builds compatible plumbing and leaves the approval step as an unbuilt seam. Conscious departure from proposal §10's zero-friction guest framing. (Resolves RA2 Q1.)
+
+## ADR-022 — Reflekt participant ↔ Person: no Person for guests
+A `Person` is created **only for Google-authenticated participants** (Identity mints it at login; Reflekt reads it from the cookie and sets `Participant.PersonId`). **Guests get no `Person`** — a guest is `Participant{GuestToken, DisplayName}` with `PersonId` null. No guest-Person creation, no cross-session guest matching (no IP, no fingerprinting). This **resolves the §3↔§10 tension** in `suite-integration-architecture.md` toward §10's orphan-avoidance rationale: §3 loosely implied a guest Person record; §10 argues against orphan Persons and complex matching. Guests are a free-tier demo edge case — a per-retro `Participant` row suffices; cross-retro/cross-module correlation applies only to real members, who arrive via Google. A guest who later authenticates simply gains their Google `Person`; old guest rows are not retro-linked. (Resolves RA2 Q2; supersedes the deferred-mechanism note in ADR-016.)
+
+---
+
 ## Supersession note
 `v1.md` remains valid for Fokus domain detail (entity classification, HealthScore formula, indexes). It is **superseded** on: standalone deployment, "no auth", "no gRPC/MassTransit/MediatR" scope lines, thin-domain-as-end-state, and compute-in-endpoints — all overridden by ADR-001/004/005/006/007 above.

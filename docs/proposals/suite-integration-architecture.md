@@ -4,6 +4,10 @@
 **Date:** May 16, 2026  
 **Context:** Reflekt v2 nearly complete, Fokus v1 shipped with Jira integration. This document captures the architectural decisions for integrating them into a unified suite, how each decision was reached, and what was explicitly deferred.
 
+> **2026-06-14 — promoted to the binding register.** The decisions below are now ADRs in `docs/architecture/decisions.md` (ADR-001 = §1; ADR-016…020 = §3/§4/§5/§6/§8/§9). Two refinements since this proposal: a retro is modeled as **`RetroSession` referencing 1..N Fokus sprints** (not 1:1 — ADR-018), and the port runs **lift-and-shift first** (program in `docs/backlog.md`). Where this doc and the ADRs differ, **the ADRs win**.
+>
+> **2026-06-14 (RA2 clarifications).** Guest identity: **no `Person` for guests** (ADR-022) — resolves the §3↔§10 tension toward §10's orphan-avoidance rationale (§3's "guest Person record" does not hold). Retro access is **SM-waiting-room-gated** (ADR-021), a deliberate departure from §10's zero-friction guest framing; the waiting room is a separate later feature (`adhoc-RetroWaitingRoom`).
+
 ---
 
 ## 1. Monorepo — Modular Monolith
