@@ -1,9 +1,13 @@
 {
   "stryker-config": {
     "project": "Fokus.Domain.csproj",
+    "mutate": ["**/Analytics/HealthScoreCalculator.cs"],
     "test-runner": "mtp",
     "coverage-analysis": "off",
     "reporters": ["progress", "html"],
-    "mutation-level": "standard"
+    "mutation-level": "standard",
+    "thresholds": {
+      "break": 75
+    }
   }
 }

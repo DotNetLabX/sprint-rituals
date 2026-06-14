@@ -15,6 +15,7 @@ public static class HealthScoreCalculator
         if (value >= amber)
         {
             var range = green - amber;
+            // Stryker disable once all : dead code — reaching here requires value>=amber AND value<green AND green==amber, a contradiction; see docs/kb/health-score.md Edge Cases
             if (range == 0) return 50;
             return 50 + (value - amber) / range * 49;
         }
@@ -32,6 +33,7 @@ public static class HealthScoreCalculator
         if (value <= amber)
         {
             var range = amber - green;
+            // Stryker disable once all : dead code — reaching here requires value>green AND value<=amber AND amber==green, a contradiction; see docs/kb/health-score.md Edge Cases
             if (range == 0) return 50;
             return 99 - (value - green) / range * 49;
         }

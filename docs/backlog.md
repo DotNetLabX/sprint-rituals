@@ -24,6 +24,22 @@ Order is dependency-driven (skills before the domain work that applies them; mec
 
 ---
 
+## Candidate Bug — Negative-Amber Pathology in ScoreHigherIsBetter
+
+**Slug:** adhoc-CoverHealthScore (surfaced during mutation-gating Step 3)
+**Priority:** Low — production never passes negative thresholds; no user-visible impact today.
+
+`ScoreHigherIsBetter` has no guard preventing a negative `amber` argument. When `amber < 0` and `value < amber`, the formula `value / amber * 49` produces a result above 49 (e.g. `amber=-10, value=-20 → 98`), violating the intended [0,49] range of the below-amber band.
+
+Characterization test: `Characterization_NegativeAmber_ProducesAbove49_HigherIsBetter` in `HealthScoreCalculatorTests` pins the actual behavior (returns 98) and is tagged as a candidate bug.
+
+Resolution options (to decide if negative thresholds ever become possible):
+1. Add `if (amber < 0) return 0;` guard before the below-amber division.
+2. Validate at the call site that thresholds are non-negative.
+3. Accept as won't-fix if invariant is enforced upstream.
+
+---
+
 ## Pass 0 — Foundations  (slug: `adhoc-Pass0-Foundations`, Status: Done)
 
 Cross-cutting, mechanical, no per-feature semantics. No user input required — fully specified by the ADRs below.

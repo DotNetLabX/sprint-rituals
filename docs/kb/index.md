@@ -16,6 +16,7 @@ under `docs/kb/` with sections defined in `docs/kb/_schema/entry-template.md`.
 | File | Concept | Status |
 |------|---------|--------|
 | [health-score.md](health-score.md) | HealthScore interpolation and RAG classification | mutation-gated |
+| [bug-ratio.md](bug-ratio.md) | Bug-ratio metrics, multi-sprint aggregation, alert streak | verified |
 
 ## Conventions
 
