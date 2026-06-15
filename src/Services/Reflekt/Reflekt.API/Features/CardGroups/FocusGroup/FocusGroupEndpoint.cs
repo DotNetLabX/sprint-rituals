@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Reflekt.API.Auth;
 using Reflekt.API.Features.PhaseActions;
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 using Reflekt.Persistence.Repositories;
 using AuthPolicies = Reflekt.API.Auth.Policies;
 
@@ -15,7 +15,7 @@ public sealed record FocusGroupResponse(int FocusedGroupId, int? PreviousGroupId
 [HttpPost("/api/sprints/{sprintId}/card-groups/{groupId}/focus")]
 [Tags("CardGroups")]
 public sealed class FocusGroupEndpoint(
-    SprintRepository sprintRepository,
+    RetroSessionRepository retroSessionRepository,
     TeamRepository teamRepository,
     CardGroupRepository cardGroupRepository,
     PhaseActionCache phaseActionCache)
@@ -25,7 +25,7 @@ public sealed class FocusGroupEndpoint(
     {
         var userId = User.GetPersonId();
 
-        var sprint = await sprintRepository.GetByIdAsync(req.SprintId, ct);
+        var sprint = await retroSessionRepository.GetByIdAsync(req.SprintId, ct);
         if (sprint is null) { await Send.NotFoundAsync(ct); return; }
 
         var team = await teamRepository.GetByIdAsync(sprint.TeamId, ct);
@@ -35,15 +35,15 @@ public sealed class FocusGroupEndpoint(
             return;
         }
 
-        if (sprint.State != SprintState.Active)
+        if (sprint.State != RetroSessionState.Active)
         {
             AddError("Sprint must be Active.");
             await Send.ErrorsAsync(409, ct);
             return;
         }
 
-        if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, SprintAction.FocusGroup))
-            ThrowError($"{SprintAction.FocusGroup} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
+        if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, RetroAction.FocusGroup))
+            ThrowError($"{RetroAction.FocusGroup} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
 
         var targetGroup = await cardGroupRepository.GetByIdAsync(req.GroupId, ct);
         if (targetGroup is null || targetGroup.SprintId != req.SprintId) { await Send.NotFoundAsync(ct); return; }
@@ -62,8 +62,10 @@ public sealed class FocusGroupEndpoint(
         }
 
         sprint.SetFocus(req.GroupId);
-        await sprintRepository.SaveChangesAsync(ct);
+        await retroSessionRepository.SaveChangesAsync(ct);
 
         await Send.OkAsync(new FocusGroupResponse(req.GroupId, previousGroupId, previousGroupDiscussed), ct);
     }
 }
+
+

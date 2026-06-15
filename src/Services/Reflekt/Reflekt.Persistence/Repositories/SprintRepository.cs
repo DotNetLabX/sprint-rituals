@@ -1,19 +1,20 @@
 using Microsoft.EntityFrameworkCore;
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 
 namespace Reflekt.Persistence.Repositories;
 
-public sealed class SprintRepository(ReflektDbContext db) : Repository<Sprint>(db)
+public sealed class RetroSessionRepository(ReflektDbContext db) : Repository<RetroSession>(db)
 {
-    public Task<List<Sprint>> GetByTeamIdAsync(int teamId, CancellationToken ct)
-        => Db.Sprints
+    public Task<List<RetroSession>> GetByTeamIdAsync(int teamId, CancellationToken ct)
+        => Db.RetroSessions
             .Where(s => s.TeamId == teamId)
             .OrderByDescending(s => s.CreatedAt)
             .ToListAsync(ct);
 
-    public Task<Sprint?> GetMostRecentClosedByTeamIdAsync(int teamId, CancellationToken ct)
-        => Db.Sprints
-            .Where(s => s.TeamId == teamId && s.State == SprintState.Closed)
+    public Task<RetroSession?> GetMostRecentClosedByTeamIdAsync(int teamId, CancellationToken ct)
+        => Db.RetroSessions
+            .Where(s => s.TeamId == teamId && s.State == RetroSessionState.Closed)
             .OrderByDescending(s => s.ClosedAt)
             .FirstOrDefaultAsync(ct);
 }
+

@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 using Reflekt.Domain.Teams;
 
 namespace Reflekt.Persistence.Repositories;
@@ -21,16 +21,16 @@ public sealed class TeamRepository(ReflektDbContext db) : Repository<Team>(db)
                 t.Id,
                 t.Name,
                 t.CreatedAt,
-                Db.Sprints.Count(s => s.TeamId == t.Id),
-                Db.Sprints.Where(s => s.TeamId == t.Id).Max(s => (DateTime?)s.CreatedAt),
-                Db.Sprints.Any(s => s.TeamId == t.Id && s.State == SprintState.Active)))
+                Db.RetroSessions.Count(s => s.TeamId == t.Id),
+                Db.RetroSessions.Where(s => s.TeamId == t.Id).Max(s => (DateTime?)s.CreatedAt),
+                Db.RetroSessions.Any(s => s.TeamId == t.Id && s.State == RetroSessionState.Active)))
             .ToListAsync(ct);
 
     public async Task DeleteTeamWithCascadeAsync(int teamId, CancellationToken ct)
     {
         await using var tx = await Db.Database.BeginTransactionAsync(ct);
 
-        var sprintIds = await Db.Sprints
+        var sprintIds = await Db.RetroSessions
             .Where(s => s.TeamId == teamId)
             .Select(s => s.Id)
             .ToListAsync(ct);
@@ -56,7 +56,7 @@ public sealed class TeamRepository(ReflektDbContext db) : Repository<Team>(db)
             await Db.Cards.Where(c => sprintIds.Contains(c.SprintId)).ExecuteDeleteAsync(ct);
             await Db.CardGroups.Where(g => sprintIds.Contains(g.SprintId)).ExecuteDeleteAsync(ct);
             await Db.Participants.Where(p => sprintIds.Contains(p.SprintId)).ExecuteDeleteAsync(ct);
-            await Db.Sprints.Where(s => s.TeamId == teamId).ExecuteDeleteAsync(ct);
+            await Db.RetroSessions.Where(s => s.TeamId == teamId).ExecuteDeleteAsync(ct);
         }
 
         await Db.Teams.Where(t => t.Id == teamId).ExecuteDeleteAsync(ct);
@@ -72,3 +72,4 @@ public sealed record TeamSummaryDto(
     int SprintCount,
     DateTime? LastSprintDate,
     bool HasActiveSprint);
+

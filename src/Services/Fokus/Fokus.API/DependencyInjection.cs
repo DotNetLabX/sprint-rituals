@@ -31,13 +31,8 @@ public static class DependencyInjection
         // gRPC server (code-first protobuf-net.Grpc)
         services.AddCodeFirstGrpc();
 
-        // MassTransit — in-memory transport (no RabbitMQ; integration events within the monorepo)
-        // AddConsumers discovers all IConsumer<T> implementations in this assembly (e.g. SeedCompanyDomain consumer).
-        services.AddMassTransit(x =>
-        {
-            x.AddConsumers(typeof(DependencyInjection).Assembly);
-            x.UsingInMemory((context, cfg) => cfg.ConfigureEndpoints(context));
-        });
+        // MassTransit consumers are registered in Host/Program.cs AddMassTransit (single shared bus).
+        // Fokus consumers are discovered via AddFokusMessaging(cfg) called from Host.
 
         services.AddSignalR();
         services.AddRestApiJira(configuration);
@@ -67,6 +62,15 @@ public static class DependencyInjection
         services.AddScoped<DeveloperDetailCalculator>();
 
         return services;
+    }
+
+    /// <summary>
+    /// Registers Fokus's MassTransit consumers onto the shared in-memory bus.
+    /// Called from Host/Program.cs inside the single AddMassTransit block (Step 4 topology).
+    /// </summary>
+    public static void AddFokusMessaging(this IBusRegistrationConfigurator cfg)
+    {
+        cfg.AddConsumers(typeof(DependencyInjection).Assembly);
     }
 
     /// <summary>

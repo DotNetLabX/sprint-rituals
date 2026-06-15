@@ -1,13 +1,13 @@
 using FluentValidation;
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 
 namespace Reflekt.API.Features.Cards.CreateCard;
 
 public sealed record CreateCardCommand(int SprintId, string Text, string ColumnType, string CardType, string? AssigneeName)
-    : ISprintAction
+    : IRetroAction
 {
-    public SprintAction ActionType =>
-        CardType == "ActionItem" ? SprintAction.CreateActionItem : SprintAction.CreateNote;
+    public RetroAction ActionType =>
+        CardType == "ActionItem" ? RetroAction.CreateActionItem : RetroAction.CreateNote;
 }
 
 public sealed class CreateCardCommandValidator : Validator<CreateCardCommand>
@@ -20,3 +20,4 @@ public sealed class CreateCardCommandValidator : Validator<CreateCardCommand>
         RuleFor(x => x.AssigneeName).MaximumLength(50).When(x => x.AssigneeName is not null);
     }
 }
+

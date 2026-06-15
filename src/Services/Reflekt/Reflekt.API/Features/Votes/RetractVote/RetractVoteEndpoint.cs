@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Reflekt.API.Features.PhaseActions;
 using Reflekt.API.Hubs;
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 using Reflekt.Persistence.Repositories;
 using AuthPolicies = Reflekt.API.Auth.Policies;
 
@@ -15,7 +15,7 @@ public sealed record RetractVoteRequest(int SprintId, int GroupId);
 [HttpDelete("/api/sprints/{sprintId}/card-groups/{groupId}/votes")]
 [Tags("Votes")]
 public sealed class RetractVoteEndpoint(
-    SprintRepository sprintRepository,
+    RetroSessionRepository retroSessionRepository,
     VoteRepository voteRepository,
     PhaseActionCache phaseActionCache,
     IHubContext<SprintHub> hubContext)
@@ -35,14 +35,14 @@ public sealed class RetractVoteEndpoint(
             return;
         }
 
-        var sprint = await sprintRepository.GetByIdAsync(req.SprintId, ct);
+        var sprint = await retroSessionRepository.GetByIdAsync(req.SprintId, ct);
         if (sprint is null) { await Send.NotFoundAsync(ct); return; }
 
-        if (sprint.State == SprintState.Closed)
+        if (sprint.State == RetroSessionState.Closed)
             ThrowError("Sprint is closed.", StatusCodes.Status409Conflict);
 
-        if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, SprintAction.RetractVote))
-            ThrowError($"{SprintAction.RetractVote} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
+        if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, RetroAction.RetractVote))
+            ThrowError($"{RetroAction.RetractVote} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
 
         var vote = await voteRepository.GetOneByParticipantAndGroupAsync(participantId, req.GroupId, ct);
         if (vote is null)
@@ -60,3 +60,5 @@ public sealed class RetractVoteEndpoint(
         await Send.OkAsync(new VoteResponse(req.GroupId, voteCount, myVoteCount), ct);
     }
 }
+
+

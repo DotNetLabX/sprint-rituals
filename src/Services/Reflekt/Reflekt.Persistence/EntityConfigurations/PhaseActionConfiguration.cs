@@ -1,4 +1,4 @@
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 
 namespace Reflekt.Persistence.EntityConfigurations;
 
@@ -13,31 +13,32 @@ internal sealed class PhaseActionConfiguration : IEntityTypeConfiguration<PhaseA
 
         builder.HasData(
             // Writing phase
-            new PhaseAction(SprintPhase.Writing, SprintAction.CreateNote),
-            new PhaseAction(SprintPhase.Writing, SprintAction.EditNote),
-            new PhaseAction(SprintPhase.Writing, SprintAction.DeleteNote),
-            new PhaseAction(SprintPhase.Writing, SprintAction.AttachEvidenceLink),
-            new PhaseAction(SprintPhase.Writing, SprintAction.DetachEvidenceLink),
-            new PhaseAction(SprintPhase.Writing, SprintAction.AdvancePhase),
+            new PhaseAction(RetroPhase.Writing, RetroAction.CreateNote),
+            new PhaseAction(RetroPhase.Writing, RetroAction.EditNote),
+            new PhaseAction(RetroPhase.Writing, RetroAction.DeleteNote),
+            new PhaseAction(RetroPhase.Writing, RetroAction.AttachEvidenceLink),
+            new PhaseAction(RetroPhase.Writing, RetroAction.DetachEvidenceLink),
+            new PhaseAction(RetroPhase.Writing, RetroAction.AdvancePhase),
             // Voting phase
-            new PhaseAction(SprintPhase.Voting, SprintAction.CastVote),
-            new PhaseAction(SprintPhase.Voting, SprintAction.RetractVote),
-            new PhaseAction(SprintPhase.Voting, SprintAction.AdvancePhase),
+            new PhaseAction(RetroPhase.Voting, RetroAction.CastVote),
+            new PhaseAction(RetroPhase.Voting, RetroAction.RetractVote),
+            new PhaseAction(RetroPhase.Voting, RetroAction.AdvancePhase),
             // Discussing phase
-            new PhaseAction(SprintPhase.Discussing, SprintAction.CreateActionItem),
-            new PhaseAction(SprintPhase.Discussing, SprintAction.EditActionItem),
-            new PhaseAction(SprintPhase.Discussing, SprintAction.DeleteActionItem),
-            new PhaseAction(SprintPhase.Discussing, SprintAction.AttachEvidenceLink),
-            new PhaseAction(SprintPhase.Discussing, SprintAction.DetachEvidenceLink),
-            new PhaseAction(SprintPhase.Discussing, SprintAction.AdvancePhase),
-            new PhaseAction(SprintPhase.Discussing, SprintAction.FocusGroup),
-            new PhaseAction(SprintPhase.Discussing, SprintAction.ToggleDiscussed),
+            new PhaseAction(RetroPhase.Discussing, RetroAction.CreateActionItem),
+            new PhaseAction(RetroPhase.Discussing, RetroAction.EditActionItem),
+            new PhaseAction(RetroPhase.Discussing, RetroAction.DeleteActionItem),
+            new PhaseAction(RetroPhase.Discussing, RetroAction.AttachEvidenceLink),
+            new PhaseAction(RetroPhase.Discussing, RetroAction.DetachEvidenceLink),
+            new PhaseAction(RetroPhase.Discussing, RetroAction.AdvancePhase),
+            new PhaseAction(RetroPhase.Discussing, RetroAction.FocusGroup),
+            new PhaseAction(RetroPhase.Discussing, RetroAction.ToggleDiscussed),
             // Grouping phase
-            new PhaseAction(SprintPhase.Grouping, SprintAction.GroupCards),
-            new PhaseAction(SprintPhase.Grouping, SprintAction.UngroupCards),
-            new PhaseAction(SprintPhase.Grouping, SprintAction.RenameGroup),
-            new PhaseAction(SprintPhase.Grouping, SprintAction.AdvancePhase)
+            new PhaseAction(RetroPhase.Grouping, RetroAction.GroupCards),
+            new PhaseAction(RetroPhase.Grouping, RetroAction.UngroupCards),
+            new PhaseAction(RetroPhase.Grouping, RetroAction.RenameGroup),
+            new PhaseAction(RetroPhase.Grouping, RetroAction.AdvancePhase)
             // Reporting: no permitted actions
         );
     }
 }
+

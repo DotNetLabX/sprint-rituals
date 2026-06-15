@@ -5,7 +5,7 @@ using Reflekt.API.Features.PhaseActions;
 using Reflekt.API.Hubs;
 using Reflekt.Domain.CardGroups;
 using Reflekt.Domain.Cards;
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 using Reflekt.Persistence.Repositories;
 using AuthPolicies = Reflekt.API.Auth.Policies;
 
@@ -17,7 +17,7 @@ public sealed record CreateGroupRequest(int SprintId, List<int> CardIds, string?
 [HttpPost("/api/sprints/{sprintId}/card-groups")]
 [Tags("CardGroups")]
 public sealed class CreateGroupEndpoint(
-    SprintRepository sprintRepository,
+    RetroSessionRepository retroSessionRepository,
     TeamRepository teamRepository,
     CardRepository cardRepository,
     CardGroupRepository cardGroupRepository,
@@ -29,7 +29,7 @@ public sealed class CreateGroupEndpoint(
     {
         var userId = User.GetPersonId();
 
-        var sprint = await sprintRepository.GetByIdAsync(req.SprintId, ct);
+        var sprint = await retroSessionRepository.GetByIdAsync(req.SprintId, ct);
         if (sprint is null) { await Send.NotFoundAsync(ct); return; }
 
         var team = await teamRepository.GetByIdAsync(sprint.TeamId, ct);
@@ -39,8 +39,8 @@ public sealed class CreateGroupEndpoint(
             return;
         }
 
-        if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, SprintAction.GroupCards))
-            ThrowError($"{SprintAction.GroupCards} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
+        if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, RetroAction.GroupCards))
+            ThrowError($"{RetroAction.GroupCards} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
 
         if (req.CardIds.Count < 2)
             ThrowError("At least 2 cards are required to create a group.", StatusCodes.Status400BadRequest);
@@ -112,3 +112,5 @@ public sealed class CreateGroupEndpoint(
         }, 201, ct);
     }
 }
+
+

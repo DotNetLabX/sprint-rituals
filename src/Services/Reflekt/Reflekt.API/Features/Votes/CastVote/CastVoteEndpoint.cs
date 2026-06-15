@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Reflekt.API.Features.PhaseActions;
 using Reflekt.API.Hubs;
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 using Reflekt.Domain.Votes;
 using Reflekt.Persistence.Repositories;
 using AuthPolicies = Reflekt.API.Auth.Policies;
@@ -16,7 +16,7 @@ public sealed record CastVoteRequest(int SprintId, int GroupId);
 [HttpPost("/api/sprints/{sprintId}/card-groups/{groupId}/votes")]
 [Tags("Votes")]
 public sealed class CastVoteEndpoint(
-    SprintRepository sprintRepository,
+    RetroSessionRepository retroSessionRepository,
     CardGroupRepository cardGroupRepository,
     VoteRepository voteRepository,
     PhaseActionCache phaseActionCache,
@@ -40,14 +40,14 @@ public sealed class CastVoteEndpoint(
         var group = await cardGroupRepository.GetByIdAsync(req.GroupId, ct);
         if (group is null || group.SprintId != req.SprintId) { await Send.NotFoundAsync(ct); return; }
 
-        var sprint = await sprintRepository.GetByIdAsync(req.SprintId, ct);
+        var sprint = await retroSessionRepository.GetByIdAsync(req.SprintId, ct);
         if (sprint is null) { await Send.NotFoundAsync(ct); return; }
 
-        if (sprint.State == SprintState.Closed)
+        if (sprint.State == RetroSessionState.Closed)
             ThrowError("Sprint is closed.", StatusCodes.Status409Conflict);
 
-        if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, SprintAction.CastVote))
-            ThrowError($"{SprintAction.CastVote} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
+        if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, RetroAction.CastVote))
+            ThrowError($"{RetroAction.CastVote} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
 
         await using var tx = await voteRepository.BeginSerializableAsync(ct);
 
@@ -75,3 +75,5 @@ public sealed class CastVoteEndpoint(
         await Send.ResponseAsync(new VoteResponse(req.GroupId, voteCount, myVoteCount), 201, ct);
     }
 }
+
+

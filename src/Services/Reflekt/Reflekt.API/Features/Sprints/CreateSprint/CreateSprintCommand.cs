@@ -1,11 +1,12 @@
 using FluentValidation;
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 
 namespace Reflekt.API.Features.Sprints.CreateSprint;
 
-public sealed record CreateSprintCommand(
+public sealed record CreateRetroSessionCommand(
     int TeamId,
     string Name,
+    IReadOnlyList<int> FokusSprintIds,
     int? VotesPerParticipant,
     string? Column1Name,
     string? Column1Color,
@@ -17,11 +18,13 @@ public sealed record CreateSprintCommand(
     int? VotingTimerDefault,
     int? DiscussingTimerDefault);
 
-public sealed class CreateSprintCommandValidator : Validator<CreateSprintCommand>
+public sealed class CreateRetroSessionCommandValidator : Validator<CreateRetroSessionCommand>
 {
-    public CreateSprintCommandValidator()
+    public CreateRetroSessionCommandValidator()
     {
         RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.FokusSprintIds).NotEmpty().WithMessage("At least one FokusSprintId is required.");
+        RuleForEach(x => x.FokusSprintIds).GreaterThan(0).WithMessage("Each FokusSprintId must be a positive integer.");
         RuleFor(x => x.VotesPerParticipant).GreaterThanOrEqualTo(1).When(x => x.VotesPerParticipant.HasValue);
         RuleFor(x => x.Column1Name).MaximumLength(30).NotEmpty().When(x => x.Column1Name is not null);
         RuleFor(x => x.Column2Name).MaximumLength(30).NotEmpty().When(x => x.Column2Name is not null);

@@ -24,11 +24,12 @@ public static class DependencyInjection
         });
 
         services.AddScoped<TeamRepository>();
-        services.AddScoped<SprintRepository>();
+        services.AddScoped<RetroSessionRepository>();
         services.AddScoped<ParticipantRepository>();
         services.AddScoped<CardRepository>();
         services.AddScoped<VoteRepository>();
         services.AddScoped<CardGroupRepository>();
+        services.AddScoped<FokusSprintSnapshotRepository>();
 
         return services;
     }
@@ -49,3 +50,4 @@ public static class DependencyInjection
             await DbInitializer.SeedAsync(db);
     }
 }
+

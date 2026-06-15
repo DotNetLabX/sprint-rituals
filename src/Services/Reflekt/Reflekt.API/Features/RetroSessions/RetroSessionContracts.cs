@@ -1,6 +1,6 @@
-namespace Reflekt.API.Features.Sprints;
+namespace Reflekt.API.Features.RetroSessions;
 
-public sealed record SprintResponse(
+public sealed record RetroSessionResponse(
     int Id,
     int TeamId,
     string Name,
@@ -19,9 +19,9 @@ public sealed record SprintResponse(
     int VotingTimerDefault,
     int DiscussingTimerDefault);
 
-public sealed record SprintSummaryParticipant(string DisplayName);
+public sealed record RetroSessionSummaryParticipant(string DisplayName);
 
-public sealed record SprintSummaryResponse(
+public sealed record RetroSessionSummaryResponse(
     int Id,
     int TeamId,
     string Name,
@@ -29,7 +29,7 @@ public sealed record SprintSummaryResponse(
     string CurrentPhase,
     int VotesPerParticipant,
     bool IsScrumMaster,
-    List<SprintSummaryParticipant> Participants,
+    List<RetroSessionSummaryParticipant> Participants,
     string Column1Name,
     string Column1Color,
     string Column2Name,
@@ -40,5 +40,4 @@ public sealed record SprintSummaryResponse(
     int VotingTimerDefault,
     int DiscussingTimerDefault);
 
-public sealed record SprintRouteRequest(int TeamId, int SprintId);
-
+public sealed record RetroSessionRouteRequest(int TeamId, int RetroSessionId);

@@ -1,14 +1,14 @@
 using Mapster;
-using Reflekt.API.Features.Sprints;
-using Reflekt.Domain.Sprints;
+using Reflekt.API.Features.RetroSessions;
+using Reflekt.Domain.RetroSessions;
 
 namespace Reflekt.API.Mappings;
 
-public class SprintMappings : IRegister
+public class RetroSessionMappings : IRegister
 {
     public void Register(TypeAdapterConfig config)
     {
-        config.NewConfig<Sprint, SprintResponse>()
+        config.NewConfig<RetroSession, RetroSessionResponse>()
             .Map(d => d.State, s => s.State.ToString())
             .Map(d => d.CurrentPhase, s => s.CurrentPhase.ToString())
             .Map(d => d.Column1Color, s => s.Column1Color.Value)

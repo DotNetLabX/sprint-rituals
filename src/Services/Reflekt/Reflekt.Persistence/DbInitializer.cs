@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Reflekt.Domain.CardGroups;
 using Reflekt.Domain.Cards;
 using Reflekt.Domain.Participants;
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 using Reflekt.Domain.Teams;
 using Reflekt.Domain.Votes;
 
@@ -30,18 +30,19 @@ internal static class DbInitializer
             team = await db.Teams.FirstAsync(ct);
         }
 
-        Sprint sprint;
-        if (!await db.Sprints.AnyAsync(s => s.TeamId == team.Id, ct))
+        RetroSession sprint;
+        if (!await db.RetroSessions.AnyAsync(s => s.TeamId == team.Id, ct))
         {
-            sprint = Sprint.Create("Sprint 1", team.Id);
+            // dev-only seed: placeholder Fokus sprint id [1] satisfies the ≥1 invariant; no real Fokus sprint 1 guaranteed (same spirit as SeedOwnerPersonId sentinel)
+            sprint = RetroSession.Create("Sprint 1", team.Id, fokusSprintIds: [1]);
             sprint.Start();
             sprint.ClearDomainEvents();
-            db.Sprints.Add(sprint);
+            db.RetroSessions.Add(sprint);
             await db.SaveChangesAsync(ct);
         }
         else
         {
-            sprint = await db.Sprints.FirstAsync(s => s.TeamId == team.Id, ct);
+            sprint = await db.RetroSessions.FirstAsync(s => s.TeamId == team.Id, ct);
         }
 
         if (!await db.Participants.AnyAsync(p => p.SprintId == sprint.Id, ct))
@@ -148,3 +149,4 @@ internal static class DbInitializer
         }
     }
 }
+

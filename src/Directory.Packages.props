@@ -20,6 +20,7 @@
     <!-- MassTransit -->
     <PackageVersion Include="MassTransit" Version="9.1.2" />
     <PackageVersion Include="MassTransit.Abstractions" Version="9.1.2" />
+    <PackageVersion Include="MassTransit.TestFramework" Version="9.1.2" />
     <!-- gRPC -->
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore" Version="1.2.2" />
     <PackageVersion Include="protobuf-net.Grpc" Version="1.2.2" />

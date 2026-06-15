@@ -1,18 +1,18 @@
 using Microsoft.AspNetCore.Authorization;
 using Reflekt.API.Auth;
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 using Reflekt.Persistence.Repositories;
 using AuthPolicies = Reflekt.API.Auth.Policies;
 
 namespace Reflekt.API.Features.Sprints.CreateSprint;
 
 [Authorize(Policy = AuthPolicies.ScrumMaster)]
-[HttpPost("/api/teams/{teamId}/sprints")]
-[Tags("Sprints")]
-public sealed class CreateSprintEndpoint(TeamRepository teamRepository, SprintRepository sprintRepository)
-    : Endpoint<CreateSprintCommand, SprintResponse>
+[HttpPost("/api/teams/{teamId}/retro-sessions")]
+[Tags("RetroSessions")]
+public sealed class CreateRetroSessionEndpoint(TeamRepository teamRepository, RetroSessionRepository retroSessionRepository)
+    : Endpoint<CreateRetroSessionCommand, RetroSessionResponse>
 {
-    public override async Task HandleAsync(CreateSprintCommand command, CancellationToken ct)
+    public override async Task HandleAsync(CreateRetroSessionCommand command, CancellationToken ct)
     {
         var userId = User.GetPersonId();
 
@@ -25,7 +25,7 @@ public sealed class CreateSprintEndpoint(TeamRepository teamRepository, SprintRe
             return;
         }
 
-        // Resolve column config: explicit values take precedence; fallback to most recent sprint in team
+        // Resolve column config: explicit values take precedence; fallback to most recent retro session in team
         string? col1Name = command.Column1Name;
         string? col1Color = command.Column1Color;
         string? col2Name = command.Column2Name;
@@ -35,8 +35,8 @@ public sealed class CreateSprintEndpoint(TeamRepository teamRepository, SprintRe
 
         if (col1Name is null && col1Color is null && col2Name is null && col2Color is null && col3Name is null && col3Color is null)
         {
-            var previousSprints = await sprintRepository.GetByTeamIdAsync(command.TeamId, ct);
-            var mostRecent = previousSprints.FirstOrDefault();
+            var previousSessions = await retroSessionRepository.GetByTeamIdAsync(command.TeamId, ct);
+            var mostRecent = previousSessions.FirstOrDefault();
             if (mostRecent is not null)
             {
                 col1Name = mostRecent.Column1Name;
@@ -48,9 +48,10 @@ public sealed class CreateSprintEndpoint(TeamRepository teamRepository, SprintRe
             }
         }
 
-        var sprint = Sprint.Create(
+        var session = RetroSession.Create(
             command.Name,
             command.TeamId,
+            command.FokusSprintIds,
             command.VotesPerParticipant ?? 3,
             col1Name, col1Color,
             col2Name, col2Color,
@@ -59,9 +60,9 @@ public sealed class CreateSprintEndpoint(TeamRepository teamRepository, SprintRe
             command.VotingTimerDefault,
             command.DiscussingTimerDefault);
 
-        await sprintRepository.AddAsync(sprint, ct);
-        await sprintRepository.SaveChangesAsync(ct);
+        await retroSessionRepository.AddAsync(session, ct);
+        await retroSessionRepository.SaveChangesAsync(ct);
 
-        await Send.ResponseAsync(sprint.Adapt<SprintResponse>(), 201, ct);
+        await Send.ResponseAsync(session.Adapt<RetroSessionResponse>(), 201, ct);
     }
 }

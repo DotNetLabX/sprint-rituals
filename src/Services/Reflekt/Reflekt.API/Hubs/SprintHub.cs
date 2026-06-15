@@ -61,12 +61,12 @@ public class SprintHub(
         if (timerSnapshot.Status == TimerStatus.Stopped)
         {
             using var scope = scopeFactory.CreateScope();
-            var sprintRepo = scope.ServiceProvider.GetRequiredService<SprintRepository>();
+            var sprintRepo = scope.ServiceProvider.GetRequiredService<RetroSessionRepository>();
             var sprint = await sprintRepo.GetByIdAsync(sprintId, Context.ConnectionAborted);
             if (sprint is not null && sprint.CurrentPhase is
-                Reflekt.Domain.Sprints.SprintPhase.Writing or
-                Reflekt.Domain.Sprints.SprintPhase.Voting or
-                Reflekt.Domain.Sprints.SprintPhase.Discussing)
+                Reflekt.Domain.RetroSessions.RetroPhase.Writing or
+                Reflekt.Domain.RetroSessions.RetroPhase.Voting or
+                Reflekt.Domain.RetroSessions.RetroPhase.Discussing)
             {
                 var durationSeconds = sprint.GetTimerDefaultForPhase() * 60;
                 timerSnapshot = timerService.Start(sprintId, durationSeconds);
@@ -187,7 +187,7 @@ public class SprintHub(
 
         using var scope = scopeFactory.CreateScope();
         var participantRepo = scope.ServiceProvider.GetRequiredService<ParticipantRepository>();
-        var sprintRepo = scope.ServiceProvider.GetRequiredService<SprintRepository>();
+        var sprintRepo = scope.ServiceProvider.GetRequiredService<RetroSessionRepository>();
         var teamRepo = scope.ServiceProvider.GetRequiredService<TeamRepository>();
 
         var participant = await participantRepo.GetByIdAsync(participantId, Context.ConnectionAborted);
@@ -223,17 +223,17 @@ public class SprintHub(
             throw new HubException("Only the Scrum Master can control the timer.");
     }
 
-    private async Task<Reflekt.Domain.Sprints.Sprint> LoadTimedSprintAsync(int sprintId)
+    private async Task<Reflekt.Domain.RetroSessions.RetroSession> LoadTimedSprintAsync(int sprintId)
     {
         using var scope = scopeFactory.CreateScope();
-        var sprintRepo = scope.ServiceProvider.GetRequiredService<SprintRepository>();
+        var sprintRepo = scope.ServiceProvider.GetRequiredService<RetroSessionRepository>();
         var sprint = await sprintRepo.GetByIdAsync(sprintId, Context.ConnectionAborted)
             ?? throw new HubException("Sprint not found.");
 
         if (sprint.CurrentPhase is not (
-            Reflekt.Domain.Sprints.SprintPhase.Writing or
-            Reflekt.Domain.Sprints.SprintPhase.Voting or
-            Reflekt.Domain.Sprints.SprintPhase.Discussing))
+            Reflekt.Domain.RetroSessions.RetroPhase.Writing or
+            Reflekt.Domain.RetroSessions.RetroPhase.Voting or
+            Reflekt.Domain.RetroSessions.RetroPhase.Discussing))
             throw new HubException($"Timer is not available in phase {sprint.CurrentPhase}.");
 
         return sprint;
@@ -298,3 +298,5 @@ public class SprintHub(
         await base.OnDisconnectedAsync(exception);
     }
 }
+
+

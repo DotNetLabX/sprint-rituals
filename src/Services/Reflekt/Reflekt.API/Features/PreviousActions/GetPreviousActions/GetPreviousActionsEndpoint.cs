@@ -12,14 +12,14 @@ public sealed record GetPreviousActionsRequest(int SprintId);
 [HttpGet("/api/sprints/{sprintId}/previous-actions")]
 [Tags("PreviousActions")]
 public sealed class GetPreviousActionsEndpoint(
-    SprintRepository sprintRepository,
+    RetroSessionRepository retroSessionRepository,
     TeamRepository teamRepository,
     CardRepository cardRepository)
     : Endpoint<GetPreviousActionsRequest, List<PreviousActionItemResponse>>
 {
     public override async Task HandleAsync(GetPreviousActionsRequest req, CancellationToken ct)
     {
-        var sprint = await sprintRepository.GetByIdAsync(req.SprintId, ct);
+        var sprint = await retroSessionRepository.GetByIdAsync(req.SprintId, ct);
         if (sprint is null) { await Send.NotFoundAsync(ct); return; }
 
         var participantIdClaim = User.FindFirstValue("participantId");
@@ -42,7 +42,7 @@ public sealed class GetPreviousActionsEndpoint(
             }
         }
 
-        var previousSprint = await sprintRepository.GetMostRecentClosedByTeamIdAsync(sprint.TeamId, ct);
+        var previousSprint = await retroSessionRepository.GetMostRecentClosedByTeamIdAsync(sprint.TeamId, ct);
         if (previousSprint is null)
         {
             await Send.OkAsync([], ct);
@@ -64,3 +64,5 @@ public sealed class GetPreviousActionsEndpoint(
         await Send.OkAsync(response, ct);
     }
 }
+
+

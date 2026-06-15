@@ -13,7 +13,7 @@ public sealed record GetParticipantReportRequest(int SprintId);
 [HttpGet("/api/sprints/{sprintId}/report")]
 [Tags("Reports")]
 public sealed class GetParticipantReportEndpoint(
-    SprintRepository sprintRepository,
+    RetroSessionRepository retroSessionRepository,
     TeamRepository teamRepository,
     CardRepository cardRepository,
     CardGroupRepository cardGroupRepository,
@@ -23,7 +23,7 @@ public sealed class GetParticipantReportEndpoint(
 {
     public override async Task HandleAsync(GetParticipantReportRequest req, CancellationToken ct)
     {
-        var sprint = await sprintRepository.GetByIdAsync(req.SprintId, ct);
+        var sprint = await retroSessionRepository.GetByIdAsync(req.SprintId, ct);
         if (sprint is null) { await Send.NotFoundAsync(ct); return; }
 
         var participantIdClaim = User.FindFirstValue("participantId");
@@ -110,7 +110,7 @@ public sealed class GetParticipantReportEndpoint(
 
     private async Task<ReportPreviousActionsSection?> BuildPreviousActionsSectionAsync(int sprintId, int teamId, CancellationToken ct)
     {
-        var previousSprint = await sprintRepository.GetMostRecentClosedByTeamIdAsync(teamId, ct);
+        var previousSprint = await retroSessionRepository.GetMostRecentClosedByTeamIdAsync(teamId, ct);
         if (previousSprint is null) return null;
 
         var reviewedItems = await cardRepository.GetActionItemsReviewedInSprintAsync(sprintId, ct);
@@ -129,3 +129,5 @@ public sealed class GetParticipantReportEndpoint(
         return new ReportPreviousActionsSection(previousSprint.Name, entries);
     }
 }
+
+

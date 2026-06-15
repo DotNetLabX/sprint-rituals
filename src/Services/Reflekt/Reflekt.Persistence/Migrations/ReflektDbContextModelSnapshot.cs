@@ -175,6 +175,32 @@ namespace Reflekt.Persistence.Migrations
                     b.ToTable("EvidenceLinks", (string)null);
                 });
 
+            modelBuilder.Entity("Reflekt.Domain.FokusSprints.FokusSprintSnapshot", b =>
+                {
+                    b.Property<int>("SprintId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("BoardId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SprintName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("SyncedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("SprintId");
+
+                    b.ToTable("FokusSprintSnapshots", (string)null);
+                });
+
             modelBuilder.Entity("Reflekt.Domain.Participants.Participant", b =>
                 {
                     b.Property<int>("Id")
@@ -227,7 +253,22 @@ namespace Reflekt.Persistence.Migrations
                     b.ToTable("Participants", (string)null);
                 });
 
-            modelBuilder.Entity("Reflekt.Domain.Sprints.PhaseAction", b =>
+            modelBuilder.Entity("Reflekt.Domain.RetroSessions.FokusSprintRef", b =>
+                {
+                    b.Property<int>("RetroSessionId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("FokusSprintId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("RetroSessionId", "FokusSprintId");
+
+                    b.HasIndex("FokusSprintId");
+
+                    b.ToTable("FokusSprintRefs", (string)null);
+                });
+
+            modelBuilder.Entity("Reflekt.Domain.RetroSessions.PhaseAction", b =>
                 {
                     b.Property<int>("Phase")
                         .HasColumnType("INTEGER");
@@ -347,7 +388,7 @@ namespace Reflekt.Persistence.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Reflekt.Domain.Sprints.Sprint", b =>
+            modelBuilder.Entity("Reflekt.Domain.RetroSessions.RetroSession", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -456,7 +497,7 @@ namespace Reflekt.Persistence.Migrations
 
                     b.HasIndex("TeamId");
 
-                    b.ToTable("Sprints", (string)null);
+                    b.ToTable("RetroSessions", (string)null);
                 });
 
             modelBuilder.Entity("Reflekt.Domain.Teams.Team", b =>
@@ -535,7 +576,7 @@ namespace Reflekt.Persistence.Migrations
 
             modelBuilder.Entity("Reflekt.Domain.CardGroups.CardGroup", b =>
                 {
-                    b.HasOne("Reflekt.Domain.Sprints.Sprint", null)
+                    b.HasOne("Reflekt.Domain.RetroSessions.RetroSession", null)
                         .WithMany()
                         .HasForeignKey("SprintId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -555,12 +596,12 @@ namespace Reflekt.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Reflekt.Domain.Sprints.Sprint", null)
+                    b.HasOne("Reflekt.Domain.RetroSessions.RetroSession", null)
                         .WithMany()
                         .HasForeignKey("ReviewedInSprintId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("Reflekt.Domain.Sprints.Sprint", null)
+                    b.HasOne("Reflekt.Domain.RetroSessions.RetroSession", null)
                         .WithMany()
                         .HasForeignKey("SprintId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -578,14 +619,23 @@ namespace Reflekt.Persistence.Migrations
 
             modelBuilder.Entity("Reflekt.Domain.Participants.Participant", b =>
                 {
-                    b.HasOne("Reflekt.Domain.Sprints.Sprint", null)
+                    b.HasOne("Reflekt.Domain.RetroSessions.RetroSession", null)
                         .WithMany()
                         .HasForeignKey("SprintId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Reflekt.Domain.Sprints.Sprint", b =>
+            modelBuilder.Entity("Reflekt.Domain.RetroSessions.FokusSprintRef", b =>
+                {
+                    b.HasOne("Reflekt.Domain.RetroSessions.RetroSession", null)
+                        .WithMany("FokusSprintRefs")
+                        .HasForeignKey("RetroSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Reflekt.Domain.RetroSessions.RetroSession", b =>
                 {
                     b.HasOne("Reflekt.Domain.Teams.Team", null)
                         .WithMany()
@@ -612,6 +662,11 @@ namespace Reflekt.Persistence.Migrations
             modelBuilder.Entity("Reflekt.Domain.Cards.Card", b =>
                 {
                     b.Navigation("EvidenceLinks");
+                });
+
+            modelBuilder.Entity("Reflekt.Domain.RetroSessions.RetroSession", b =>
+                {
+                    b.Navigation("FokusSprintRefs");
                 });
 #pragma warning restore 612, 618
         }

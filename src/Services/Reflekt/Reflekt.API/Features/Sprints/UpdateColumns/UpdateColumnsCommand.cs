@@ -1,5 +1,5 @@
 using FluentValidation;
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 
 namespace Reflekt.API.Features.Sprints.UpdateColumns;
 
@@ -24,3 +24,4 @@ public sealed class UpdateColumnsCommandValidator : Validator<UpdateColumnsComma
         RuleFor(x => x.Column3Color).NotEmpty().Must(ColumnColor.IsValid).WithMessage("Column3Color must be one of the allowed palette values.");
     }
 }
+

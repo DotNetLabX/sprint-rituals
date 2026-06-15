@@ -12,14 +12,14 @@ public sealed record GetParticipantsRequest(int SprintId);
 [HttpGet("/api/sprints/{sprintId}/participants")]
 [Tags("Participants")]
 public sealed class GetParticipantsEndpoint(
-    SprintRepository sprintRepository,
+    RetroSessionRepository retroSessionRepository,
     TeamRepository teamRepository,
     ParticipantRepository participantRepository)
     : Endpoint<GetParticipantsRequest, List<ParticipantResponse>>
 {
     public override async Task HandleAsync(GetParticipantsRequest request, CancellationToken ct)
     {
-        var sprint = await sprintRepository.GetByIdAsync(request.SprintId, ct);
+        var sprint = await retroSessionRepository.GetByIdAsync(request.SprintId, ct);
         if (sprint is null) { await Send.NotFoundAsync(ct); return; }
 
         var isGuestToken = User.FindFirstValue("participantId") is not null;
@@ -47,3 +47,5 @@ public sealed class GetParticipantsEndpoint(
         await Send.OkAsync(participants.Select(p => p.Adapt<ParticipantResponse>()).ToList(), ct);
     }
 }
+
+

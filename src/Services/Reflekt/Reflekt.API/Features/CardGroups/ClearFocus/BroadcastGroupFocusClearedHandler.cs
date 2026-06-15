@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 using Reflekt.API.Hubs;
-using Reflekt.Domain.Sprints.Events;
+using Reflekt.Domain.RetroSessions.Events;
 
 namespace Reflekt.API.Features.CardGroups.ClearFocus;
 
@@ -8,9 +8,10 @@ public sealed class BroadcastGroupFocusClearedHandler(IHubContext<SprintHub> hub
     : IEventHandler<GroupFocusClearedEvent>
 {
     public Task HandleAsync(GroupFocusClearedEvent ev, CancellationToken ct)
-        => hubContext.Clients.Group($"sprint:{ev.Sprint.Id}")
+        => hubContext.Clients.Group($"sprint:{ev.RetroSession.Id}")
             .SendAsync("GroupFocusCleared", new
             {
                 previousGroupId = ev.PreviousGroupId
             }, ct);
 }
+

@@ -12,9 +12,9 @@ Reflekt is a real-time collaborative sprint-retrospective tool. A team runs a re
 
 Reflekt is being ported into the monolith in sequenced passes (lift-and-shift first, then refactor/integrate — see the Reflekt program in `docs/backlog.md`). The binding end-state is captured in `docs/architecture/decisions.md` ADR-016…020. Until the later passes land, the lifted code still differs from the target:
 
-- **Auth (ADR-016):** target is Identity-owned (Google + cookie via the Identity module); Reflekt keeps only guest-token auth. The lifted code still carries its own Google/cookie config and `User` aggregate until the Identity-unification pass.
-- **RetroSession (ADR-018):** the retro aggregate is being renamed from `Sprint` → `RetroSession` and linked to 1..N Fokus sprints. Lifted code still uses `Sprint` until the sprint-ownership pass.
-- **Fokus linkage (ADR-017/019):** the `FokusSprintSnapshot` projection, the `ISprintAnalyticsService` gRPC client, and the `SprintSynced` consumer arrive in the integration passes.
+- **Auth (ADR-016):** target is Identity-owned (Google + cookie via the Identity module); Reflekt keeps only guest-token auth. **Landed in RA2 (adhoc-ReflektIdentityUnification):** Reflekt's own `User` aggregate and parallel Google/cookie config removed; only the guest-token scheme remains (chained onto Identity's auth builder). RA4 carry-over: wire authenticated `Participant.PersonId` into the sprint-context panel.
+- **RetroSession (ADR-018):** `Sprint` → `RetroSession` rename and Fokus-sprint linkage (1..N `FokusSprintRef` child rows, `FokusSprintSnapshot` projection, `SprintSynced` consumer, `CreateRetroSession` route). **Landed in RA3 (adhoc-ReflektSprintOwnership).** Child FK columns kept `SprintId`-named (Q1=b). SignalR method/group/claim strings kept `sprint*`-named (Q2). HTTP lifecycle routes renamed to `/retro-sessions`. RA4 carry-overs: wire `FokusSprintIds` field into client UI and OpenAPI schema; add `FokusSprintSnapshot` data to the sprint-context panel via `ISprintAnalyticsService` gRPC client.
+- **Fokus linkage (ADR-017/019):** `SprintSynced` consumer and `FokusSprintSnapshot` projection **landed in RA3**. `ISprintAnalyticsService` gRPC client (anonymized metrics for the sprint-context panel) is **RA4 — not yet landed** (blocked on RA3; see `adhoc-SprintContextPanel` in backlog).
 
 ## Architecture
 
@@ -23,7 +23,7 @@ DDD, Vertical Slice, CQRS, Clean Architecture, Event Driven Design — same as t
 ## Domain model
 
 - **Aggregates:**
-  - `RetroSession` — the retro board (phases, columns, focus). *Currently named `Sprint`; renamed per ADR-018.* References 1..N Fokus sprints.
+  - `RetroSession` — the retro board (phases, columns, focus). Renamed from `Sprint` per ADR-018 (landed RA3). References 1..N Fokus sprints via `FokusSprintRef` child table.
   - `Team` — owns retros; membership.
   - `Card` — a retro note; owns its `EvidenceLink`s.
   - `CardGroup` — clusters cards during Grouping; carries discussed/focus state.

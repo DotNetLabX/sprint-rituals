@@ -1,15 +1,15 @@
 
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 using Reflekt.Domain.Teams;
 
 namespace Reflekt.Persistence.EntityConfigurations;
 
-internal sealed class SprintConfiguration : EntityConfiguration<Sprint>
+internal sealed class RetroSessionConfiguration : EntityConfiguration<RetroSession>
 {
-    public override void Configure(EntityTypeBuilder<Sprint> builder)
+    public override void Configure(EntityTypeBuilder<RetroSession> builder)
     {
         base.Configure(builder);
-        builder.ToTable("Sprints");
+        builder.ToTable("RetroSessions");
         builder.Property(s => s.TeamId).IsRequired();
         builder.HasOne<Team>().WithMany().HasForeignKey(s => s.TeamId).OnDelete(DeleteBehavior.Cascade);
         builder.Property(s => s.Name).IsRequired().HasMaxLength(100);
@@ -47,5 +47,14 @@ internal sealed class SprintConfiguration : EntityConfiguration<Sprint>
         builder.Property(s => s.DiscussingTimerDefault).IsRequired().HasDefaultValue(10);
 
         builder.HasIndex(s => s.ClosedAt);
+
+        // 1..N Fokus sprint link (child entity, composite key) — per EvidenceLink pattern
+        builder.HasMany(s => s.FokusSprintRefs)
+            .WithOne()
+            .HasForeignKey(r => r.RetroSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Navigation(s => s.FokusSprintRefs)
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }

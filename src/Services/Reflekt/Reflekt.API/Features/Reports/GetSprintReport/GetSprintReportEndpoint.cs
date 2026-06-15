@@ -7,14 +7,14 @@ using AuthPolicies = Reflekt.API.Auth.Policies;
 
 namespace Reflekt.API.Features.Reports.GetSprintReport;
 
-public sealed record GetSprintReportRequest(int TeamId, int SprintId);
+public sealed record GetSprintReportRequest(int TeamId, int RetroSessionId);
 
 [Authorize(Policy = AuthPolicies.OwnerOrScrumMaster)]
-[HttpGet("/api/teams/{teamId}/sprints/{sprintId}/report")]
+[HttpGet("/api/teams/{teamId}/retro-sessions/{retroSessionId}/report")]
 [Tags("Reports")]
 public sealed class GetSprintReportEndpoint(
     TeamRepository teamRepository,
-    SprintRepository sprintRepository,
+    RetroSessionRepository retroSessionRepository,
     CardRepository cardRepository,
     CardGroupRepository cardGroupRepository,
     VoteRepository voteRepository,
@@ -23,13 +23,14 @@ public sealed class GetSprintReportEndpoint(
 {
     public override async Task HandleAsync(GetSprintReportRequest req, CancellationToken ct)
     {
-        var sprint = await sprintRepository.GetByIdAsync(req.SprintId, ct);
+        var sprint = await retroSessionRepository.GetByIdAsync(req.RetroSessionId, ct);
         if (sprint is null || sprint.TeamId != req.TeamId) { await Send.NotFoundAsync(ct); return; }
 
         var participantIdClaim = User.FindFirstValue("participantId");
         if (participantIdClaim is not null)
         {
-            if (!int.TryParse(User.FindFirstValue("sprintId"), out var claimSprintId) || claimSprintId != req.SprintId)
+            // "sprintId" claim is a SignalR/guest-token wire value — stays sprintId-named (Q2 DO-NOT-TOUCH)
+            if (!int.TryParse(User.FindFirstValue("sprintId"), out var claimSprintId) || claimSprintId != req.RetroSessionId)
             {
                 await Send.UnauthorizedAsync(ct);
                 return;
@@ -46,10 +47,10 @@ public sealed class GetSprintReportEndpoint(
             }
         }
 
-        var cards = await cardRepository.GetBySprintIdAsync(req.SprintId, ct);
-        var groups = await cardGroupRepository.GetBySprintIdAsync(req.SprintId, ct);
+        var cards = await cardRepository.GetBySprintIdAsync(req.RetroSessionId, ct);
+        var groups = await cardGroupRepository.GetBySprintIdAsync(req.RetroSessionId, ct);
         var voteCounts = await voteRepository.GetVoteCountsByGroupIdsAsync(groups.Select(g => g.Id), ct);
-        var participants = await participantRepository.GetBySprintIdAsync(req.SprintId, ct);
+        var participants = await participantRepository.GetBySprintIdAsync(req.RetroSessionId, ct);
         var teamInfo = await teamRepository.GetByIdAsync(req.TeamId, ct);
 
         var cardsByGroup = cards
@@ -82,7 +83,7 @@ public sealed class GetSprintReportEndpoint(
             .Select(c => c.Adapt<ReportActionItemEntry>())
             .ToList();
 
-        var previousActionsSection = await BuildPreviousActionsSectionAsync(req.SprintId, sprint.TeamId, ct);
+        var previousActionsSection = await BuildPreviousActionsSectionAsync(req.RetroSessionId, sprint.TeamId, ct);
 
         var response = new ReportResponse(
             new ReportSprintInfo(sprint.Id, sprint.Name, sprint.CreatedAt, sprint.ClosedAt),
@@ -108,12 +109,12 @@ public sealed class GetSprintReportEndpoint(
         return new ReportColumnSection(columnName, columnColor, groups);
     }
 
-    private async Task<ReportPreviousActionsSection?> BuildPreviousActionsSectionAsync(int sprintId, int teamId, CancellationToken ct)
+    private async Task<ReportPreviousActionsSection?> BuildPreviousActionsSectionAsync(int retroSessionId, int teamId, CancellationToken ct)
     {
-        var previousSprint = await sprintRepository.GetMostRecentClosedByTeamIdAsync(teamId, ct);
+        var previousSprint = await retroSessionRepository.GetMostRecentClosedByTeamIdAsync(teamId, ct);
         if (previousSprint is null) return null;
 
-        var reviewedItems = await cardRepository.GetActionItemsReviewedInSprintAsync(sprintId, ct);
+        var reviewedItems = await cardRepository.GetActionItemsReviewedInSprintAsync(retroSessionId, ct);
         var unreviewedEligible = await cardRepository.GetUnreviewedActionItemsBySprintIdAsync(previousSprint.Id, ct);
 
         // Only include the section when at least one action item from the previous sprint was eligible

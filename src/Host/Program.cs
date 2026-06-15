@@ -6,6 +6,7 @@ using Fokus.Persistence;
 using Identity.API;
 using Identity.API.Auth;
 using Identity.Persistence;
+using MassTransit;
 using Reflekt.API;
 using Reflekt.Persistence;
 using Scalar.AspNetCore;
@@ -16,6 +17,15 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddIdentityModule(builder.Configuration);
 builder.Services.AddFokusModule(builder.Configuration);
 builder.Services.AddReflektModule(builder.Configuration);
+
+// MassTransit — single in-memory bus shared across all modules (ADR-019, Step 4).
+// Each module exposes AddXxxMessaging(cfg) to register its consumers onto the shared bus.
+builder.Services.AddMassTransit(cfg =>
+{
+    cfg.AddFokusMessaging();
+    cfg.AddReflektMessaging();
+    cfg.UsingInMemory((context, busCfg) => busCfg.ConfigureEndpoints(context));
+});
 builder.Services.AddOpenApi();
 builder.Services.AddFastEndpoints(o =>
 {

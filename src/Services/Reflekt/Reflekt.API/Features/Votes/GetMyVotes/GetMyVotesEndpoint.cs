@@ -11,7 +11,7 @@ public sealed record GetMyVotesRequest(int SprintId);
 [HttpGet("/api/sprints/{sprintId}/votes/mine")]
 [Tags("Votes")]
 public sealed class GetMyVotesEndpoint(
-    SprintRepository sprintRepository,
+    RetroSessionRepository retroSessionRepository,
     VoteRepository voteRepository)
     : Endpoint<GetMyVotesRequest, List<VoteDistributionEntry>>
 {
@@ -29,10 +29,12 @@ public sealed class GetMyVotesEndpoint(
             return;
         }
 
-        var sprint = await sprintRepository.GetByIdAsync(req.SprintId, ct);
+        var sprint = await retroSessionRepository.GetByIdAsync(req.SprintId, ct);
         if (sprint is null) { await Send.NotFoundAsync(ct); return; }
 
         var distribution = await voteRepository.GetVoteDistributionAsync(participantId, ct);
         await Send.OkAsync(distribution.Select(e => new VoteDistributionEntry(e.GroupId, e.Count)).ToList(), ct);
     }
 }
+
+

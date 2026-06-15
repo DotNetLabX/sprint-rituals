@@ -1,4 +1,5 @@
 
+using MassTransit;
 using Microsoft.AspNetCore.SignalR;
 using Reflekt.API.Auth;
 using Reflekt.API.Features.PhaseActions;
@@ -41,6 +42,15 @@ public static class DependencyInjection
         services.AddSingleton<TimerService>();
 
         return services;
+    }
+
+    /// <summary>
+    /// Registers Reflekt's MassTransit consumers onto the shared in-memory bus.
+    /// Called from Host/Program.cs inside the single AddMassTransit block (ADR-019, Step 4).
+    /// </summary>
+    public static void AddReflektMessaging(this IBusRegistrationConfigurator cfg)
+    {
+        cfg.AddConsumers(typeof(DependencyInjection).Assembly);
     }
 
     /// <summary>

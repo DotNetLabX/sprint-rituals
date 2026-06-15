@@ -1,6 +1,6 @@
-namespace Reflekt.Domain.Sprints;
+namespace Reflekt.Domain.RetroSessions;
 
-public enum SprintAction
+public enum RetroAction
 {
     CreateNote,
     EditNote,

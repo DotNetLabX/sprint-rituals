@@ -1,6 +1,6 @@
-namespace Reflekt.Domain.Sprints;
+namespace Reflekt.Domain.RetroSessions;
 
-public sealed partial class Sprint
+public sealed partial class RetroSession
 {
     private const int WritingTimerMin = 1;
     private const int WritingTimerMax = 60;
@@ -8,9 +8,10 @@ public sealed partial class Sprint
     private const int DefaultVotingTimer = 3;
     private const int DefaultDiscussingTimer = 10;
 
-    public static Sprint Create(
+    public static RetroSession Create(
         string name,
         int teamId,
+        IReadOnlyCollection<int> fokusSprintIds,
         int votesPerParticipant = 3,
         string? column1Name = null,
         string? column1Color = null,
@@ -25,6 +26,9 @@ public sealed partial class Sprint
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentOutOfRangeException.ThrowIfLessThan(votesPerParticipant, 1);
 
+        if (fokusSprintIds is null || fokusSprintIds.Count == 0)
+            throw new ArgumentException("A RetroSession must reference at least one Fokus sprint.", nameof(fokusSprintIds));
+
         if (writingTimerDefault.HasValue)
             ValidateTimerRange(writingTimerDefault.Value, nameof(writingTimerDefault));
         if (votingTimerDefault.HasValue)
@@ -32,7 +36,7 @@ public sealed partial class Sprint
         if (discussingTimerDefault.HasValue)
             ValidateTimerRange(discussingTimerDefault.Value, nameof(discussingTimerDefault));
 
-        var sprint = new Sprint
+        var session = new RetroSession
         {
             Name = name,
             TeamId = teamId,
@@ -42,25 +46,36 @@ public sealed partial class Sprint
             VotingTimerDefault = votingTimerDefault ?? DefaultVotingTimer,
             DiscussingTimerDefault = discussingTimerDefault ?? DefaultDiscussingTimer,
         };
-        sprint.State = SprintState.Draft;
-        sprint.CurrentPhase = SprintPhase.Writing;
+        session.State = RetroSessionState.Draft;
+        session.CurrentPhase = RetroPhase.Writing;
 
-        if (column1Name is not null) sprint.Column1Name = ValidateColumnName(column1Name, nameof(column1Name));
-        if (column1Color is not null) sprint.Column1Color = ColumnColor.Create(column1Color);
-        if (column2Name is not null) sprint.Column2Name = ValidateColumnName(column2Name, nameof(column2Name));
-        if (column2Color is not null) sprint.Column2Color = ColumnColor.Create(column2Color);
-        if (column3Name is not null) sprint.Column3Name = ValidateColumnName(column3Name, nameof(column3Name));
-        if (column3Color is not null) sprint.Column3Color = ColumnColor.Create(column3Color);
+        if (column1Name is not null) session.Column1Name = ValidateColumnName(column1Name, nameof(column1Name));
+        if (column1Color is not null) session.Column1Color = ColumnColor.Create(column1Color);
+        if (column2Name is not null) session.Column2Name = ValidateColumnName(column2Name, nameof(column2Name));
+        if (column2Color is not null) session.Column2Color = ColumnColor.Create(column2Color);
+        if (column3Name is not null) session.Column3Name = ValidateColumnName(column3Name, nameof(column3Name));
+        if (column3Color is not null) session.Column3Color = ColumnColor.Create(column3Color);
 
-        sprint.AddDomainEvent(new Events.SprintCreatedEvent(sprint));
-        return sprint;
+        foreach (var fokusSprintId in fokusSprintIds)
+            session._fokusSprintRefs.Add(new FokusSprintRef(fokusSprintId));
+
+        session.AddDomainEvent(new Events.RetroSessionCreatedEvent(session));
+        return session;
+    }
+
+    /// <summary>Adds a Fokus sprint reference to an existing session (for the "skipped-retro covers two sprints" case).</summary>
+    public void AddFokusSprintRef(int fokusSprintId)
+    {
+        if (_fokusSprintRefs.Any(r => r.FokusSprintId == fokusSprintId))
+            return;
+        _fokusSprintRefs.Add(new FokusSprintRef(fokusSprintId));
     }
 
     public int GetTimerDefaultForPhase() => CurrentPhase switch
     {
-        SprintPhase.Writing => WritingTimerDefault,
-        SprintPhase.Voting => VotingTimerDefault,
-        SprintPhase.Discussing => DiscussingTimerDefault,
+        RetroPhase.Writing => WritingTimerDefault,
+        RetroPhase.Voting => VotingTimerDefault,
+        RetroPhase.Discussing => DiscussingTimerDefault,
         _ => throw new InvalidOperationException($"Phase {CurrentPhase} does not have a timer default."),
     };
 
@@ -97,23 +112,23 @@ public sealed partial class Sprint
 
     public void Start()
     {
-        if (State != SprintState.Draft)
-            throw new InvalidOperationException("Sprint must be in Draft state to start.");
-        State = SprintState.Active;
-        AddDomainEvent(new Events.SprintStartedEvent(this));
+        if (State != RetroSessionState.Draft)
+            throw new InvalidOperationException("RetroSession must be in Draft state to start.");
+        State = RetroSessionState.Active;
+        AddDomainEvent(new Events.RetroSessionStartedEvent(this));
     }
 
     public void AdvancePhase()
     {
-        if (State != SprintState.Active)
-            throw new InvalidOperationException("Sprint must be Active to advance phase.");
+        if (State != RetroSessionState.Active)
+            throw new InvalidOperationException("RetroSession must be Active to advance phase.");
         CurrentPhase = CurrentPhase switch
         {
-            SprintPhase.Writing => SprintPhase.Grouping,
-            SprintPhase.Grouping => SprintPhase.Voting,
-            SprintPhase.Voting => SprintPhase.Discussing,
-            SprintPhase.Discussing => SprintPhase.Reporting,
-            SprintPhase.Reporting => throw new InvalidOperationException("Sprint phase is already Reporting."),
+            RetroPhase.Writing => RetroPhase.Grouping,
+            RetroPhase.Grouping => RetroPhase.Voting,
+            RetroPhase.Voting => RetroPhase.Discussing,
+            RetroPhase.Discussing => RetroPhase.Reporting,
+            RetroPhase.Reporting => throw new InvalidOperationException("RetroSession phase is already Reporting."),
             _ => throw new InvalidOperationException($"Unknown phase: {CurrentPhase}."),
         };
         AddDomainEvent(new Events.PhaseAdvancedEvent(this));
@@ -121,19 +136,19 @@ public sealed partial class Sprint
 
     public void Close()
     {
-        if (State != SprintState.Active)
-            throw new InvalidOperationException("Sprint must be Active to close.");
-        State = SprintState.Closed;
+        if (State != RetroSessionState.Active)
+            throw new InvalidOperationException("RetroSession must be Active to close.");
+        State = RetroSessionState.Closed;
         ClosedAt = DateTime.UtcNow;
-        AddDomainEvent(new Events.SprintClosedEvent(this));
+        AddDomainEvent(new Events.RetroSessionClosedEvent(this));
     }
 
     public void SetFocus(int groupId)
     {
-        if (State != SprintState.Active)
-            throw new InvalidOperationException("Sprint must be Active to set focus.");
-        if (CurrentPhase != SprintPhase.Discussing)
-            throw new InvalidOperationException("Sprint must be in Discussing phase to set focus.");
+        if (State != RetroSessionState.Active)
+            throw new InvalidOperationException("RetroSession must be Active to set focus.");
+        if (CurrentPhase != RetroPhase.Discussing)
+            throw new InvalidOperationException("RetroSession must be in Discussing phase to set focus.");
 
         var previousGroupId = FocusedGroupId;
         FocusedGroupId = groupId;
@@ -142,10 +157,10 @@ public sealed partial class Sprint
 
     public void ClearFocus()
     {
-        if (State != SprintState.Active)
-            throw new InvalidOperationException("Sprint must be Active to clear focus.");
-        if (CurrentPhase != SprintPhase.Discussing)
-            throw new InvalidOperationException("Sprint must be in Discussing phase to clear focus.");
+        if (State != RetroSessionState.Active)
+            throw new InvalidOperationException("RetroSession must be Active to clear focus.");
+        if (CurrentPhase != RetroPhase.Discussing)
+            throw new InvalidOperationException("RetroSession must be in Discussing phase to clear focus.");
 
         var previousGroupId = FocusedGroupId;
         FocusedGroupId = null;

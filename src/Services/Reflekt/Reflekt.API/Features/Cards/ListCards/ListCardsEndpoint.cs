@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Reflekt.API.Auth;
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 using Reflekt.Persistence.Repositories;
 using AuthPolicies = Reflekt.API.Auth.Policies;
 
@@ -13,7 +13,7 @@ public sealed record ListCardsRequest(int SprintId);
 [HttpGet("/api/sprints/{sprintId}/cards")]
 [Tags("Cards")]
 public sealed class ListCardsEndpoint(
-    SprintRepository sprintRepository,
+    RetroSessionRepository retroSessionRepository,
     TeamRepository teamRepository,
     CardRepository cardRepository,
     VoteRepository voteRepository)
@@ -21,7 +21,7 @@ public sealed class ListCardsEndpoint(
 {
     public override async Task HandleAsync(ListCardsRequest req, CancellationToken ct)
     {
-        var sprint = await sprintRepository.GetByIdAsync(req.SprintId, ct);
+        var sprint = await retroSessionRepository.GetByIdAsync(req.SprintId, ct);
         if (sprint is null) { await Send.NotFoundAsync(ct); return; }
 
         var participantIdClaim = User.FindFirstValue("participantId");
@@ -49,7 +49,7 @@ public sealed class ListCardsEndpoint(
         var voteCounts = await voteRepository.GetVoteCountsByGroupIdsAsync(groupIds, ct);
 
         var requestingParticipantId = participantIdClaim is not null ? int.Parse(participantIdClaim) : (int?)null;
-        var redactOthers = sprint.CurrentPhase == SprintPhase.Writing && requestingParticipantId is not null;
+        var redactOthers = sprint.CurrentPhase == RetroPhase.Writing && requestingParticipantId is not null;
 
         await Send.OkAsync(
             cards.Select(c =>
@@ -63,3 +63,5 @@ public sealed class ListCardsEndpoint(
             ct);
     }
 }
+
+

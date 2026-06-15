@@ -1,4 +1,4 @@
-namespace Reflekt.Domain.Sprints;
+namespace Reflekt.Domain.RetroSessions;
 
 public sealed class ColumnColor
 {

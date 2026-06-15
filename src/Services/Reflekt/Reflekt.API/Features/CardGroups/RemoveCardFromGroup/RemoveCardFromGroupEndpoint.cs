@@ -3,7 +3,7 @@ using Reflekt.API.Auth;
 using Reflekt.API.Features.PhaseActions;
 using Reflekt.Domain.CardGroups;
 using Reflekt.Domain.Cards;
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 using Reflekt.Persistence.Repositories;
 using AuthPolicies = Reflekt.API.Auth.Policies;
 
@@ -15,7 +15,7 @@ public sealed record RemoveCardFromGroupRequest(int SprintId, int GroupId, int C
 [HttpDelete("/api/sprints/{sprintId}/card-groups/{groupId}/cards/{cardId}")]
 [Tags("CardGroups")]
 public sealed class RemoveCardFromGroupEndpoint(
-    SprintRepository sprintRepository,
+    RetroSessionRepository retroSessionRepository,
     TeamRepository teamRepository,
     CardRepository cardRepository,
     CardGroupRepository cardGroupRepository,
@@ -26,7 +26,7 @@ public sealed class RemoveCardFromGroupEndpoint(
     {
         var userId = User.GetPersonId();
 
-        var sprint = await sprintRepository.GetByIdAsync(req.SprintId, ct);
+        var sprint = await retroSessionRepository.GetByIdAsync(req.SprintId, ct);
         if (sprint is null) { await Send.NotFoundAsync(ct); return; }
 
         var team = await teamRepository.GetByIdAsync(sprint.TeamId, ct);
@@ -36,8 +36,8 @@ public sealed class RemoveCardFromGroupEndpoint(
             return;
         }
 
-        if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, SprintAction.UngroupCards))
-            ThrowError($"{SprintAction.UngroupCards} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
+        if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, RetroAction.UngroupCards))
+            ThrowError($"{RetroAction.UngroupCards} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
 
         var group = await cardGroupRepository.GetByIdAsync(req.GroupId, ct);
         if (group is null || group.SprintId != req.SprintId) { await Send.NotFoundAsync(ct); return; }
@@ -57,3 +57,5 @@ public sealed class RemoveCardFromGroupEndpoint(
         await Send.OkAsync(ct);
     }
 }
+
+

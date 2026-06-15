@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Reflekt.API.Auth;
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 using Reflekt.Persistence.Repositories;
 using AuthPolicies = Reflekt.API.Auth.Policies;
 
@@ -12,17 +12,17 @@ public sealed record KickParticipantRequest(int SprintId, int ParticipantId);
 [HttpDelete("/api/sprints/{sprintId}/participants/{participantId}")]
 [Tags("Participants")]
 public sealed class KickParticipantEndpoint(
-    SprintRepository sprintRepository,
+    RetroSessionRepository retroSessionRepository,
     TeamRepository teamRepository,
     ParticipantRepository participantRepository)
     : Endpoint<KickParticipantRequest, EmptyResponse>
 {
     public override async Task HandleAsync(KickParticipantRequest req, CancellationToken ct)
     {
-        var sprint = await sprintRepository.GetByIdAsync(req.SprintId, ct);
+        var sprint = await retroSessionRepository.GetByIdAsync(req.SprintId, ct);
         if (sprint is null) { await Send.NotFoundAsync(ct); return; }
 
-        if (sprint.State != SprintState.Active)
+        if (sprint.State != RetroSessionState.Active)
             ThrowError("Cannot kick participants from a non-active sprint.", StatusCodes.Status409Conflict);
 
         var userId = User.GetPersonId();
@@ -47,3 +47,5 @@ public sealed class KickParticipantEndpoint(
         await Send.NoContentAsync(ct);
     }
 }
+
+

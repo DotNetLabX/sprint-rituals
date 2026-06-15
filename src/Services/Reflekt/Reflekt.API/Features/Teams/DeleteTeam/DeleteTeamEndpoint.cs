@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Reflekt.API.Auth;
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 using Reflekt.Persistence.Repositories;
 using AuthPolicies = Reflekt.API.Auth.Policies;
 
@@ -10,7 +10,7 @@ namespace Reflekt.API.Features.Teams.DeleteTeam;
 [Authorize(Policy = AuthPolicies.ScrumMaster)]
 [HttpDelete("/api/teams/{teamId}")]
 [Tags("Teams")]
-public sealed class DeleteTeamEndpoint(TeamRepository teamRepository, SprintRepository sprintRepository)
+public sealed class DeleteTeamEndpoint(TeamRepository teamRepository, RetroSessionRepository retroSessionRepository)
     : Endpoint<DeleteTeamCommand, EmptyResponse>
 {
     public override async Task HandleAsync(DeleteTeamCommand command, CancellationToken ct)
@@ -33,8 +33,8 @@ public sealed class DeleteTeamEndpoint(TeamRepository teamRepository, SprintRepo
             return;
         }
 
-        var hasActiveSprint = await sprintRepository.Query()
-            .AnyAsync(s => s.TeamId == command.TeamId && s.State == SprintState.Active, ct);
+        var hasActiveSprint = await retroSessionRepository.Query()
+            .AnyAsync(s => s.TeamId == command.TeamId && s.State == RetroSessionState.Active, ct);
 
         if (hasActiveSprint)
         {
@@ -48,3 +48,5 @@ public sealed class DeleteTeamEndpoint(TeamRepository teamRepository, SprintRepo
         await Send.NoContentAsync(ct);
     }
 }
+
+

@@ -41,5 +41,6 @@
   </Folder>
   <Folder Name="/src/Services/Reflekt/">
     <Project Path="src/Services/Reflekt/Reflekt.Domain.Tests/Reflekt.Domain.Tests.csproj" />
+    <Project Path="src/Services/Reflekt/Reflekt.Persistence.Tests/Reflekt.Persistence.Tests.csproj" />
   </Folder>
 </Solution>

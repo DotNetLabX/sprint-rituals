@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Reflekt.Domain.Participants;
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 
 namespace Reflekt.Persistence.EntityConfigurations;
 
@@ -13,7 +13,7 @@ internal sealed class ParticipantConfiguration : EntityConfiguration<Participant
         base.Configure(builder);
         builder.ToTable("Participants");
         builder.Property(p => p.SprintId).IsRequired();
-        builder.HasOne<Sprint>().WithMany().HasForeignKey(p => p.SprintId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne<RetroSession>().WithMany().HasForeignKey(p => p.SprintId).OnDelete(DeleteBehavior.Cascade);
         builder.Property(p => p.DisplayName).IsRequired().HasMaxLength(50);
         builder.Property(p => p.GuestToken).IsRequired();
         builder.HasIndex(p => p.GuestToken).IsUnique();
@@ -25,3 +25,4 @@ internal sealed class ParticipantConfiguration : EntityConfiguration<Participant
         builder.HasIndex(p => p.PersonId);
     }
 }
+

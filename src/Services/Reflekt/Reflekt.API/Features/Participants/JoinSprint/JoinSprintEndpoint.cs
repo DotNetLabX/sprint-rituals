@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Reflekt.API.Auth;
 using Reflekt.Domain.Participants;
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 using Reflekt.Persistence.Repositories;
 
 namespace Reflekt.API.Features.Participants.JoinSprint;
@@ -9,15 +9,15 @@ namespace Reflekt.API.Features.Participants.JoinSprint;
 [AllowAnonymous]
 [HttpPost("/api/sprints/{sprintId}/join")]
 [Tags("Participants")]
-public sealed class JoinSprintEndpoint(SprintRepository sprintRepository, ParticipantRepository participantRepository)
+public sealed class JoinSprintEndpoint(RetroSessionRepository retroSessionRepository, ParticipantRepository participantRepository)
     : Endpoint<JoinSprintCommand, JoinSprintResponse>
 {
     public override async Task HandleAsync(JoinSprintCommand command, CancellationToken ct)
     {
-        var sprint = await sprintRepository.GetByIdAsync(command.SprintId, ct);
+        var sprint = await retroSessionRepository.GetByIdAsync(command.SprintId, ct);
         if (sprint is null) { await Send.NotFoundAsync(ct); return; }
 
-        if (sprint.State != SprintState.Active)
+        if (sprint.State != RetroSessionState.Active)
             ThrowError("Sprint is not accepting participants.", StatusCodes.Status409Conflict);
 
         if (await participantRepository.ExistsByDisplayNameAsync(command.SprintId, command.DisplayName, ct))
@@ -34,3 +34,5 @@ public sealed class JoinSprintEndpoint(SprintRepository sprintRepository, Partic
         await Send.ResponseAsync(participant.Adapt<JoinSprintResponse>(), 201, ct);
     }
 }
+
+

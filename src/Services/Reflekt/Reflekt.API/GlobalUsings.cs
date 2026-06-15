@@ -11,5 +11,8 @@ global using Microsoft.Extensions.Logging;
 global using FastEndpoints;
 global using Mapster;
 global using Reflekt.API;
-global using Reflekt.Domain.Sprints;
+global using Reflekt.API.Features.RetroSessions;
+global using Reflekt.Domain.FokusSprints;
+global using Reflekt.Domain.RetroSessions;
 global using Reflekt.Persistence;
+

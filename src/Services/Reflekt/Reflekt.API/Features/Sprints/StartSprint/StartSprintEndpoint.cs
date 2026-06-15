@@ -1,18 +1,18 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Reflekt.API.Auth;
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 using Reflekt.Persistence.Repositories;
 using AuthPolicies = Reflekt.API.Auth.Policies;
 
 namespace Reflekt.API.Features.Sprints.StartSprint;
 
 [Authorize(Policy = AuthPolicies.ScrumMaster)]
-[HttpPost("/api/teams/{teamId}/sprints/{sprintId}/start")]
+[HttpPost("/api/teams/{teamId}/retro-sessions/{retroSessionId}/start")]
 [Tags("Sprints")]
-public sealed class StartSprintEndpoint(TeamRepository teamRepository, SprintRepository sprintRepository)
-    : Endpoint<SprintRouteRequest, SprintResponse>
+public sealed class StartSprintEndpoint(TeamRepository teamRepository, RetroSessionRepository retroSessionRepository)
+    : Endpoint<RetroSessionRouteRequest, RetroSessionResponse>
 {
-    public override async Task HandleAsync(SprintRouteRequest request, CancellationToken ct)
+    public override async Task HandleAsync(RetroSessionRouteRequest request, CancellationToken ct)
     {
         var userId = User.GetPersonId();
 
@@ -25,10 +25,10 @@ public sealed class StartSprintEndpoint(TeamRepository teamRepository, SprintRep
             return;
         }
 
-        var sprint = await sprintRepository.GetByIdAsync(request.SprintId, ct);
+        var sprint = await retroSessionRepository.GetByIdAsync(request.RetroSessionId, ct);
         if (sprint is null || sprint.TeamId != request.TeamId) { await Send.NotFoundAsync(ct); return; }
 
-        if (sprint.State != SprintState.Draft)
+        if (sprint.State != RetroSessionState.Draft)
         {
             AddError("Sprint must be in Draft state to start.");
             await Send.ErrorsAsync(409, ct);
@@ -36,8 +36,10 @@ public sealed class StartSprintEndpoint(TeamRepository teamRepository, SprintRep
         }
 
         sprint.Start();
-        await sprintRepository.SaveChangesAsync(ct);
+        await retroSessionRepository.SaveChangesAsync(ct);
 
-        await Send.OkAsync(sprint.Adapt<SprintResponse>(), ct);
+        await Send.OkAsync(sprint.Adapt<RetroSessionResponse>(), ct);
     }
 }
+
+

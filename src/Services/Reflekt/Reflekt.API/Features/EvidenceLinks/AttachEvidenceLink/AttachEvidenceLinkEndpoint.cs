@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Reflekt.API.Auth;
 using Reflekt.API.Features.Cards;
 using Reflekt.API.Features.PhaseActions;
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 using Reflekt.Persistence.Repositories;
 using AuthPolicies = Reflekt.API.Auth.Policies;
 
@@ -13,7 +13,7 @@ namespace Reflekt.API.Features.EvidenceLinks.AttachEvidenceLink;
 [HttpPost("/api/sprints/{sprintId}/cards/{cardId}/evidence-links")]
 [Tags("EvidenceLinks")]
 public sealed class AttachEvidenceLinkEndpoint(
-    SprintRepository sprintRepository,
+    RetroSessionRepository retroSessionRepository,
     TeamRepository teamRepository,
     CardRepository cardRepository,
     IConfiguration configuration,
@@ -25,14 +25,14 @@ public sealed class AttachEvidenceLinkEndpoint(
         var card = await cardRepository.GetByIdAsync(command.CardId, ct);
         if (card is null || card.SprintId != command.SprintId) { await Send.NotFoundAsync(ct); return; }
 
-        var sprint = await sprintRepository.GetByIdAsync(command.SprintId, ct);
+        var sprint = await retroSessionRepository.GetByIdAsync(command.SprintId, ct);
         if (sprint is null) { await Send.NotFoundAsync(ct); return; }
 
-        if (sprint.State == SprintState.Closed)
+        if (sprint.State == RetroSessionState.Closed)
             ThrowError("Sprint is closed.", StatusCodes.Status409Conflict);
 
-        if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, SprintAction.AttachEvidenceLink))
-            ThrowError($"{SprintAction.AttachEvidenceLink} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
+        if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, RetroAction.AttachEvidenceLink))
+            ThrowError($"{RetroAction.AttachEvidenceLink} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
 
         var participantIdClaim = User.FindFirstValue("participantId");
         if (participantIdClaim is not null)
@@ -63,3 +63,5 @@ public sealed class AttachEvidenceLinkEndpoint(
         await Send.ResponseAsync(link.Adapt<EvidenceLinkResponse>(), 201, ct);
     }
 }
+
+

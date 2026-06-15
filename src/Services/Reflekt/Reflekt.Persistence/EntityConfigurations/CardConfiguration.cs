@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Reflekt.Domain.CardGroups;
 using Reflekt.Domain.Cards;
 using Reflekt.Domain.Participants;
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 
 namespace Reflekt.Persistence.EntityConfigurations;
 
@@ -15,7 +15,8 @@ internal sealed class CardConfiguration : EntityConfiguration<Card>
         base.Configure(builder);
         builder.ToTable("Cards");
         builder.Property(c => c.SprintId).IsRequired();
-        builder.HasOne<Sprint>().WithMany().HasForeignKey(c => c.SprintId).OnDelete(DeleteBehavior.Cascade);
+        // SprintId FK column name preserved per Q1=b DO-NOT-TOUCH
+        builder.HasOne<RetroSession>().WithMany().HasForeignKey(c => c.SprintId).OnDelete(DeleteBehavior.Cascade);
         builder.Property(c => c.ParticipantId).IsRequired();
         builder.HasOne<Participant>().WithMany().HasForeignKey(c => c.ParticipantId).OnDelete(DeleteBehavior.Restrict);
         builder.Property(c => c.ColumnType).IsRequired();
@@ -29,7 +30,8 @@ internal sealed class CardConfiguration : EntityConfiguration<Card>
         builder.Property(c => c.UpdatedAt).IsRequired();
 
         builder.Property(c => c.ReviewStatus).IsRequired().HasDefaultValue(ReviewStatus.None);
-        builder.HasOne<Sprint>().WithMany().HasForeignKey(c => c.ReviewedInSprintId).OnDelete(DeleteBehavior.SetNull);
+        // ReviewedInSprintId column name preserved per Q1=b DO-NOT-TOUCH (4th FK)
+        builder.HasOne<RetroSession>().WithMany().HasForeignKey(c => c.ReviewedInSprintId).OnDelete(DeleteBehavior.SetNull);
         builder.HasIndex(c => c.ReviewedInSprintId);
 
         builder.HasMany(c => c.EvidenceLinks)
@@ -41,3 +43,4 @@ internal sealed class CardConfiguration : EntityConfiguration<Card>
             .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }
+

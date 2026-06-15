@@ -3,7 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Reflekt.Domain.CardGroups;
 using Reflekt.Domain.Cards;
 using Reflekt.Domain.Participants;
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.FokusSprints;
+using Reflekt.Domain.RetroSessions;
 using Reflekt.Domain.Teams;
 using Reflekt.Domain.Votes;
 
@@ -12,12 +13,13 @@ namespace Reflekt.Persistence;
 public class ReflektDbContext(DbContextOptions<ReflektDbContext> options) : ApplicationDbContext<ReflektDbContext>(options)
 {
     public DbSet<Team> Teams => Set<Team>();
-    public DbSet<Sprint> Sprints => Set<Sprint>();
+    public DbSet<RetroSession> RetroSessions => Set<RetroSession>();
     public DbSet<Participant> Participants => Set<Participant>();
     public DbSet<Card> Cards => Set<Card>();
     public DbSet<CardGroup> CardGroups => Set<CardGroup>();
     public DbSet<Vote> Votes => Set<Vote>();
     public DbSet<EvidenceLink> EvidenceLinks => Set<EvidenceLink>();
+    public DbSet<FokusSprintSnapshot> FokusSprintSnapshots => Set<FokusSprintSnapshot>();
     public DbSet<PhaseAction> PhaseActions => Set<PhaseAction>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -26,3 +28,4 @@ public class ReflektDbContext(DbContextOptions<ReflektDbContext> options) : Appl
         base.OnModelCreating(modelBuilder);
     }
 }
+

@@ -8,14 +8,14 @@ namespace Reflekt.API.Features.Sprints.UpdateColumns;
 [Authorize(Policy = AuthPolicies.ScrumMaster)]
 [HttpPut("/api/sprints/{sprintId}/columns")]
 [Tags("Sprints")]
-public sealed class UpdateColumnsEndpoint(TeamRepository teamRepository, SprintRepository sprintRepository)
-    : Endpoint<UpdateColumnsCommand, SprintResponse>
+public sealed class UpdateColumnsEndpoint(TeamRepository teamRepository, RetroSessionRepository retroSessionRepository)
+    : Endpoint<UpdateColumnsCommand, RetroSessionResponse>
 {
     public override async Task HandleAsync(UpdateColumnsCommand command, CancellationToken ct)
     {
         var userId = User.GetPersonId();
 
-        var sprint = await sprintRepository.GetByIdAsync(command.SprintId, ct);
+        var sprint = await retroSessionRepository.GetByIdAsync(command.SprintId, ct);
         if (sprint is null) { await Send.NotFoundAsync(ct); return; }
 
         var team = await teamRepository.GetByIdAsync(sprint.TeamId, ct);
@@ -30,8 +30,10 @@ public sealed class UpdateColumnsEndpoint(TeamRepository teamRepository, SprintR
             command.Column2Name, command.Column2Color,
             command.Column3Name, command.Column3Color);
 
-        await sprintRepository.SaveChangesAsync(ct);
+        await retroSessionRepository.SaveChangesAsync(ct);
 
-        await Send.OkAsync(sprint.Adapt<SprintResponse>(), ct);
+        await Send.OkAsync(sprint.Adapt<RetroSessionResponse>(), ct);
     }
 }
+
+

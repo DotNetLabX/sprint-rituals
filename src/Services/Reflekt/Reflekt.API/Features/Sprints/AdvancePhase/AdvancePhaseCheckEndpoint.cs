@@ -1,6 +1,6 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Reflekt.API.Auth;
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 using Reflekt.Persistence.Repositories;
 using AuthPolicies = Reflekt.API.Auth.Policies;
 
@@ -16,18 +16,18 @@ public sealed record AdvancePhaseCheckResponse(
     int? TotalPreviousActionCount = null);
 
 [Authorize(Policy = AuthPolicies.ScrumMaster)]
-[HttpPost("/api/teams/{teamId}/sprints/{sprintId}/advance-phase/check")]
+[HttpPost("/api/teams/{teamId}/retro-sessions/{retroSessionId}/advance-phase/check")]
 [Tags("Sprints")]
 public sealed class AdvancePhaseCheckEndpoint(
     TeamRepository teamRepository,
-    SprintRepository sprintRepository,
+    RetroSessionRepository retroSessionRepository,
     ParticipantRepository participantRepository,
     CardGroupRepository cardGroupRepository,
     VoteRepository voteRepository,
     CardRepository cardRepository)
-    : Endpoint<SprintRouteRequest, AdvancePhaseCheckResponse>
+    : Endpoint<RetroSessionRouteRequest, AdvancePhaseCheckResponse>
 {
-    public override async Task HandleAsync(SprintRouteRequest request, CancellationToken ct)
+    public override async Task HandleAsync(RetroSessionRouteRequest request, CancellationToken ct)
     {
         var userId = User.GetPersonId();
 
@@ -40,26 +40,26 @@ public sealed class AdvancePhaseCheckEndpoint(
             return;
         }
 
-        var sprint = await sprintRepository.GetByIdAsync(request.SprintId, ct);
+        var sprint = await retroSessionRepository.GetByIdAsync(request.RetroSessionId, ct);
         if (sprint is null || sprint.TeamId != request.TeamId) { await Send.NotFoundAsync(ct); return; }
 
-        if (sprint.State != SprintState.Active)
+        if (sprint.State != RetroSessionState.Active)
         {
             AddError("Sprint must be Active to check phase advancement.");
             await Send.ErrorsAsync(409, ct);
             return;
         }
 
-        if (sprint.CurrentPhase == SprintPhase.Reporting)
+        if (sprint.CurrentPhase == RetroPhase.Reporting)
         {
             AddError("Cannot advance from Reporting phase.");
             await Send.ErrorsAsync(409, ct);
             return;
         }
 
-        if (sprint.CurrentPhase == SprintPhase.Writing)
+        if (sprint.CurrentPhase == RetroPhase.Writing)
         {
-            var previousSprint = await sprintRepository.GetMostRecentClosedByTeamIdAsync(sprint.TeamId, ct);
+            var previousSprint = await retroSessionRepository.GetMostRecentClosedByTeamIdAsync(sprint.TeamId, ct);
             if (previousSprint is not null)
             {
                 var unreviewedItems = await cardRepository.GetUnreviewedActionItemsBySprintIdAsync(previousSprint.Id, ct);
@@ -80,10 +80,10 @@ public sealed class AdvancePhaseCheckEndpoint(
             return;
         }
 
-        if (sprint.CurrentPhase == SprintPhase.Voting)
+        if (sprint.CurrentPhase == RetroPhase.Voting)
         {
-            var participants = await participantRepository.GetBySprintIdAsync(request.SprintId, ct);
-            var participantIdsWithVotes = await voteRepository.GetParticipantIdsWithVotesInSprintAsync(request.SprintId, ct);
+            var participants = await participantRepository.GetBySprintIdAsync(request.RetroSessionId, ct);
+            var participantIdsWithVotes = await voteRepository.GetParticipantIdsWithVotesInSprintAsync(request.RetroSessionId, ct);
             var votingSet = participantIdsWithVotes.ToHashSet();
             var nonVotingCount = participants.Count(p => !votingSet.Contains(p.Id));
 
@@ -94,9 +94,9 @@ public sealed class AdvancePhaseCheckEndpoint(
             return;
         }
 
-        if (sprint.CurrentPhase == SprintPhase.Discussing)
+        if (sprint.CurrentPhase == RetroPhase.Discussing)
         {
-            var groups = await cardGroupRepository.GetBySprintIdAsync(request.SprintId, ct);
+            var groups = await cardGroupRepository.GetBySprintIdAsync(request.RetroSessionId, ct);
             var discussedCount = groups.Count(g => g.DiscussedAt.HasValue);
 
             await Send.OkAsync(new AdvancePhaseCheckResponse(
@@ -109,3 +109,5 @@ public sealed class AdvancePhaseCheckEndpoint(
         await Send.OkAsync(new AdvancePhaseCheckResponse(sprint.CurrentPhase.ToString()), ct);
     }
 }
+
+

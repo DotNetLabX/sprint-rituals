@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Reflekt.API.Auth;
 using Reflekt.API.Features.PhaseActions;
 using Reflekt.Domain.Cards;
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 using Reflekt.Persistence.Repositories;
 using AuthPolicies = Reflekt.API.Auth.Policies;
 
@@ -15,7 +15,7 @@ public sealed record DeleteCardRequest(int SprintId, int CardId);
 [HttpDelete("/api/sprints/{sprintId}/cards/{cardId}")]
 [Tags("Cards")]
 public sealed class DeleteCardEndpoint(
-    SprintRepository sprintRepository,
+    RetroSessionRepository retroSessionRepository,
     TeamRepository teamRepository,
     CardRepository cardRepository,
     PhaseActionCache phaseActionCache)
@@ -26,10 +26,10 @@ public sealed class DeleteCardEndpoint(
         var card = await cardRepository.GetByIdAsync(req.CardId, ct);
         if (card is null || card.SprintId != req.SprintId) { await Send.NotFoundAsync(ct); return; }
 
-        var sprint = await sprintRepository.GetByIdAsync(req.SprintId, ct);
+        var sprint = await retroSessionRepository.GetByIdAsync(req.SprintId, ct);
         if (sprint is null) { await Send.NotFoundAsync(ct); return; }
 
-        if (sprint.State == SprintState.Closed)
+        if (sprint.State == RetroSessionState.Closed)
             ThrowError("Sprint is closed.", StatusCodes.Status409Conflict);
 
         var participantIdClaim = User.FindFirstValue("participantId");
@@ -52,11 +52,11 @@ public sealed class DeleteCardEndpoint(
             }
         }
 
-        var action = card.CardType == CardType.ActionItem ? SprintAction.DeleteActionItem : SprintAction.DeleteNote;
+        var action = card.CardType == CardType.ActionItem ? RetroAction.DeleteActionItem : RetroAction.DeleteNote;
         if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, action))
             ThrowError($"{action} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
 
-        if (sprint.CurrentPhase == SprintPhase.Discussing && card.CardType == CardType.ActionItem)
+        if (sprint.CurrentPhase == RetroPhase.Discussing && card.CardType == CardType.ActionItem)
         {
             // Presence check: only a cookie-authenticated suite user may delete an action item in
             // Discussing. Any Identity cookie carries person_id (RA2), so this is behavior-equivalent
@@ -75,3 +75,5 @@ public sealed class DeleteCardEndpoint(
         await Send.NoContentAsync(ct);
     }
 }
+
+

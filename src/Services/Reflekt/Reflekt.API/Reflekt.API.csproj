@@ -16,6 +16,7 @@
     <PackageReference Include="Mapster" />
     <PackageReference Include="Mapster.DependencyInjection" />
     <PackageReference Include="AngleSharp" />
+    <PackageReference Include="MassTransit" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
   </ItemGroup>
 
@@ -24,6 +25,7 @@
     <ProjectReference Include="..\Reflekt.Persistence\Reflekt.Persistence.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Blocks.AspNetCore\Blocks.AspNetCore.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Blocks.FastEndpoints\Blocks.FastEndpoints.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Blocks.Contracts\Blocks.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

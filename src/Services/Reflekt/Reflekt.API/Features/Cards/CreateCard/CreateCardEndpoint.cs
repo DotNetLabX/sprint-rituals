@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Reflekt.API.Features.PhaseActions;
 using Reflekt.Domain.Cards;
-using Reflekt.Domain.Sprints;
+using Reflekt.Domain.RetroSessions;
 using Reflekt.Persistence.Repositories;
 using AuthPolicies = Reflekt.API.Auth.Policies;
 
@@ -13,7 +13,7 @@ namespace Reflekt.API.Features.Cards.CreateCard;
 [Authorize(Policy = AuthPolicies.Participant)]
 [HttpPost("/api/sprints/{sprintId}/cards")]
 [Tags("Cards")]
-public sealed class CreateCardEndpoint(SprintRepository sprintRepository, CardRepository cardRepository, PhaseActionCache phaseActionCache)
+public sealed class CreateCardEndpoint(RetroSessionRepository retroSessionRepository, CardRepository cardRepository, PhaseActionCache phaseActionCache)
     : Endpoint<CreateCardCommand, CardResponse>
 {
     public override async Task HandleAsync(CreateCardCommand command, CancellationToken ct)
@@ -42,17 +42,17 @@ public sealed class CreateCardEndpoint(SprintRepository sprintRepository, CardRe
             return;
         }
 
-        var sprint = await sprintRepository.GetByIdAsync(command.SprintId, ct);
+        var sprint = await retroSessionRepository.GetByIdAsync(command.SprintId, ct);
         if (sprint is null) { await Send.NotFoundAsync(ct); return; }
 
-        if (sprint.State == SprintState.Closed)
+        if (sprint.State == RetroSessionState.Closed)
             ThrowError("Sprint is closed.", StatusCodes.Status409Conflict);
 
-        var action = cardType == CardType.ActionItem ? SprintAction.CreateActionItem : SprintAction.CreateNote;
+        var action = cardType == CardType.ActionItem ? RetroAction.CreateActionItem : RetroAction.CreateNote;
         if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, action))
             ThrowError($"{action} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
 
-        if (sprint.CurrentPhase == SprintPhase.Discussing && cardType == CardType.ActionItem)
+        if (sprint.CurrentPhase == RetroPhase.Discussing && cardType == CardType.ActionItem)
         {
             var cookieResult = await HttpContext.AuthenticateAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme);
@@ -71,3 +71,5 @@ public sealed class CreateCardEndpoint(SprintRepository sprintRepository, CardRe
         await Send.ResponseAsync(card.Adapt<CardResponse>(), 201, ct);
     }
 }
+
+
