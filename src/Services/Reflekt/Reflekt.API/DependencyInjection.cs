@@ -1,4 +1,6 @@
 
+using Blocks.AspNetCore.Grpc;
+using Blocks.Contracts.Grpc;
 using MassTransit;
 using Microsoft.AspNetCore.SignalR;
 using Reflekt.API.Auth;
@@ -23,6 +25,12 @@ public static class DependencyInjection
     {
         services.AddReflektPersistence(configuration);
 
+        // gRPC client — Reflekt dials Fokus's ISprintAnalyticsService for the sprint-context panel.
+        // This is Reflekt's first gRPC client. Config key: Grpc:Services:SprintAnalytics:Url.
+        // Mirror Fokus.API/DependencyInjection.cs:42-43 (ADR-019).
+        var grpcOptions = configuration.GetSection("Grpc").Get<GrpcServicesOptions>() ?? new GrpcServicesOptions();
+        services.AddCodeFirstGrpcClient<ISprintAnalyticsService>(grpcOptions, "SprintAnalytics");
+
         // Mapster
         Mapster.TypeAdapterConfig.GlobalSettings.Scan(typeof(DependencyInjection).Assembly);
         services.AddSingleton(Mapster.TypeAdapterConfig.GlobalSettings);
@@ -40,6 +48,7 @@ public static class DependencyInjection
         services.AddReflektOpenGraph();
         services.AddSingleton<PhaseActionCache>();
         services.AddSingleton<TimerService>();
+        services.AddScoped<Features.RetroSessions.GetSprintContext.GetSprintContextAssembler>();
 
         return services;
     }

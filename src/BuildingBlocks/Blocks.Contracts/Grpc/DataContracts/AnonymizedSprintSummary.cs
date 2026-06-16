@@ -35,6 +35,42 @@ public class AnonymizedSprintSummary
     /// <summary>Top mid-sprint scope additions — ticket key, summary, and story points only. No assignee data.</summary>
     [DataMember(Order = 8)]
     public List<ScopeAdditionEntry> TopScopeAdditions { get; set; } = [];
+
+    // --- Sprint identity (RA4 additive, Orders 9–12) ---
+
+    /// <summary>Fokus sprint ID — identifies which sprint these metrics belong to.</summary>
+    [DataMember(Order = 9)]
+    public int SprintId { get; set; }
+
+    /// <summary>Sprint name as recorded in Fokus.</summary>
+    [DataMember(Order = 10)]
+    public string SprintName { get; set; } = default!;
+
+    /// <summary>Sprint start date (UTC).</summary>
+    [DataMember(Order = 11)]
+    public DateTime StartDate { get; set; }
+
+    /// <summary>Sprint end date (UTC).</summary>
+    [DataMember(Order = 12)]
+    public DateTime EndDate { get; set; }
+
+    // --- Per-rate RAG bands (RA4 additive, Orders 13–15) ---
+    // Source: Fokus HealthScoreData — authoritative Fokus thresholds, never recomputed here (Rule 3).
+    // DisruptionRag bands on the same combined DisruptionRate (Scope + Bug) as the DisruptionRate
+    // field above — there is no asymmetry between the two fields.
+
+    /// <summary>RAG classification for completion rate: "green" | "amber" | "red".</summary>
+    [DataMember(Order = 13)]
+    public string CompletionRag { get; set; } = default!;
+
+    /// <summary>RAG classification for disruption rate: "green" | "amber" | "red".
+    /// Bands on combined (scope + bug) disruption rate — same input as <see cref="DisruptionRate"/>.</summary>
+    [DataMember(Order = 14)]
+    public string DisruptionRag { get; set; } = default!;
+
+    /// <summary>RAG classification for carry-over rate: "green" | "amber" | "red".</summary>
+    [DataMember(Order = 15)]
+    public string CarryOverRag { get; set; } = default!;
 }
 
 [DataContract]

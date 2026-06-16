@@ -220,6 +220,19 @@ public class SprintAnalyticsGrpcService(
                     .Where(m => m.RemovedAt == null)
                     .Sum(m => m.StoryPoints ?? settings.BugRatio.DefaultSpPerBug) : 0m,
             TopScopeAdditions = topScopeAdditions,
+
+            // Sprint identity (RA4 — additive, Orders 9–12)
+            SprintId = selectedSprint.Id,
+            SprintName = selectedSprint.Name,
+            StartDate = selectedSprint.StartDate,
+            EndDate = selectedSprint.EndDate,
+
+            // Per-rate RAG bands (RA4 — additive, Orders 13–15)
+            // DisruptionRag bands on the combined DisruptionRate (Scope + Bug) — same input as
+            // the DisruptionRate field above. Map straight from the analyzer, never recompute (Rule 3).
+            CompletionRag = health?.CompletionRag ?? "red",
+            DisruptionRag = health?.DisruptionRag ?? "red",
+            CarryOverRag = health?.CarryOverRag ?? "red",
         };
     }
 
