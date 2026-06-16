@@ -20,10 +20,10 @@ public class SprintAnalyticsGrpcService(
     DeveloperRepository developerRepository,
     TicketRepository ticketRepository,
     TestExecutionRepository testExecutionRepository,
-    SprintSummaryCalculator sprintSummaryCalculator,
-    ScopeChangeCalculator scopeChangeCalculator,
-    CarryOverCalculator carryOverCalculator,
-    QaMetricsCalculator qaMetricsCalculator) : ISprintAnalyticsService
+    SprintSummaryAnalyzer sprintSummaryCalculator,
+    ScopeChangeAnalyzer scopeChangeCalculator,
+    CarryOverAnalyzer carryOverCalculator,
+    QaMetricsAnalyzer qaMetricsCalculator) : ISprintAnalyticsService
 {
     public async Task<AnonymizedSprintSummary> GetSprintSummaryAsync(SprintQuery request, CancellationToken ct = default)
     {

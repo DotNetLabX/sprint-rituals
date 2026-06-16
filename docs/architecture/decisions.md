@@ -25,7 +25,7 @@ Each module is **API + Domain + Persistence** only. FastEndpoints endpoint class
 ## ADR-005 — Computation lives in the Domain layer
 Analytics/derived computation is **domain logic**, not API plumbing.
 - Single-aggregate logic → **aggregate behavior methods**.
-- Cross-aggregate computation → **domain services** in `{Module}.Domain/{Area}/` (e.g. `Fokus.Domain/Analytics/SprintSummaryCalculator.cs`).
+- Cross-aggregate computation → **domain services** in `{Module}.Domain/{Area}/` (e.g. `Fokus.Domain/Analytics/SprintSummaryAnalyzer.cs`).
 - Domain services **return domain types / value objects** — never API response DTOs.
 - Endpoints call the domain service and **Mapster-map the domain result to the response DTO** at the boundary.
 - **Minimize API service classes.** A service class in `*.API/Features/` is a smell signalling logic that belongs in the domain — justify it or move it. (Resolves problems #4, #5, #6, #7.)

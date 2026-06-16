@@ -12,7 +12,7 @@ public class GetDeveloperDetailEndpoint(
     DeveloperRepository developerRepository,
     AppSettingsRepository appSettingsRepository,
     TicketRepository ticketRepository,
-    DeveloperDetailCalculator developerDetailCalculator,
+    DeveloperDetailAnalyzer developerDetailCalculator,
     IOptions<JiraOptions> jiraOptions)
     : Endpoint<GetDeveloperDetailQuery, DeveloperDetailResponse>
 {

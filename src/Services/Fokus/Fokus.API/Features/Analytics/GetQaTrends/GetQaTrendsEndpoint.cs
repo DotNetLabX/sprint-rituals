@@ -11,7 +11,7 @@ public class GetQaTrendsEndpoint(
     TestExecutionRepository testExecutionRepository,
     TicketRepository ticketRepository,
     DeveloperRepository developerRepository,
-    BugRatioCalculator bugRatioCalculator,
+    BugRatioAnalyzer bugRatioCalculator,
     QaTrendsAnalyzer qaTrendsAnalyzer)
     : Endpoint<GetQaTrendsQuery, QaTrendsResponse>
 {
@@ -95,7 +95,7 @@ public class GetQaTrendsEndpoint(
         // 8. Load status transitions for target sprint tickets
         var statusTransitions = await ticketRepository.GetStatusTransitionsForSprintTicketsAsync(targetIds, ct);
 
-        // 9. Bug ratio per sprint via BugRatioCalculator.ComputeMultiSprint
+        // 9. Bug ratio per sprint via BugRatioAnalyzer.ComputeMultiSprint
         // Include one extra sprint beyond the target range for N+1 correlation
         var activeDevelopers = await developerRepository.GetActiveDevelopersAsync(ct);
 
@@ -110,7 +110,7 @@ public class GetQaTrendsEndpoint(
             extendedIds.Add(nextSprint.Id);
         }
 
-        // Load all closed sprints with memberships for BugRatioCalculator (alert evaluation needs all)
+        // Load all closed sprints with memberships for BugRatioAnalyzer (alert evaluation needs all)
         var allLoadedSprints = await sprintRepository.GetSprintsWithMembershipsAsync(allSprintIds, ct);
         var allSortedSprints = allLoadedSprints.OrderBy(s => s.StartDate).ToList();
 

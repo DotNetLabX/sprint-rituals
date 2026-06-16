@@ -45,21 +45,21 @@ public static class DependencyInjection
         services.AddScoped<SprintIssueSyncService>();
         services.AddScoped<XrayIssueSyncService>();
         services.AddScoped<WorkflowDetectionService>();
-        services.AddScoped<SprintSummaryCalculator>();
-        services.AddScoped<QaMetricsCalculator>();
-        services.AddScoped<TestTimelineCalculator>();
-        services.AddScoped<DeveloperThroughputCalculator>();
-        services.AddScoped<ScopeChangeCalculator>();
-        services.AddScoped<CarryOverCalculator>();
-        services.AddScoped<BugRatioCalculator>();
+        services.AddScoped<SprintSummaryAnalyzer>();
+        services.AddScoped<QaMetricsAnalyzer>();
+        services.AddScoped<TestTimelineAnalyzer>();
+        services.AddScoped<DeveloperThroughputAnalyzer>();
+        services.AddScoped<ScopeChangeAnalyzer>();
+        services.AddScoped<CarryOverAnalyzer>();
+        services.AddScoped<BugRatioAnalyzer>();
         services.AddScoped<EpicProgressAnalyzer>();
-        services.AddScoped<CycleTimeCalculator>();
+        services.AddScoped<CycleTimeAnalyzer>();
         services.AddScoped<LeaderboardCalculator>();
         services.AddScoped<DeveloperQualityScorer>();
         services.AddScoped<QaWorkloadAnalyzer>();
         services.AddScoped<QaTrendsAnalyzer>();
         services.AddScoped<DeveloperProgressAnalyzer>();
-        services.AddScoped<DeveloperDetailCalculator>();
+        services.AddScoped<DeveloperDetailAnalyzer>();
 
         return services;
     }

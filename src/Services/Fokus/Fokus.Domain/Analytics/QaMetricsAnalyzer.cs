@@ -1,6 +1,6 @@
 namespace Fokus.Domain.Analytics;
 
-public class QaMetricsCalculator
+public class QaMetricsAnalyzer
 {
     public QaMetricsData ComputeQaMetrics(
         List<TestExecution> sprintTEs,

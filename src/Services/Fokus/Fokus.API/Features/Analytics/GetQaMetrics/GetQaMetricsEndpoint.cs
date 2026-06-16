@@ -10,7 +10,7 @@ public class GetQaMetricsEndpoint(
     AppSettingsRepository appSettingsRepository,
     TestExecutionRepository testExecutionRepository,
     TicketRepository ticketRepository,
-    QaMetricsCalculator qaMetricsCalculator)
+    QaMetricsAnalyzer qaMetricsCalculator)
     : Endpoint<GetQaMetricsQuery, QaMetricsResponse>
 {
     public override async Task HandleAsync(GetQaMetricsQuery req, CancellationToken ct)

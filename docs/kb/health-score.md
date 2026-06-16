@@ -1,7 +1,7 @@
 # Health Score
 
 Sprint health metric interpolation and RAG (Red/Amber/Green) classification rules.
-Used by `SprintSummaryCalculator` and `QaMetricsCalculator`.
+Used by `SprintSummaryAnalyzer` and `QaMetricsAnalyzer`.
 
 Rules below are **verified** via the Mine→Verify pass (clean-room extraction from source +
 independent Codex refutation, 2026-06-13). They correct the earlier hand-authored draft —
@@ -33,13 +33,13 @@ notably the `range==0` guards, which are dead code, not clamps.
 
 ## Relationships
 
-- `HealthScoreCalculator` → `SprintSummaryCalculator`: provides per-metric scores that are weighted into a composite score.
-- `HealthScoreCalculator` → `QaMetricsCalculator`: same scoring logic applied to QA-specific metrics.
+- `HealthScoreCalculator` → `SprintSummaryAnalyzer`: provides per-metric scores that are weighted into a composite score.
+- `HealthScoreCalculator` → `QaMetricsAnalyzer`: same scoring logic applied to QA-specific metrics.
 - `CompositeRag` → frontend RAG badge: the string values "green"/"amber"/"red" are wire literals consumed by the Vue client.
 
 ## Source
 
-Original Fokus `fokus-spec.md` §Health Score; ported implementation in `SprintSummaryCalculator` (step 3c-A).
+Original Fokus `fokus-spec.md` §Health Score; ported implementation in `SprintSummaryAnalyzer` (step 3c-A).
 Rule verification: Mine→Verify pilot (Pass 2), clean-room miner + Codex refutation, 2026-06-13.
 
 ---

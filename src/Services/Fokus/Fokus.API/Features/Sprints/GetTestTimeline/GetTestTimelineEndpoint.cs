@@ -10,7 +10,7 @@ public class GetTestTimelineEndpoint(
     AppSettingsRepository appSettingsRepository,
     TestExecutionRepository testExecutionRepository,
     TicketRepository ticketRepository,
-    TestTimelineCalculator testTimelineCalculator)
+    TestTimelineAnalyzer testTimelineCalculator)
     : Endpoint<GetTestTimelineQuery, TestTimelineResponse>
 {
     public override async Task HandleAsync(GetTestTimelineQuery req, CancellationToken ct)

@@ -24,7 +24,7 @@ public sealed record QaMetricCardData(
 public sealed record QaSparklinePoint(string SprintName, decimal Value);
 
 /// <summary>
-/// Quality breakdown — shared domain type used by both QaMetricsCalculator and SprintSummaryCalculator.
+/// Quality breakdown — shared domain type used by both QaMetricsAnalyzer and SprintSummaryAnalyzer.
 /// Defined once here; SprintSummaryResult.cs references this type without redefining it.
 /// </summary>
 public sealed record QaBreakdownData(

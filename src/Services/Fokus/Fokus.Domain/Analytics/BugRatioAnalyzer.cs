@@ -1,6 +1,6 @@
 namespace Fokus.Domain.Analytics;
 
-public class BugRatioCalculator
+public class BugRatioAnalyzer
 {
     public BugRatioMultiSprintData ComputeMultiSprint(
         List<Sprint> targetSprints,

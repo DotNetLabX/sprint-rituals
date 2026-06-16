@@ -1,6 +1,6 @@
 namespace Fokus.Domain.Analytics;
 
-public class SprintSummaryCalculator
+public class SprintSummaryAnalyzer
 {
     public SprintSummaryData ComputeSummary(
         Sprint selectedSprint,

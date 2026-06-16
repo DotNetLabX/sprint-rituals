@@ -1,6 +1,6 @@
 namespace Fokus.Domain.Analytics;
 
-public class CarryOverCalculator
+public class CarryOverAnalyzer
 {
     public CarryOverMultiSprintData ComputeMultiSprint(
         List<Sprint> selectedSprints,

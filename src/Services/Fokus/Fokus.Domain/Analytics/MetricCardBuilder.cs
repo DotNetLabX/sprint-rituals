@@ -3,7 +3,7 @@ namespace Fokus.Domain.Analytics;
 /// <summary>
 /// Shared kernel for delta direction and polarity computation, extracted from 7 duplicate private helpers
 /// across ScopeChangeService, CarryOverService, BugRatioService, CycleTimeService (3c-B) and
-/// SprintSummaryCalculator, QaMetricsCalculator (3c-A).
+/// SprintSummaryAnalyzer, QaMetricsAnalyzer (3c-A).
 ///
 /// Two distinct polarity paths:
 ///   String-polarity path (ComputeDelta / Build): used by metric-card builders in all calculators.

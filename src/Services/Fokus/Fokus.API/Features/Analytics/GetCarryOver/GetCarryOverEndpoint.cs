@@ -10,7 +10,7 @@ public class GetCarryOverEndpoint(
     AppSettingsRepository appSettingsRepository,
     DeveloperRepository developerRepository,
     TicketRepository ticketRepository,
-    CarryOverCalculator carryOverCalculator)
+    CarryOverAnalyzer carryOverCalculator)
     : Endpoint<GetCarryOverQuery, CarryOverResponse>
 {
     public override async Task HandleAsync(GetCarryOverQuery req, CancellationToken ct)

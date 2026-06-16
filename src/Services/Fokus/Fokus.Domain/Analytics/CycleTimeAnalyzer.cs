@@ -1,6 +1,6 @@
 namespace Fokus.Domain.Analytics;
 
-public class CycleTimeCalculator
+public class CycleTimeAnalyzer
 {
     // Per-ticket computed result used internally
     private record TicketCycleResult(

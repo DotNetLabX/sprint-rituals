@@ -10,7 +10,7 @@ public class GetCycleTimeEndpoint(
     TicketRepository ticketRepository,
     AppSettingsRepository appSettingsRepository,
     DeveloperRepository developerRepository,
-    CycleTimeCalculator cycleTimeCalculator)
+    CycleTimeAnalyzer cycleTimeCalculator)
     : Endpoint<GetCycleTimeQuery, CycleTimeResponse>
 {
     public override async Task HandleAsync(GetCycleTimeQuery req, CancellationToken ct)

@@ -10,7 +10,7 @@ public class GetBugRatioEndpoint(
     AppSettingsRepository appSettingsRepository,
     DeveloperRepository developerRepository,
     TicketRepository ticketRepository,
-    BugRatioCalculator bugRatioCalculator)
+    BugRatioAnalyzer bugRatioCalculator)
     : Endpoint<GetBugRatioQuery, BugRatioResponse>
 {
     public override async Task HandleAsync(GetBugRatioQuery req, CancellationToken ct)

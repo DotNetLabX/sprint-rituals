@@ -1,6 +1,6 @@
 namespace Fokus.Domain.Analytics;
 
-public class ScopeChangeCalculator
+public class ScopeChangeAnalyzer
 {
     public ScopeChangeMultiSprintData ComputeMultiSprint(
         List<Sprint> sprints,

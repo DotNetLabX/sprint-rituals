@@ -9,9 +9,9 @@ public class GetSprintSummaryEndpoint(
     DeveloperRepository developerRepository,
     AppSettingsRepository appSettingsRepository,
     TicketRepository ticketRepository,
-    SprintSummaryCalculator sprintSummaryCalculator,
+    SprintSummaryAnalyzer sprintSummaryCalculator,
     TestExecutionRepository testExecutionRepository,
-    QaMetricsCalculator qaMetricsCalculator)
+    QaMetricsAnalyzer qaMetricsCalculator)
     : Endpoint<GetSprintSummaryQuery, SprintSummaryResponse>
 {
     public override async Task HandleAsync(GetSprintSummaryQuery req, CancellationToken ct)
@@ -118,7 +118,7 @@ public class GetSprintSummaryEndpoint(
             qualitySubScore = qaResult.QualitySubScore;
             qualityBreakdown = qaResult.QualityBreakdown;
 
-            testingCrunch = TestTimelineCalculator.ComputeCrunchFlag(
+            testingCrunch = TestTimelineAnalyzer.ComputeCrunchFlag(
                 sprintTEs,
                 selectedSprint.Memberships.ToList(),
                 selectedSprint,

@@ -1,7 +1,7 @@
 # Bug Ratio
 
 Bug-vs-feature story-point ratios, multi-sprint aggregation, per-developer breakdowns, and the
-consecutive-sprint bug-ratio alert. Computed by `BugRatioCalculator`.
+consecutive-sprint bug-ratio alert. Computed by `BugRatioAnalyzer`.
 
 Rules below are **verified** via the Mine→Verify pass (3 independent clean-room miners +
 independent Codex refutation, 2026-06-14). Confidence is high: the three miners converged on the
@@ -25,9 +25,9 @@ same ~22 behaviors with zero contradictions.
 
 ## Key Files
 
-- `src/Services/Fokus/Fokus.Domain/Analytics/BugRatioCalculator.cs` — production implementation
-- `src/Services/Fokus/Fokus.Domain.Tests/Analytics/BugRatioCalculatorTests.cs` — example-based tests (pending Step 3 / Cover)
-- `src/Services/Fokus/Fokus.Domain.Tests/Analytics/BugRatioCalculatorPropertyTests.cs` — property-based tests (pending Step 3 / Cover)
+- `src/Services/Fokus/Fokus.Domain/Analytics/BugRatioAnalyzer.cs` — production implementation
+- `src/Services/Fokus/Fokus.Domain.Tests/Analytics/BugRatioAnalyzerTests.cs` — example-based tests (pending Step 3 / Cover)
+- `src/Services/Fokus/Fokus.Domain.Tests/Analytics/BugRatioAnalyzerPropertyTests.cs` — property-based tests (pending Step 3 / Cover)
 
 ## Edge Cases
 
@@ -40,13 +40,13 @@ same ~22 behaviors with zero contradictions.
 
 ## Relationships
 
-- `BugRatioCalculator` → `TransitionAttributionChecker`: delegates the "completed in sprint" determination and stage/window resolution.
-- `BugRatioCalculator` → `SprintMembership.GetEffectiveSp`: effective-SP and `defaultSpPerBug` fallback live on the membership, not here.
-- `BugRatioCalculator` → `MetricCardBuilder`: delta direction/polarity and card display formatting.
+- `BugRatioAnalyzer` → `TransitionAttributionChecker`: delegates the "completed in sprint" determination and stage/window resolution.
+- `BugRatioAnalyzer` → `SprintMembership.GetEffectiveSp`: effective-SP and `defaultSpPerBug` fallback live on the membership, not here.
+- `BugRatioAnalyzer` → `MetricCardBuilder`: delta direction/polarity and card display formatting.
 
 ## Source
 
-Original Fokus `fokus-spec.md` §Bug Ratio; ported implementation in `BugRatioCalculator`.
+Original Fokus `fokus-spec.md` §Bug Ratio; ported implementation in `BugRatioAnalyzer`.
 Rule verification: Mine→Verify pilot (Pass 2), 3 clean-room miners + Codex refutation, 2026-06-14.
 
 ---

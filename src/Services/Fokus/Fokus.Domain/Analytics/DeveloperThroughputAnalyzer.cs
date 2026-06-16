@@ -1,6 +1,6 @@
 namespace Fokus.Domain.Analytics;
 
-public class DeveloperThroughputCalculator
+public class DeveloperThroughputAnalyzer
 {
     public DeveloperThroughputResultData ComputeThroughput(
         List<Sprint> allLoadedSprints,

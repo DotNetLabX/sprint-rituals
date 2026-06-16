@@ -10,7 +10,7 @@ public class GetDeveloperThroughputEndpoint(
     DeveloperRepository developerRepository,
     AppSettingsRepository appSettingsRepository,
     TicketRepository ticketRepository,
-    DeveloperThroughputCalculator developerThroughputCalculator)
+    DeveloperThroughputAnalyzer developerThroughputCalculator)
     : Endpoint<GetDeveloperThroughputQuery, DeveloperThroughputResponse>
 {
     public override async Task HandleAsync(GetDeveloperThroughputQuery req, CancellationToken ct)

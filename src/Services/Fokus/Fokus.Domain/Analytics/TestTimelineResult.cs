@@ -87,7 +87,7 @@ public sealed record GapTicketData(
     decimal GapDays);
 
 /// <summary>
-/// Cross-consumed domain type: testing crunch flag used by SprintSummaryCalculator and gRPC service.
+/// Cross-consumed domain type: testing crunch flag used by SprintSummaryAnalyzer and gRPC service.
 /// </summary>
 public sealed record TestingCrunchFlag(
     decimal CrunchPercentage,

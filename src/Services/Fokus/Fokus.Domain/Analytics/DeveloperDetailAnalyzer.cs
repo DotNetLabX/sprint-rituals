@@ -1,6 +1,6 @@
 namespace Fokus.Domain.Analytics;
 
-public class DeveloperDetailCalculator
+public class DeveloperDetailAnalyzer
 {
     public DeveloperDetailResultData ComputeDetail(
         string accountId,

@@ -10,7 +10,7 @@ public class GetScopeChangeEndpoint(
     TicketRepository ticketRepository,
     AppSettingsRepository appSettingsRepository,
     DeveloperRepository developerRepository,
-    ScopeChangeCalculator scopeChangeCalculator)
+    ScopeChangeAnalyzer scopeChangeCalculator)
     : Endpoint<GetScopeChangeQuery, ScopeChangeResponse>
 {
     public override async Task HandleAsync(GetScopeChangeQuery req, CancellationToken ct)

@@ -1,6 +1,6 @@
 namespace Fokus.Domain.Analytics;
 
-public class TestTimelineCalculator
+public class TestTimelineAnalyzer
 {
     public TestTimelineData ComputeTimeline(
         List<TestExecution> sprintTEs,
@@ -64,7 +64,7 @@ public class TestTimelineCalculator
     }
 
     /// <summary>
-    /// Computes testing crunch flag data as a standalone method for reuse by SprintSummaryCalculator.
+    /// Computes testing crunch flag data as a standalone method for reuse by SprintSummaryAnalyzer.
     /// </summary>
     public static TestingCrunchFlag? ComputeCrunchFlag(
         List<TestExecution> sprintTEs,
