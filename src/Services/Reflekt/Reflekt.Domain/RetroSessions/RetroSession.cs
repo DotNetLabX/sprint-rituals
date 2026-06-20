@@ -14,16 +14,11 @@ public sealed partial class RetroSession : AggregateRoot
     public DateTime? ClosedAt { get; private set; }
     public int? FocusedGroupId { get; private set; }
 
-    public string Column1Name { get; private set; } = "Went Well";
-    public string Column2Name { get; private set; } = "Didn't Go Well";
-    public string Column3Name { get; private set; } = "Start Doing";
-    public ColumnColor Column1Color { get; private set; } = ColumnColor.Create("green");
-    public ColumnColor Column2Color { get; private set; } = ColumnColor.Create("red");
-    public ColumnColor Column3Color { get; private set; } = ColumnColor.Create("amber");
+    public RetroColumn Column1 { get; private set; } = RetroColumn.Create("Went Well", "green");
+    public RetroColumn Column2 { get; private set; } = RetroColumn.Create("Didn't Go Well", "red");
+    public RetroColumn Column3 { get; private set; } = RetroColumn.Create("Start Doing", "amber");
 
-    public required int WritingTimerDefault { get; init; }
-    public required int VotingTimerDefault { get; init; }
-    public required int DiscussingTimerDefault { get; init; }
+    public TimerDefaults Timers { get; private set; } = TimerDefaults.Create(5, 3, 10);
 
     private readonly List<FokusSprintRef> _fokusSprintRefs = [];
     public IReadOnlyList<FokusSprintRef> FokusSprintRefs => _fokusSprintRefs.AsReadOnly();

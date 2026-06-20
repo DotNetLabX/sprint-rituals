@@ -72,9 +72,9 @@ public sealed class GetParticipantReportEndpoint(
 
         var columnSections = new List<ReportColumnSection>
         {
-            BuildColumnSection(session.Column1Name, session.Column1Color.Value, ColumnType.Column1, groupEntries),
-            BuildColumnSection(session.Column2Name, session.Column2Color.Value, ColumnType.Column2, groupEntries),
-            BuildColumnSection(session.Column3Name, session.Column3Color.Value, ColumnType.Column3, groupEntries),
+            BuildColumnSection(session.Column1.Name, session.Column1.Color.Value, ColumnType.Column1, groupEntries),
+            BuildColumnSection(session.Column2.Name, session.Column2.Color.Value, ColumnType.Column2, groupEntries),
+            BuildColumnSection(session.Column3.Name, session.Column3.Color.Value, ColumnType.Column3, groupEntries),
         };
 
         var actionItems = cards

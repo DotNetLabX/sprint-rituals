@@ -41,15 +41,15 @@ public sealed class GetRetroSummaryEndpoint(RetroSessionRepository retroSessionR
             session.VotesPerParticipant,
             isScrumMaster,
             participantDtos,
-            session.Column1Name,
-            session.Column1Color.Value,
-            session.Column2Name,
-            session.Column2Color.Value,
-            session.Column3Name,
-            session.Column3Color.Value,
-            session.WritingTimerDefault,
-            session.VotingTimerDefault,
-            session.DiscussingTimerDefault), ct);
+            session.Column1.Name,
+            session.Column1.Color.Value,
+            session.Column2.Name,
+            session.Column2.Color.Value,
+            session.Column3.Name,
+            session.Column3.Color.Value,
+            session.Timers.Writing,
+            session.Timers.Voting,
+            session.Timers.Discussing), ct);
     }
 }
 

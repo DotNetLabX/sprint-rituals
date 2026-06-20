@@ -39,12 +39,12 @@ public sealed class CreateRetroSessionEndpoint(TeamRepository teamRepository, Re
             var mostRecent = previousSessions.FirstOrDefault();
             if (mostRecent is not null)
             {
-                col1Name = mostRecent.Column1Name;
-                col1Color = mostRecent.Column1Color.Value;
-                col2Name = mostRecent.Column2Name;
-                col2Color = mostRecent.Column2Color.Value;
-                col3Name = mostRecent.Column3Name;
-                col3Color = mostRecent.Column3Color.Value;
+                col1Name = mostRecent.Column1.Name;
+                col1Color = mostRecent.Column1.Color.Value;
+                col2Name = mostRecent.Column2.Name;
+                col2Color = mostRecent.Column2.Color.Value;
+                col3Name = mostRecent.Column3.Name;
+                col3Color = mostRecent.Column3.Color.Value;
             }
         }
 

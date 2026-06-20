@@ -24,6 +24,8 @@ DDD, Vertical Slice, CQRS, Clean Architecture, Event Driven Design — same as t
 
 - **Aggregates:**
   - `RetroSession` — the retro board (phases, columns, focus). Renamed from `Sprint` per ADR-018 (landed RA3). References 1..N Fokus sprints via `FokusSprintRef` child table.
+    - **Value objects (ADR-007, RR-B):** carries `Column1/2/3 : RetroColumn` (name + `ColumnColor`) and `Timers : TimerDefaults` (writing/voting/discussing ints). Both VOs extend `Blocks.Domain.ValueObjects.ValueObject`, persisted as flat `ComplexProperty` columns (`Column1_Name`, `Column1_Color`, …, `Timers_Writing`, …). Wire boundary stays flat — `RetroSessionResponse`/`RetroSessionSummaryResponse` and the SignalR `ColumnConfigUpdated` payload all expose the original 9 field names unchanged; Mapster explicit `.Map` rules flatten at the endpoint boundary.
+    - **VO scan (RR-B):** `Card`, `CardGroup`, `Participant`, `Vote`, `Team` were scanned for cohesive scalar clusters — none found. No VOs warranted on those aggregates.
   - `Team` — owns retros; membership.
   - `Card` — a retro note; owns its `EvidenceLink`s.
   - `CardGroup` — clusters cards during Grouping; carries discussed/focus state.

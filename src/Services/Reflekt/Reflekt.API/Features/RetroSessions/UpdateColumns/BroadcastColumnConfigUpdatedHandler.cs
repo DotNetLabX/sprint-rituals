@@ -12,12 +12,13 @@ public sealed class BroadcastColumnConfigUpdatedHandler(IHubContext<RetroHub> hu
             .SendAsync("ColumnConfigUpdated", new
             {
                 retroSessionId = ev.RetroSession.Id,
-                column1Name = ev.RetroSession.Column1Name,
-                column1Color = ev.RetroSession.Column1Color.Value,
-                column2Name = ev.RetroSession.Column2Name,
-                column2Color = ev.RetroSession.Column2Color.Value,
-                column3Name = ev.RetroSession.Column3Name,
-                column3Color = ev.RetroSession.Column3Color.Value,
+                // Payload key names are client-contract — must stay camelCase/unchanged.
+                // Only the value source moves to the grouped domain path.
+                column1Name = ev.RetroSession.Column1.Name,
+                column1Color = ev.RetroSession.Column1.Color.Value,
+                column2Name = ev.RetroSession.Column2.Name,
+                column2Color = ev.RetroSession.Column2.Color.Value,
+                column3Name = ev.RetroSession.Column3.Name,
+                column3Color = ev.RetroSession.Column3.Color.Value,
             }, ct);
 }
-

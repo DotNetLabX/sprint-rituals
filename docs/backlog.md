@@ -105,3 +105,20 @@ Bring Reflekt (real-time collaborative retro tool, `<reflekt-repo>`) into the mo
 - RA2/RA3/RA5 depend only on RA1's green build and can run in any order after it. RA3 reads cleaner if RA2 lands first (auth/Person wiring in place) but it is not a hard dependency. RA4 is the only one that needs RA3 — it renders the snapshot the sprint-ownership pass introduces.
 - Reflekt is newer than pre-refactor Fokus and already follows ADR-008/009 (2-file split, `Command`/`Query` naming), so the ADR-alignment burden (Send.* currency, thin composition root, VOs) is light — folded into RA1 where it diverges, not a separate pass.
 - The Reflekt source carries its own design provenance under `<reflekt-repo>\ai-coding\plans\` (~25 feature plans/lessons) — use it to attest intent when porting behavior.
+
+---
+
+## Reflekt Refactor Program (`adhoc-ReflektRefactorTriage`)
+
+Mirror of the Fokus refactoring path (`refactor-triage.md` → ADRs → numbered passes) for the lifted Reflekt code. Triage: `docs/proposals/reflekt-refactor-triage.md`. Gate = the user-point register **ADR-002…015** + event-correctness + cleanup arms, checked against actual Reflekt code. Burden is light — Reflekt is post-guard code, so only the deep/semantic arm carries real debt. Same pipeline mode as every Fokus pass (Standard+Codex).
+
+| ID | Slug | Type | Status | Depends on | Scope |
+|----|------|------|--------|-----------|-------|
+| RR0 | adhoc-ReflektRefactorTriage | architect doc work | ✓ **Done** (2026-06-20) | RA5 ✓ | Discovery sweep vs ADR-002…015 + event/cleanup arms. ADR-006 clean (no DTO-in-domain); 004/012/013/015 done; N2 naming closed by RA5. Emits RR-B/C/D + RR-E rider. Not a pipeline pass. |
+| RR-B | adhoc-ReflektValueObjects | adhoc | ✓ **Done** (2026-06-20) — Standard+Codex; critic caught C1 (read-site census, SignalR claim); reviewer APPROVED + Codex GO; 43/43 + 19/19 | RR0 | ADR-007 VO problem class (ADR-003) across **all** aggregates. Confirmed: `RetroSession` → `RetroColumn` (Name+Color) + `TimerDefaults`, EF `ComplexProperty`. Scans Card/Vote/Team/CardGroup/Participant in-pass. Folds RR-E N1 (delete dead `Sprints/` dirs). |
+| RR-C | adhoc-ReflektComputationToDomain | adhoc | Queued | RR0 (RR-B preferred) | ADR-005: lift `Reports/*` aggregation (132–133-line endpoint handlers) into a `Reflekt.Domain` report service returning domain types; Mapster-map to `ReportContracts` at the endpoint boundary. |
+| RR-D | adhoc-ReflektEventCorrectness | adhoc | Queued | RR0 | Pass-5 arm: verify no post-save raises / declared-unraised events across all `Behaviors`; fix found instances (problem-class). |
+
+**Notes:**
+- Scope is deliberately short vs Fokus Pass0–6: the mechanical arm (ADR-008/009/011/013/014) and ADR-006 were already satisfied by RA1 / newer Reflekt code. Triage O1 holds the full-mirror-vs-targeted fork (targeted chosen).
+- RR-B/C/D have no hard inter-dependencies after RR0; RR-B runs first because VOs touch the `RetroSession` aggregate that RR-C/D also read.

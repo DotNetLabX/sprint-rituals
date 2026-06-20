@@ -2,8 +2,6 @@ namespace Reflekt.Domain.RetroSessions;
 
 public sealed partial class RetroSession
 {
-    private const int WritingTimerMin = 1;
-    private const int WritingTimerMax = 60;
     private const int DefaultWritingTimer = 5;
     private const int DefaultVotingTimer = 3;
     private const int DefaultDiscussingTimer = 10;
@@ -29,32 +27,26 @@ public sealed partial class RetroSession
         if (fokusSprintIds is null || fokusSprintIds.Count == 0)
             throw new ArgumentException("A RetroSession must reference at least one Fokus sprint.", nameof(fokusSprintIds));
 
-        if (writingTimerDefault.HasValue)
-            ValidateTimerRange(writingTimerDefault.Value, nameof(writingTimerDefault));
-        if (votingTimerDefault.HasValue)
-            ValidateTimerRange(votingTimerDefault.Value, nameof(votingTimerDefault));
-        if (discussingTimerDefault.HasValue)
-            ValidateTimerRange(discussingTimerDefault.Value, nameof(discussingTimerDefault));
-
         var session = new RetroSession
         {
             Name = name,
             TeamId = teamId,
             VotesPerParticipant = votesPerParticipant,
             CreatedAt = DateTime.UtcNow,
-            WritingTimerDefault = writingTimerDefault ?? DefaultWritingTimer,
-            VotingTimerDefault = votingTimerDefault ?? DefaultVotingTimer,
-            DiscussingTimerDefault = discussingTimerDefault ?? DefaultDiscussingTimer,
         };
         session.State = RetroSessionState.Draft;
         session.CurrentPhase = RetroPhase.Writing;
 
-        if (column1Name is not null) session.Column1Name = ValidateColumnName(column1Name, nameof(column1Name));
-        if (column1Color is not null) session.Column1Color = ColumnColor.Create(column1Color);
-        if (column2Name is not null) session.Column2Name = ValidateColumnName(column2Name, nameof(column2Name));
-        if (column2Color is not null) session.Column2Color = ColumnColor.Create(column2Color);
-        if (column3Name is not null) session.Column3Name = ValidateColumnName(column3Name, nameof(column3Name));
-        if (column3Color is not null) session.Column3Color = ColumnColor.Create(column3Color);
+        // Group columns into VOs; explicit values override defaults (validation inside RetroColumn.Create).
+        session.Column1 = RetroColumn.Create(column1Name ?? "Went Well", column1Color ?? "green");
+        session.Column2 = RetroColumn.Create(column2Name ?? "Didn't Go Well", column2Color ?? "red");
+        session.Column3 = RetroColumn.Create(column3Name ?? "Start Doing", column3Color ?? "amber");
+
+        // Group timer defaults into VO (1–60 validation inside TimerDefaults.Create).
+        session.Timers = TimerDefaults.Create(
+            writingTimerDefault ?? DefaultWritingTimer,
+            votingTimerDefault ?? DefaultVotingTimer,
+            discussingTimerDefault ?? DefaultDiscussingTimer);
 
         foreach (var fokusSprintId in fokusSprintIds)
             session._fokusSprintRefs.Add(new FokusSprintRef(fokusSprintId));
@@ -71,43 +63,19 @@ public sealed partial class RetroSession
         _fokusSprintRefs.Add(new FokusSprintRef(fokusSprintId));
     }
 
-    public int GetTimerDefaultForPhase() => CurrentPhase switch
-    {
-        RetroPhase.Writing => WritingTimerDefault,
-        RetroPhase.Voting => VotingTimerDefault,
-        RetroPhase.Discussing => DiscussingTimerDefault,
-        _ => throw new InvalidOperationException($"Phase {CurrentPhase} does not have a timer default."),
-    };
-
-    private static void ValidateTimerRange(int value, string paramName)
-    {
-        if (value < WritingTimerMin || value > WritingTimerMax)
-            throw new ArgumentOutOfRangeException(paramName, value,
-                $"Timer default must be between {WritingTimerMin} and {WritingTimerMax} minutes.");
-    }
+    /// <summary>Returns the timer default for the current phase. Delegates to <see cref="TimerDefaults.GetForPhase"/>.</summary>
+    public int GetTimerDefaultForPhase() => Timers.GetForPhase(CurrentPhase);
 
     public void UpdateColumnConfig(
         string column1Name, string column1Color,
         string column2Name, string column2Color,
         string column3Name, string column3Color)
     {
-        Column1Name = ValidateColumnName(column1Name, nameof(column1Name));
-        Column1Color = ColumnColor.Create(column1Color);
-        Column2Name = ValidateColumnName(column2Name, nameof(column2Name));
-        Column2Color = ColumnColor.Create(column2Color);
-        Column3Name = ValidateColumnName(column3Name, nameof(column3Name));
-        Column3Color = ColumnColor.Create(column3Color);
+        // Validation (non-empty, ≤30 chars, palette guard) enforced inside RetroColumn.Create.
+        Column1 = RetroColumn.Create(column1Name, column1Color);
+        Column2 = RetroColumn.Create(column2Name, column2Color);
+        Column3 = RetroColumn.Create(column3Name, column3Color);
         AddDomainEvent(new Events.ColumnConfigUpdatedEvent(this));
-    }
-
-    private static string ValidateColumnName(string name, string paramName)
-    {
-        var trimmed = name?.Trim() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(trimmed))
-            throw new ArgumentException("Column name cannot be empty or whitespace.", paramName);
-        if (trimmed.Length > 30)
-            throw new ArgumentException("Column name cannot exceed 30 characters.", paramName);
-        return trimmed;
     }
 
     public void Start()

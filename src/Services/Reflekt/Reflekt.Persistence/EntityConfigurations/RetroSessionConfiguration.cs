@@ -20,31 +20,42 @@ internal sealed class RetroSessionConfiguration : EntityConfiguration<RetroSessi
         builder.Property(s => s.FocusedGroupId);
         builder.HasIndex(s => s.TeamId);
 
-        builder.Property(s => s.Column1Name).IsRequired().HasMaxLength(30).HasDefaultValue("Went Well");
-        builder.Property(s => s.Column2Name).IsRequired().HasMaxLength(30).HasDefaultValue("Didn't Go Well");
-        builder.Property(s => s.Column3Name).IsRequired().HasMaxLength(30).HasDefaultValue("Start Doing");
+        builder.ComplexProperty(s => s.Column1, b =>
+        {
+            b.Property(c => c.Name).IsRequired().HasMaxLength(30).HasDefaultValue("Went Well");
+            b.Property(c => c.Color)
+                .IsRequired()
+                .HasMaxLength(10)
+                .HasDefaultValue(ColumnColor.Create("green"))
+                .HasConversion(c => c.Value, s => ColumnColor.Create(s));
+        });
 
-        builder.Property(s => s.Column1Color)
-            .IsRequired()
-            .HasMaxLength(10)
-            .HasDefaultValue(ColumnColor.Create("green"))
-            .HasConversion(c => c.Value, s => ColumnColor.Create(s));
+        builder.ComplexProperty(s => s.Column2, b =>
+        {
+            b.Property(c => c.Name).IsRequired().HasMaxLength(30).HasDefaultValue("Didn't Go Well");
+            b.Property(c => c.Color)
+                .IsRequired()
+                .HasMaxLength(10)
+                .HasDefaultValue(ColumnColor.Create("red"))
+                .HasConversion(c => c.Value, s => ColumnColor.Create(s));
+        });
 
-        builder.Property(s => s.Column2Color)
-            .IsRequired()
-            .HasMaxLength(10)
-            .HasDefaultValue(ColumnColor.Create("red"))
-            .HasConversion(c => c.Value, s => ColumnColor.Create(s));
+        builder.ComplexProperty(s => s.Column3, b =>
+        {
+            b.Property(c => c.Name).IsRequired().HasMaxLength(30).HasDefaultValue("Start Doing");
+            b.Property(c => c.Color)
+                .IsRequired()
+                .HasMaxLength(10)
+                .HasDefaultValue(ColumnColor.Create("amber"))
+                .HasConversion(c => c.Value, s => ColumnColor.Create(s));
+        });
 
-        builder.Property(s => s.Column3Color)
-            .IsRequired()
-            .HasMaxLength(10)
-            .HasDefaultValue(ColumnColor.Create("amber"))
-            .HasConversion(c => c.Value, s => ColumnColor.Create(s));
-
-        builder.Property(s => s.WritingTimerDefault).IsRequired().HasDefaultValue(5);
-        builder.Property(s => s.VotingTimerDefault).IsRequired().HasDefaultValue(3);
-        builder.Property(s => s.DiscussingTimerDefault).IsRequired().HasDefaultValue(10);
+        builder.ComplexProperty(s => s.Timers, b =>
+        {
+            b.Property(t => t.Writing).IsRequired().HasDefaultValue(5);
+            b.Property(t => t.Voting).IsRequired().HasDefaultValue(3);
+            b.Property(t => t.Discussing).IsRequired().HasDefaultValue(10);
+        });
 
         builder.HasIndex(s => s.ClosedAt);
 
