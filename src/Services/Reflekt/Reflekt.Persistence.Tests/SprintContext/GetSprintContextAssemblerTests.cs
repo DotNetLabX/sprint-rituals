@@ -55,7 +55,8 @@ public class GetSprintContextAssemblerTests : IDisposable
         string completionRag = "green",
         string disruptionRag = "green",
         string carryOverRag = "green",
-        List<ScopeAdditionEntry>? topScopeAdditions = null)
+        List<ScopeAdditionEntry>? topScopeAdditions = null,
+        int? scopeAdditionTotal = null)
         => new()
         {
             SprintId = sprintId,
@@ -71,6 +72,9 @@ public class GetSprintContextAssemblerTests : IDisposable
             HealthScore = 100m,
             HealthRag = "green",
             TopScopeAdditions = topScopeAdditions ?? [],
+            // Defaults to the displayed-list size when not specified (no overflow) — the server
+            // always sends the true total, but most fixtures only care about the list itself.
+            ScopeAdditionTotal = scopeAdditionTotal ?? (topScopeAdditions?.Count ?? 0),
         };
 
     // ─── Slice 1: single ref → live section ───────────────────────────────────
@@ -209,14 +213,16 @@ public class GetSprintContextAssemblerTests : IDisposable
         s.AddedMidSprint.Should().BeNull("disruption is green — scope additions are suppressed");
     }
 
-    // ─── Slice 7: overflow cap — more than 3 entries → overflow > 0 ──────────
+    // ─── Slice 7: overflow = TRUE total − shown (RA5-D), not list.Count − 3 ──
 
     [Fact]
-    public async Task Should_CapScopeAdditions_At3_And_SetOverflow()
+    public async Task Should_CapScopeAdditions_At3_And_SetTrueOverflow()
     {
         var ct = TestContext.Current.CancellationToken;
         var start = new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc);
         var grpc = new StubSprintAnalytics();
+        // The contract carries the top-5 list AND a true total of 9 mid-sprint additions.
+        // Overflow must be the TRUE remainder (9 − 3 displayed = 6), NOT list.Count − 3 (= 2).
         grpc.Seed(LiveSummary(
             sprintId: 7, name: "Sprint 7", start: start, end: start.AddDays(14),
             disruptionRag: "red",
@@ -227,14 +233,47 @@ public class GetSprintContextAssemblerTests : IDisposable
                 new ScopeAdditionEntry { TicketKey = "F-12", Summary = "C", StoryPoints = 6m },
                 new ScopeAdditionEntry { TicketKey = "F-13", Summary = "D", StoryPoints = 5m },
                 new ScopeAdditionEntry { TicketKey = "F-14", Summary = "E", StoryPoints = 4m },
-            ]));
+            ],
+            scopeAdditionTotal: 9));
 
         var assembler = MakeAssembler(grpc);
         var sections = await assembler.BuildSectionsAsync([7], ct);
 
         var s = sections[0];
         s.AddedMidSprint!.Should().HaveCount(3, "display limit is 3");
-        s.AddedMidSprintOverflow.Should().Be(2, "5 total - 3 displayed = 2 overflow");
+        s.AddedMidSprintOverflow.Should().Be(6, "true total 9 − 3 displayed = 6 overflow");
+    }
+
+    // ─── Slice 7b: list order is preserved from the contract (most-recently-added first) ──
+
+    [Fact]
+    public async Task Should_PreserveContractOrder_In_DisplayedScopeAdditions()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var start = new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc);
+        var grpc = new StubSprintAnalytics();
+        // Fokus already orders most-recently-added-first; the assembler must pass that order
+        // through unchanged (no re-sort). Story points here are NOT descending, so a re-sort
+        // would reorder them.
+        grpc.Seed(LiveSummary(
+            sprintId: 8, name: "Sprint 8", start: start, end: start.AddDays(14),
+            disruptionRag: "red",
+            topScopeAdditions:
+            [
+                new ScopeAdditionEntry { TicketKey = "NEW", Summary = "newest", StoryPoints = 1m },
+                new ScopeAdditionEntry { TicketKey = "MID", Summary = "middle", StoryPoints = 8m },
+                new ScopeAdditionEntry { TicketKey = "OLD", Summary = "oldest", StoryPoints = 3m },
+            ],
+            scopeAdditionTotal: 3));
+
+        var assembler = MakeAssembler(grpc);
+        var sections = await assembler.BuildSectionsAsync([8], ct);
+
+        var s = sections[0];
+        // Contract order is preserved, not re-sorted (story points are not descending here).
+        s.AddedMidSprint!.Select(a => a.TicketKey)
+            .Should().Equal("NEW", "MID", "OLD");
+        s.AddedMidSprintOverflow.Should().Be(0, "true total 3 − 3 displayed = 0 overflow");
     }
 
     // ─── Slice 8: structural assertion — no assignee data in any live section ─

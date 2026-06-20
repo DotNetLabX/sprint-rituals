@@ -205,7 +205,11 @@ public class SprintAnalyticsGrpcService(
         var metrics = result.Metrics;
         var health = result.HealthScore;
 
-        var topScopeAdditions = BuildTopScopeAdditions(selectedSprint, settings);
+        // Single source of truth for the scope-addition population — both the displayed
+        // top-5 list and the true total derive from the IDENTICAL predicate so "+N more"
+        // (total − shown) can never promise an unshowable (bug / removed) ticket (RA5-D).
+        var scopeAdditions = GetScopeAdditions(selectedSprint, settings).ToList();
+        var topScopeAdditions = BuildTopScopeAdditions(scopeAdditions);
 
         return new AnonymizedSprintSummary
         {
@@ -233,15 +237,32 @@ public class SprintAnalyticsGrpcService(
             CompletionRag = health?.CompletionRag ?? "red",
             DisruptionRag = health?.DisruptionRag ?? "red",
             CarryOverRag = health?.CarryOverRag ?? "red",
+
+            // True scope-addition total (RA5-D — additive, Order 16).
+            // Counted over the SAME predicate as TopScopeAdditions, BEFORE the top-5 cap,
+            // so the consumer's "+N more" overflow (total − shown) is accurate.
+            ScopeAdditionTotal = scopeAdditions.Count,
         };
     }
 
-    private static List<ScopeAdditionEntry> BuildTopScopeAdditions(Sprint sprint, AppSettings settings)
+    /// <summary>
+    /// The mid-sprint scope-addition population: post-planning, not removed, non-bug.
+    /// SINGLE source of truth — both the displayed top-5 and the true total count this set,
+    /// so they can never drift (RA5-D, note 4).
+    /// </summary>
+    private static IEnumerable<SprintMembership> GetScopeAdditions(Sprint sprint, AppSettings settings)
     {
         var planningCutoff = sprint.StartDate.AddDays(settings.Sync.PlanningWindowDays);
         return sprint.Memberships
-            .Where(m => m.AddedAt > planningCutoff && m.RemovedAt == null && m.Ticket?.IssueType != "Bug")
-            .OrderByDescending(m => m.StoryPoints ?? 0m)
+            .Where(m => m.AddedAt > planningCutoff && m.RemovedAt == null && m.Ticket?.IssueType != "Bug");
+    }
+
+    private static List<ScopeAdditionEntry> BuildTopScopeAdditions(IEnumerable<SprintMembership> scopeAdditions)
+    {
+        // Rule 7: most-recently-added first. AddedAt is an ORDERING KEY ONLY — it is never
+        // projected into ScopeAdditionEntry, so no timestamp crosses the privacy boundary.
+        return scopeAdditions
+            .OrderByDescending(m => m.AddedAt)
             .Take(5)
             .Select(m => new ScopeAdditionEntry
             {
@@ -261,8 +282,13 @@ public class SprintAnalyticsGrpcService(
             BugDisruptionRate = 0m,
             AddedSp = metrics.AddedSp.Value,
             BugAddedSp = 0m,
-            // Note: Action is stored as lowercase "added" — this check ("Added") is a latent case bug preserved verbatim.
-            MidSprintAdditionCount = result.Events.Count(e => e.Action == "Added" && !e.IsExcluded),
+            // The event table writes the Action lowercase ("added" — ScopeChangeAnalyzer.cs).
+            // Compare case-insensitively so this count is correct (was `== "Added"`, which never
+            // matched → always 0). The sibling "removed" literal is also lowercase; no "removed"
+            // consumer exists in this map today (BugAddedSp/BugDisruptionRate are hard-0m), but any
+            // future action compare here MUST use OrdinalIgnoreCase to avoid reintroducing this bug.
+            MidSprintAdditionCount = result.Events.Count(
+                e => string.Equals(e.Action, "added", StringComparison.OrdinalIgnoreCase) && !e.IsExcluded),
         };
     }
 

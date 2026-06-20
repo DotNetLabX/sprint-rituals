@@ -1,8 +1,8 @@
 # adhoc-ReflektFrontendMerge (RA5) — Communication Log
 
 **Branch:** main
-**Step:** reviewer:review (RA5-B re-review)
-**Cycle:** 2/3
+**Step:** reviewer:review (RA5-D)
+**Cycle:** 1/3
 **Team Mode:** standard+codex
 **Review Mode:** plan=critic (done, all 4 approved) · impl=reviewer+codex (round 1), reviewer-only (cycles 2–3)
 **Commit Strategy:** per-sub-plan (1 plan commit done + 1 feat commit per A/C/B/D)
@@ -10,7 +10,7 @@
 **Developer ID:** dev-ra5a (RA5-A done) · ac39668a3e1e9611a (RA5-C, unnamed)
 **Reviewer ID:** a6942a4a4a7fb7555 (RA5-A) · a2383af5f46e40b30 (RA5-C Step 2) · Codex: ab12d11e831bb07f0 (RA5-A) / a957a4c6d0024ec9b (RA5-C)
 **Sub-plan order:** A → C → B → D
-**Plan Steps Completed / Remaining:** [A1–5 ✅ 3070445 · C1–4+Step5 ✅ 4a3bc75] / [B1–4, D1–4]
+**Plan Steps Completed / Remaining:** [A1–5 ✅ 3070445 · C1–4+Step5 ✅ 4a3bc75 · B1–4 ✅ d59da31] / [D1–4]
 **Questions Resolved:** [RA5-C Q1 (DTO 23→26), Q2 (VoteRepo method), Q3 (FOLD IN — user-confirmed), Q4 (claim 17)]
 
 ---
@@ -79,6 +79,18 @@
 | 58 | TL → dev-ra5a (resume) | developer:implement | Fix cycle 1/3: HIGH cache-keying (loadedFor keyed) + 2 LOW. Codex FILE_MISSING dismissed | — |
 | 59 | dev-ra5a → TL | developer:implement | Fixes applied: loadedFor keying (guard + set-on-success + sections cleared on id change), unused prop removed, button type+aria-pressed. Builds green. TL confirmed keying at source | — |
 | 60 | TL → reviewer (resume) | reviewer:review | Re-review cycle 2/3: verify keying fix + 2 LOWs | — |
+| 61 | reviewer → TL | reviewer:review | APPROVED (cycle 2/3). Keying fix verified w/ behavioral trace (A→B fresh, no stale-flash, retry-safe); 2 LOWs fixed; builds green | — |
+| 62 | TL → git | close RA5-B | Commit d59da31 (retro panel + RA5 docs, scoped). RA5-B DONE. 3/4 sub-plans | — |
+| 63 | TL → ac39668 (resume) | developer:analyze | RA5-D Phase 1 analyze (plan-D-rule7-pc3.md). Reuse backend dev; briefed FOKUS not Reflekt + folded bugs | — |
+| 64 | ac39668 → TL | developer:analyze | All clear, no blockers. Verified all plan claims vs Fokus source (case bug confirmed w/ in-code comment, Order 16 additive free, AddedAt ordering-key-only=privacy holds). 4 notes: (1) breaking assembler test :237 + ScopeAdditionTotal helper, (2) net-new MidSprintAddition fixture, (3) test via public surface, (4) factor predicate once | Plan under-specified 2 test edits |
+| 65 | TL → ac39668 (resume) | developer:implement | Implement RA5-D; notes 1-4 folded in (in dev lane, no plan amendment) | — |
+| 66 | ac39668 → TL | developer:implement | RA5-D complete: Rule 7 AddedAt-desc (key-only, not serialized), ScopeAdditionTotal Order 16 (predicate factored once), case bug fixed (OrdinalIgnoreCase), assembler overflow=max(0,total−shown), PC3 no-op. Tests: Fokus.API 6/6, Reflekt.Persistence 15/15, Fokus.Domain 62/62, Reflekt.Domain 7/7. Build green | — |
+| 67 | TL (verify) → src | architect:donecheck | Verify clean: Order 16 added (1-15 untouched), OrdinalIgnoreCase fix + guard comment, no rogue commits/fabrication | — |
+| 68 | TL → architect a7143bab (resume) | architect:donecheck | RA5-D done-check. Verify Rule 7 + privacy (AddedAt not serialized) + true total same-predicate + case fix + breaking test update + PC3 no-op; re-run builds+tests | — |
+| 69 | architect → TL | architect:donecheck | RA5-D Step 1 PASS — Rule 7 ordering, privacy conclusive (0 AddedAt in Blocks.Contracts), true total drift-impossible, case fix counts==2, breaking test+fixtures updated, PC3 no-op. All 4 suites green (6/6,15/15,62/62,7/7). Distinct populations confirmed | — |
+| 70 | TL → reviewer + Codex | reviewer:review | RA5-D round 1 (cycle 1/3): reviewer (reuse a2383af5) Step 2 + Codex (a1440773, fresh) cross-check. Codex → review-codex-D.md | — |
+| 71 | reviewer → TL | reviewer:review | APPROVED — no CRIT/HIGH. Analytics + privacy verified (ordering, same-predicate total no-drift, case-fix count==2, AddedAt 0-in-contracts, overflow math, distinct populations). 1 LOW (double-cap 5→3 ships 2 unused, harmless). Builds+suites green | — |
+| 72 | TL (await) → Codex | reviewer:review | Codex finished checks, at write-attempt (job log task-mqmc1bkn); watching for strand flush | — |
 
 ---
 

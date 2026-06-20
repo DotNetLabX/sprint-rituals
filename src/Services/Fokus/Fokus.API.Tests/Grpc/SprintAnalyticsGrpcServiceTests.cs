@@ -169,4 +169,106 @@ public class SprintAnalyticsGrpcServiceTests : IDisposable
         // 0% disruption → green (lower-is-better, disruption green <= threshold)
         result.DisruptionRag.Should().Be("green");
     }
+
+    // --- Slice 4 (RA5-D Rule 7): TopScopeAdditions ordered most-recently-added first ---
+
+    [Fact]
+    public async Task Should_OrderScopeAdditions_MostRecentlyAddedFirst()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var sprint = TestData.ClosedSprint(id: 40, name: "Sprint Delta");
+
+        // Three mid-sprint additions at different days. Story points are deliberately INVERTED
+        // relative to recency so a story-point ordering would produce a different result —
+        // this pins AddedAt-desc ordering, not SP-desc.
+        var oldest = TestData.MidSprintAddition(sprintId: 40, ticketId: "FOK-OLD",
+            storyPoints: 13m, ticket: TestData.FeatureTicket("FOK-OLD"), sprintStart: sprint.StartDate, addedDaysAfterStart: 3);
+        var middle = TestData.MidSprintAddition(sprintId: 40, ticketId: "FOK-MID",
+            storyPoints: 8m, ticket: TestData.FeatureTicket("FOK-MID"), sprintStart: sprint.StartDate, addedDaysAfterStart: 6);
+        var newest = TestData.MidSprintAddition(sprintId: 40, ticketId: "FOK-NEW",
+            storyPoints: 2m, ticket: TestData.FeatureTicket("FOK-NEW"), sprintStart: sprint.StartDate, addedDaysAfterStart: 9);
+
+        sprint.AddMembership(oldest);
+        sprint.AddMembership(middle);
+        sprint.AddMembership(newest);
+        _db.Tickets.AddRange(oldest.Ticket, middle.Ticket, newest.Ticket);
+        _db.Sprints.Add(sprint);
+        await _db.SaveChangesAsync(ct);
+
+        var result = await _sut.GetSprintSummaryAsync(new SprintQuery { SprintId = 40 }, ct);
+
+        // Most-recently-added first (AddedAt desc), not by story points (which are inverted).
+        result.TopScopeAdditions.Select(a => a.TicketKey)
+            .Should().Equal("FOK-NEW", "FOK-MID", "FOK-OLD");
+    }
+
+    // --- Slice 5 (RA5-D): ScopeAdditionTotal counts the SAME predicate as the list (bugs excluded) ---
+
+    [Fact]
+    public async Task Should_CountTrueTotal_OverSamePredicateAsList_ExcludingBugs()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var sprint = TestData.ClosedSprint(id: 50, name: "Sprint Epsilon");
+
+        // 6 non-bug mid-sprint additions (more than the top-5 cap) + 2 mid-sprint BUG additions.
+        // The true total must count only the 6 non-bug additions — matching the list's predicate —
+        // so "+N more" (total − shown) can never promise a bug the list would never show.
+        var members = new List<SprintMembership>();
+        for (var i = 1; i <= 6; i++)
+        {
+            // Day i+2 → clearly past the 2-day planning window so all 6 qualify.
+            members.Add(TestData.MidSprintAddition(sprintId: 50, ticketId: $"FOK-5{i}",
+                storyPoints: i, ticket: TestData.FeatureTicket($"FOK-5{i}"),
+                sprintStart: sprint.StartDate, addedDaysAfterStart: i + 2));
+        }
+        members.Add(TestData.MidSprintBugAddition(sprintId: 50, ticketId: "BUG-51",
+            sprintStart: sprint.StartDate, addedDaysAfterStart: 9));
+        members.Add(TestData.MidSprintBugAddition(sprintId: 50, ticketId: "BUG-52",
+            sprintStart: sprint.StartDate, addedDaysAfterStart: 10));
+
+        foreach (var m in members)
+        {
+            sprint.AddMembership(m);
+            _db.Tickets.Add(m.Ticket);
+        }
+        _db.Sprints.Add(sprint);
+        await _db.SaveChangesAsync(ct);
+
+        var result = await _sut.GetSprintSummaryAsync(new SprintQuery { SprintId = 50 }, ct);
+
+        // True total = 6 non-bug additions (bugs excluded), NOT all 8 additions.
+        result.ScopeAdditionTotal.Should().Be(6, "bugs are excluded from the total, same as the list");
+        // List is capped at 5 — so overflow downstream is 6 − shown, never promising a bug.
+        result.TopScopeAdditions.Should().HaveCount(5, "server caps the displayed list at 5");
+        result.TopScopeAdditions.Should().OnlyContain(a => a.TicketKey.StartsWith("FOK-"),
+            "no bug ticket may appear in the displayed additions");
+    }
+
+    // --- Slice 6 (RA5-D case bug): MidSprintAdditionCount > 0 for a sprint with additions ---
+
+    [Fact]
+    public async Task Should_CountMidSprintAdditions_When_AdditionsExist_CaseInsensitive()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var sprint = TestData.ClosedSprint(id: 60, name: "Sprint Zeta");
+
+        // Two non-committed mid-sprint additions → two "added" rows in the scope-change event table.
+        // Before the fix, MapToDisruptionMetrics compared Action == "Added" (capital A) against the
+        // lowercase "added" literal and always returned 0.
+        var a1 = TestData.MidSprintAddition(sprintId: 60, ticketId: "FOK-61",
+            storyPoints: 5m, ticket: TestData.FeatureTicket("FOK-61"), sprintStart: sprint.StartDate, addedDaysAfterStart: 4);
+        var a2 = TestData.MidSprintAddition(sprintId: 60, ticketId: "FOK-62",
+            storyPoints: 3m, ticket: TestData.FeatureTicket("FOK-62"), sprintStart: sprint.StartDate, addedDaysAfterStart: 6);
+
+        sprint.AddMembership(a1);
+        sprint.AddMembership(a2);
+        _db.Tickets.AddRange(a1.Ticket, a2.Ticket);
+        _db.Sprints.Add(sprint);
+        await _db.SaveChangesAsync(ct);
+
+        var result = await _sut.GetDisruptionMetricsAsync(new SprintQuery { SprintId = 60 }, ct);
+
+        result.MidSprintAdditionCount.Should().Be(2,
+            "the case-insensitive Action match now counts the lowercase \"added\" event rows");
+    }
 }

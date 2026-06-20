@@ -71,6 +71,17 @@ public class AnonymizedSprintSummary
     /// <summary>RAG classification for carry-over rate: "green" | "amber" | "red".</summary>
     [DataMember(Order = 15)]
     public string CarryOverRag { get; set; } = default!;
+
+    // --- True scope-addition total (RA5-D additive, Order 16) ---
+
+    /// <summary>
+    /// Total mid-sprint scope additions counted over the SAME predicate as
+    /// <see cref="TopScopeAdditions"/> (post-planning, not removed, non-bug) BEFORE the top-5 cap.
+    /// Lets the consumer render a true "+N more" overflow (total − shown) rather than
+    /// "+N among the top-5". Privacy: a count only — no per-ticket or timestamp data.
+    /// </summary>
+    [DataMember(Order = 16)]
+    public int ScopeAdditionTotal { get; set; }
 }
 
 [DataContract]

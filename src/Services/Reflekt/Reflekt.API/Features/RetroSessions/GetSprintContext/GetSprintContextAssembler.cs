@@ -84,8 +84,10 @@ public sealed class GetSprintContextAssembler(
 
     /// <summary>
     /// Rule 6: scope additions shown only when DisruptionRag is amber or worse (not green).
-    /// Limited to <see cref="ScopeAdditionsDisplayLimit"/> entries.
-    /// Overflow is the count of top-5-by-SP entries not displayed (Fokus truncates server-side at 5).
+    /// Limited to <see cref="ScopeAdditionsDisplayLimit"/> entries, preserving the contract's
+    /// most-recently-added-first order (Fokus orders by AddedAt desc — RA5-D Rule 7).
+    /// Overflow is the TRUE "+N more": total additions − shown (RA5-D). Fokus computes the
+    /// total over the same predicate as the list, so overflow never promises an unshowable ticket.
     /// </summary>
     private static IReadOnlyList<ScopeAdditionDto>? BuildScopeAdditions(
         AnonymizedSprintSummary summary, out int? overflow)
@@ -95,14 +97,13 @@ public sealed class GetSprintContextAssembler(
         if (summary.DisruptionRag == "green")
             return null;
 
-        var top = summary.TopScopeAdditions;
-        var displayed = top.Take(ScopeAdditionsDisplayLimit)
+        // TopScopeAdditions already arrives most-recently-added-first from Fokus — pass through in order.
+        var displayed = summary.TopScopeAdditions.Take(ScopeAdditionsDisplayLimit)
             .Select(e => new ScopeAdditionDto(e.TicketKey, e.Summary, e.StoryPoints))
             .ToList();
 
-        // Overflow: how many among the top-5-by-SP are not shown.
-        // "+N more among the top-5-by-SP" — not the true total (Fokus truncates at 5).
-        overflow = Math.Max(0, top.Count - ScopeAdditionsDisplayLimit);
+        // True overflow: total mid-sprint additions (same predicate as the list) − shown.
+        overflow = Math.Max(0, summary.ScopeAdditionTotal - displayed.Count);
         return displayed;
     }
 

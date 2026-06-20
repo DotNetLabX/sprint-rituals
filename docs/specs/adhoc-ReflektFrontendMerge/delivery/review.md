@@ -498,3 +498,124 @@ None — all findings ≥80 confidence.
 | Sibling stores re-fetch pattern | PASS | `rg "loaded\|return"` across stores | sprintContext is the ONLY store with a permanent fetch-once guard (others self-correct) |
 
 *Status: SUPERSEDED by Cycle 2/3 — reviewer, 2026-06-20 (Cycle 1/3 record)*
+
+---
+
+# RA5-D — Rule 7 Ordering + True Total (PC3 closed: thin): Review
+
+## RA5-D — Step 1 Done-Check
+
+**Plan:** `plan-D-rule7-pc3.md` · **Implementation:** `implementation.md` (RA5-D section, lines 480-548) · **Module:** Fokus (sprint-analytics) + `Blocks.Contracts` + the Reflekt assembler — NOT the RA5-C rename.
+
+**Pre-commitment predictions:** the three most likely gaps were (1) the privacy boundary leaking `AddedAt` into the wire (the new ordering key being accidentally projected); (2) the true total and the displayed list deriving from *different* predicates (so "+N more" promises an unshowable bug/removed ticket — the critic-H1 trap); (3) the case-bug fix matching the wrong literal or missing the `!e.IsExcluded` filter. All three were checked at source — none materialized.
+
+**Verify-gate note:** the platform verify gate is vacuous (0 configured commands). Build + all four named test suites were **re-run by the architect** — `dotnet build` (green), `Fokus.API.Tests` 6/6, `Reflekt.Persistence.Tests` 15/15, `Fokus.Domain.Tests` 62/62, `Reflekt.Domain.Tests` 7/7 — not assumed from implementation.md.
+
+### Required checks
+
+**1 — Rule 7 ordering (most-recently-added first).** `BuildTopScopeAdditions` (`SprintAnalyticsGrpcService.cs:260-274`) now `OrderByDescending(m => m.AddedAt)` (was `StoryPoints`), `Take(5)` kept. `Should_OrderScopeAdditions_MostRecentlyAddedFirst` (`SprintAnalyticsGrpcServiceTests.cs:176`) pins AddedAt-desc order with story points inverted vs recency (a SP-sort would fail it).
+
+**2 — PRIVACY (critical — held).** `AddedAt` appears in `SprintAnalyticsGrpcService.cs` in exactly two roles: the `.Where(...)` predicate (`:257`) and the `.OrderByDescending(...)` key (`:265`) — **never projected** into `ScopeAdditionEntry` (the `.Select(...)` at `:267-272` emits only `TicketKey`/`Summary`/`StoryPoints`). Confirmed by grep: `AddedAt` has **zero matches anywhere in `Blocks.Contracts`** — no serialized contract type carries it. `ScopeAdditionEntry` (contract, `:88-98`) = `{TicketKey, Summary, StoryPoints}`; `ScopeAdditionDto` (assembler-side) = same three fields, structurally asserted by `GetSprintContextAssemblerTests.cs:307-309` (reflection over the DTO's properties → exactly those three). No `AddedAt`, no person, no timestamp crosses the wire.
+
+**3 — True total over the IDENTICAL predicate (factored once — cannot drift).** `GetScopeAdditions(sprint, settings)` (`:253-258`) is the single source of truth for the population: `m.AddedAt > planningCutoff && m.RemovedAt == null && m.Ticket?.IssueType != "Bug"`. `MapToAnonymizedSummary` materializes it **once** into `scopeAdditions` (`:211`); the displayed list (`BuildTopScopeAdditions(scopeAdditions)`, `:212`) and the total (`ScopeAdditionTotal = scopeAdditions.Count`, `:244`, counted BEFORE `Take(5)`) both derive from that one materialized set — they are structurally incapable of drifting. `Should_CountTrueTotal_OverSamePredicateAsList_ExcludingBugs` (`:208`) seeds 6 non-bug + 2 bug mid-sprint additions and asserts `ScopeAdditionTotal == 6` (bugs excluded, same as the list) + the capped-5 list contains only `FOK-` (non-bug) tickets — so `total − shown` can never promise an unshowable ticket. Contract: `ScopeAdditionTotal` is `[DataMember(Order = 16)]` (`AnonymizedSprintSummary.cs:83-84`), additive at end-of-type; Orders 1-15 untouched (verified field-by-field) and `ScopeAdditionEntry`'s own Orders 1-3 untouched.
+
+**4 — Case bug (now counts; was always 0).** `MapToDisruptionMetrics` (`:290-291`) now `string.Equals(e.Action, "added", StringComparison.OrdinalIgnoreCase) && !e.IsExcluded`. Confirmed against the analyzer: `ScopeChangeAnalyzer.cs:404` writes the action lowercase `"added"` (and `:413` writes `"removed"` lowercase) — so the old `== "Added"` never matched (always 0). Sibling `"removed"`: no `"Removed"` consumer exists in this map today (`BugAddedSp`/`BugDisruptionRate` are hard-`0m`); a code comment (`:285-289`) records that any future action compare here MUST use `OrdinalIgnoreCase`. `Should_CountMidSprintAdditions_When_AdditionsExist_CaseInsensitive` (`:250`) asserts `MidSprintAdditionCount == 2` (was 0). The `!e.IsExcluded` filter is preserved (not a regression — it was there before).
+
+**5 — Breaking assembler test updated + helper + new fixtures.** `GetSprintContextAssemblerTests.cs` Slice 7 (`Should_CapScopeAdditions_At3_And_SetTrueOverflow`, `:218`) was the pre-existing breaking test: now seeds `scopeAdditionTotal: 9` and asserts overflow `== 6` (true total 9 − 3 shown), superseding the old `Be(2, "5 total − 3")`. The `LiveSummary` stub helper (`:47-78`) takes a `scopeAdditionTotal` param defaulting to `topScopeAdditions?.Count ?? 0` (no overflow when unspecified → existing slices unaffected) and populates `ScopeAdditionTotal`. New Slice 7b (`Should_PreserveContractOrder_...`, `:250`) asserts the assembler passes the contract order through (no re-sort, SP not descending). Fokus fixtures (`Fokus.API.Tests/_Fixtures/TestData.cs`): `MidSprintAddition` (`AddedAt = start + addedDaysAfterStart`, non-bug, `WasCommitted=false`), `MidSprintBugAddition` (`IssueType="Bug"`), `BugTicket` — all present (`:43,85,112`).
+
+**6 — Assembler overflow + doc-comments (Step 3).** `GetSprintContextAssembler.cs:106` `overflow = Math.Max(0, summary.ScopeAdditionTotal - displayed.Count)` (true total − shown); list passed through in contract order (`:100-103`, no re-sort). Overflow stays **inside the non-green branch** (`:97-98` returns `null` for `DisruptionRag == "green"` before the overflow computation — green band yields no block, no overflow). Stale doc-comments at `:85-91` and `:100` updated to assert "most-recently-added-first … TRUE '+N more'" (the old "+N among top-5-by-SP" wording is gone).
+
+**7 — PC3 (no code — confirmed no-op).** The assembler's "cached" fallback (`:119-129`) returns name + all-null metrics (thin snapshot, no metric numbers); `FokusSprintSnapshot` unchanged. No code touched for PC3 — the owner decision to keep cached sections thin (ADR-019) is ratified by recording, not a deferral. Confirmed no-op.
+
+**8 — Builds + four test suites re-run (verify gate vacuous).** `dotnet build SprintRituals.slnx` → **0 errors**, 6 pre-existing NU1903 warnings. `Fokus.API.Tests` **6/6** (3 RA4 + 3 new), `Reflekt.Persistence.Tests` **15/15** (incl. updated Slice 7 + new 7b), `Fokus.Domain.Tests` **62/62** (no regression), `Reflekt.Domain.Tests` **7/7** (no regression). All match the implementation's claimed counts exactly.
+
+### Step dispositions
+
+| Step | Disposition | Notes |
+|------|-------------|-------|
+| 1 — Fokus ordering + true total + case-bug | Implemented | `GetScopeAdditions` factored once (single predicate); `OrderByDescending(AddedAt)` + `Take(5)`; `ScopeAdditionTotal = scopeAdditions.Count` before cap; case-bug `OrdinalIgnoreCase` + `!IsExcluded`; sibling `"removed"` guarded by comment. Privacy: AddedAt is ordering-key-only, never serialized (critical PASS). H1/H2 critic findings closed. TDD: 3 new Fokus tests pin ordering / true-total-excluding-bugs / case-insensitive count. |
+| 2 — Contract additive field | Implemented | `ScopeAdditionTotal` `[DataMember(Order = 16)]` on `AnonymizedSprintSummary`; Orders 1-15 + `ScopeAdditionEntry` Orders 1-3 untouched; populated from Step 1's true count. Build green. |
+| 3 — Assembler true overflow | Implemented | `Math.Max(0, ScopeAdditionTotal − displayed.Count)`; contract order preserved; overflow inside non-green branch; stale doc-comments updated. TDD: Slice 7 updated (overflow 6), Slice 7b new (order preserved). |
+| 4 — Verification + PC3 close-out | Implemented | Build + 4 suites green (re-run); privacy invariant verified in code; PC3 confirmed no-op; RA4 carry-overs (Rule 7 + AC4) → Done. |
+
+### Skill-conformance note (not a gap)
+
+Steps 1 & 3 are `TDD: yes`; implementation.md `## Skills Used` reports `tdd` invoked on both (the red→green evidence is visible: the breaking Slice 7 was updated, 3 new Fokus tests added, the case-bug test asserts the previously-0 count is now 2). Steps 2 & 4 are `None`. The Skill Mapping is all-`None` for pattern skills (the analyzer/contract/assembler all pre-exist — this adapts them), with `tdd` as the process skill on the testable steps — consistent with the plan. No conformance gap. A self-disclosed test-data lesson (initial fixture seeded additions inside the 2-day planning window, correctly excluded by the predicate → the developer corrected the fixture to days 3-8) is a TDD-working-as-intended artifact, not a defect — it confirms the planning-window gate is enforced.
+
+### Notes / non-blocking observations (for the reviewer)
+
+- **`MidSprintAdditionCount` vs `ScopeAdditionTotal` are deliberately different populations** — and correctly so. `ScopeAdditionTotal` (the "+N more" basis) is the *non-bug, not-removed, post-planning* set, matching the displayed list. `MidSprintAdditionCount` (the disruption metric, fixed for the case bug) counts the analyzer's `"added"` events more broadly. The plan explicitly routes the true total through the inline `scopeAdditions.Count`, NOT through `MidSprintAdditionCount` (which is broader and was the bugged path) — verified the two are not conflated.
+- **`StoryPoints` is `decimal?` on both contract and DTO** — serializes as a JSON number; the RA5-B panel renders it as `({{ item.storyPoints }} pts)`. No precision concern at display.
+
+**Verdict: PASS**
+
+*Status: COMPLETE — architect, 2026-06-20*
+
+---
+
+## RA5-D — Step 2 Code Review
+
+## Reviewed By
+Reviewer agent (nexus:reviewer), 2026-06-20. Cycle 1/3. Analytics correctness + privacy review. Predicate populations traced against `ScopeChangeAnalyzer` source; mandated tests run by name (not under an exclusion filter); build + all four test projects re-run independently.
+
+## Verdict: APPROVED
+
+No CRITICAL or HIGH. Rule 7 ordering, true-total-over-same-predicate, the case-bug fix, the privacy boundary, and the assembler overflow are all correct and genuinely tested. One LOW (a benign defensive-clarity note).
+
+## Pre-commitment Predictions
+
+| Prediction | Outcome |
+|-----------|---------|
+| `OrderByDescending(AddedAt)` correct for "most-recently-added first" | Confirmed correct — `SprintAnalyticsGrpcService.cs:265`; desc = newest first. |
+| True total drifts from the list population (counts bugs/removed) | Refuted — factored once via `GetScopeAdditions`; `ScopeAdditionTotal = scopeAdditions.Count` over the IDENTICAL predicate, counted before `Take(5)`. |
+| Case fix over-counts (loses the `!IsExcluded` or includes wrong events) | Refuted — `!e.IsExcluded` guard preserved; the fix only flips `"Added"`→case-insensitive `"added"`. |
+| `AddedAt` leaks across the wire | Refuted — `AddedAt` is predicate + ordering key only; never projected into `ScopeAdditionEntry`; zero timestamp/person fields in the contract. |
+| Assembler overflow off-by-one or computed above the green gate | Refuted — `Math.Max(0, total − displayed.Count)`, inside the non-green branch, `null` on green. |
+| `ScopeAdditionTotal` and `MidSprintAdditionCount` conflated | Refuted — distinct populations, distinct code paths, not routed through each other. |
+
+## Findings
+
+### [LOW] Assembler trims a 5-item contract list to 3; the 5-cap on the Fokus side is now redundant work, not a bug
+**File:** `GetSprintContextAssembler.cs:18,101` (`ScopeAdditionsDisplayLimit = 3`) vs `SprintAnalyticsGrpcService.cs:266` (`Take(5)`)
+**Origin:** design
+**Issue:** Fokus caps `TopScopeAdditions` at 5 (`BuildTopScopeAdditions`), then the assembler re-trims to 3 (`.Take(ScopeAdditionsDisplayLimit)`). The overflow math is correct in both cases because it bases on `ScopeAdditionTotal` (the true count), not on the truncated list — so the double-cap is harmless: a sprint with 9 additions sends a 5-item list + total 9; the assembler shows 3 and computes `9 − 3 = 6`. But the Fokus-side `Take(5)` now ships 2 entries (items 4–5) that the panel never renders. Not a correctness defect — purely a minor over-fetch of two list entries across the wire. The plan kept `Take(5)` deliberately (matching the existing contract shape); flagging only so it is a known, intentional asymmetry, not an accident.
+**Fix (optional):** Align the Fokus cap to the panel's display limit (3) in a future pass, or document that 5 is intentional headroom. No action required for this cycle.
+**Confidence:** 88/100
+
+## Positive Observations
+
+- **Rule 7 ordering correct + privacy-preserving.** `OrderByDescending(m => m.AddedAt).Take(5)` (`:265-266`) — order applied *before* the cap, so the 5 shown are genuinely the 5 most recent. `AddedAt` is used only as predicate (`:257`) and ordering key (`:265`), never projected into `ScopeAdditionEntry` (which carries `TicketKey`/`Summary`/`StoryPoints?` only). No timestamp crosses the boundary.
+- **True total = same predicate as the list, factored once.** `GetScopeAdditions` (`:253-258`) is the single source: `m.AddedAt > planningCutoff && m.RemovedAt == null && m.Ticket?.IssueType != "Bug"`. `MapToAnonymizedSummary` materializes it once (`scopeAdditions = ...ToList()`, `:211`); both `BuildTopScopeAdditions(scopeAdditions)` and `ScopeAdditionTotal = scopeAdditions.Count` (`:244`) derive from that one list — no drift, no double-materialization. Counted before `Take(5)`. So `total − shown` can never promise a bug/removed ticket. **Slice 5 proves it** (6 non-bug + 2 bug → `ScopeAdditionTotal == 6`, list has no `BUG-` ticket) — non-tautological.
+- **Case-bug fix correct, not over-counting.** `string.Equals(e.Action, "added", OrdinalIgnoreCase)` (`:291`) matches the analyzer's lowercase `"added"` literal (`ScopeChangeAnalyzer.cs:404`). The `!e.IsExcluded` guard is preserved, so excluded developers stay excluded; the removed path is unaffected (the metric counts "added" events, which are emitted per `!WasCommitted` membership — unchanged by the case fix). **Slice 6 proves it** (`MidSprintAdditionCount == 2`, was 0 before). The `"removed"` sibling is documented as having no consumer today + an `OrdinalIgnoreCase` guard mandate in the code comment (`:285-289`) — closes the bug class, not just the one literal.
+- **`ScopeAdditionTotal` vs `MidSprintAdditionCount` are genuinely distinct populations, not conflated.** `ScopeAdditionTotal`: non-bug, not-removed, post-planning, any committed/excluded status. `MidSprintAdditionCount`: all `!WasCommitted` "added" events minus `IsExcluded` — includes bugs, includes removed-after-add, includes pre-planning. Different code paths (`scopeAdditions.Count` vs the events count); the plan explicitly avoided routing the true total through `MidSprintAdditionCount`. Verified against `ScopeChangeAnalyzer.cs:374-404` (the event row is emitted for any non-committed membership regardless of bug/planning gates).
+- **Assembler overflow correct.** `Math.Max(0, summary.ScopeAdditionTotal − displayed.Count)` (`:106`), inside the non-green branch (`:97-98` returns `null` for green — overflow never computed above the disruption gate). `Math.Max(0, …)` guards a defensive negative. List passed through in contract order (no re-sort). **Slice 7** (total 9, list 5 → display 3, overflow 6) + **Slice 7b** (SP not descending → order preserved) prove both, non-tautologically.
+- **Contract additivity correct.** `ScopeAdditionTotal` at `[DataMember(Order = 16)]`; Orders 1–15 and `ScopeAdditionEntry`'s 1–3 untouched. Backward-compatible.
+- **Privacy structurally gated by a reflection test.** Assembler Slice 8 asserts `ScopeAdditionDto` has exactly `[TicketKey, Summary, StoryPoints]` via `GetProperties()` — a structural guard that fails if anyone adds an assignee field.
+- **PC3 correctly a no-op** — `FokusSprintSnapshot` fallback stays thin; assembler Slice 3 asserts `CompletionRate.Should().BeNull()` for cached sections.
+
+## Gaps
+
+- No test pins **ordering ties** (two additions with the *same* `AddedAt`). `OrderByDescending` is a stable sort in LINQ-to-Objects (the memberships are materialized in-memory here, not translated to SQL), so equal-`AddedAt` items retain insertion order deterministically — not a correctness risk, but untested. Minor; the realistic data has distinct timestamps. Not a finding.
+- The gRPC round-trip serialization of `ScopeAdditionTotal` (Order 16 over the actual protobuf-net wire) is not exercised by an end-to-end serialization test — the tests call the service method directly (in-process). The `[DataMember(Order=16)]` additive pattern matches RA4's proven enrichment, and the build's contract compiles, so the risk is low. Plan Step 2 accepted "an existing gRPC round-trip test or a new one sees the populated total" — the in-process service tests (Slices 4–6) see the populated `ScopeAdditionTotal`, satisfying the intent. Not a blocker.
+
+## Open Questions
+None — the LOW is ≥80; no sub-80 findings.
+
+## Evidence
+| Check | Result | Command | Output |
+|-------|--------|---------|--------|
+| .NET build | PASS | `dotnet build SprintRituals.slnx --no-restore` | `Build succeeded. 6 Warning(s) 0 Error(s)` |
+| Fokus gRPC tests (mandated, by name) | PASS | `dotnet test Fokus.API.Tests --filter ~SprintAnalyticsGrpcServiceTests` | `Failed: 0, Passed: 6` (Slices 4–6 = RA5-D) |
+| Assembler tests (mandated, by name) | PASS | `dotnet test Reflekt.Persistence.Tests --filter ~GetSprintContextAssemblerTests` | `Failed: 0, Passed: 11` (Slice 7 updated + 7b new) |
+| Fokus.API.Tests (full) | PASS | `dotnet test Fokus.API.Tests --no-build` | `Failed: 0, Passed: 6` |
+| Fokus.Domain.Tests (regression) | PASS | `dotnet test Fokus.Domain.Tests --no-build` | `Failed: 0, Passed: 62` |
+| Reflekt.Persistence.Tests (full) | PASS | `dotnet test Reflekt.Persistence.Tests --no-build` | `Failed: 0, Passed: 15` |
+| Rule 7 ordering | PASS | Read `SprintAnalyticsGrpcService.cs:265-266` | `OrderByDescending(AddedAt).Take(5)` |
+| True total same-predicate | PASS | Read `:211,244,253-258` | factored once via `GetScopeAdditions`; count before cap |
+| Case-bug fix literal | PASS | Read `:291` vs `ScopeChangeAnalyzer.cs:404` | `OrdinalIgnoreCase` "added" matches lowercase event literal |
+| Privacy: AddedAt not serialized | PASS | `rg "AddedAt"` service + contract | predicate/ordering only; zero in contract |
+| Privacy: contract 3-field entries | PASS | Read `AnonymizedSprintSummary.cs:87-98` + Slice 8 reflection | `ScopeAdditionEntry`/`Dto` = 3 fields, no assignee |
+| Overflow = total − shown | PASS | Read assembler `:106` | `Math.Max(0, ScopeAdditionTotal − displayed.Count)`, non-green branch only |
+| Distinct populations | PASS | Read `:244` vs `:290-291` + analyzer `:374-404` | `scopeAdditions.Count` vs events count — not conflated |
+
+*Status: COMPLETE — reviewer, 2026-06-20*
