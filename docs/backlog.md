@@ -1,6 +1,6 @@
 # Backlog
 
-Refactoring program from the refactor-triage session. **Binding constraints for every pass:** `docs/architecture/decisions.md` (ADR register) + `.claude/rules/engineering-discipline.md` (auto-loaded). Evidence: `docs/proposals/refactor-triage.md`.
+Refactoring program from the refactor-triage session. **Binding constraints for every pass:** `docs/architecture/decisions.md` (ADR register) + `docs/conventions/project-rules.md`. Evidence: `docs/proposals/refactor-triage.md`.
 
 Order is dependency-driven (skills before the domain work that applies them; mechanical before deep). Each pass is one pipeline run (architect plan → developer → reviewer). Manual testing after each pass (no automated suite by decision).
 
@@ -77,7 +77,7 @@ Root-cause arm: the skills that encode the patterns the later passes apply. **Sk
 
 ## Notes for the team-lead
 
-- **Read first:** `docs/architecture/index.md` (→ `decisions.md`) and `.claude/rules/engineering-discipline.md`. They are binding.
+- **Read first:** `docs/architecture/index.md` (→ `decisions.md`) and `docs/conventions/project-rules.md`. They are binding.
 - **Decision order (ADR-003):** correct skill → reference project `<reference-repo>` → fix/create the skill. Every fix is a problem *class* (fix all instances).
 - **Pass 1 (skill repair)** — **Done.** `domain-service` shape reviewed interactively with the user (D-A general/multi-variant; D-B endpoint-owns-DTO; repo stays out of domain — handler loads). Skills committed to the plugin repo.
 - **Pass 4 (Identity extraction)** — **Done.** Scope (A2) resolved at launch: Invitation stays in Fokus (L1); full cut delivered (redemption-at-login, company-domain auto-seed, dual gRPC). Jira→Person keyed on ExternalId (Jira Cloud hides email). See `docs/specs/adhoc-Pass4-IdentityExtraction/delivery/summary.md`. Follow-ups: NU1903 transitive-dep advisory; optional inactive-user reactivation policy; frontend invite pages (Q12 deferred).
@@ -87,7 +87,7 @@ Root-cause arm: the skills that encode the patterns the later passes apply. **Sk
 
 # Reflekt Integration Program
 
-Bring Reflekt (real-time collaborative retro tool, `<reflekt-repo>`) into the monolith as a module. **Binding constraints:** `docs/architecture/decisions.md` ADR-016…020 (+ the full register) and `.claude/rules/engineering-discipline.md`. Design narrative: `docs/proposals/suite-integration-architecture.md` (ADRs win on conflict).
+Bring Reflekt (real-time collaborative retro tool, `<reflekt-repo>`) into the monolith as a module. **Binding constraints:** `docs/architecture/decisions.md` ADR-016…020 (+ the full register) and `docs/conventions/project-rules.md`. Design narrative: `docs/proposals/suite-integration-architecture.md` (ADRs win on conflict).
 
 **Strategy (owner-decided 2026-06-14):** lift-and-shift first, then refactor/integrate — keep the mechanical move bisectable from semantic change, same mechanical-before-deep order as the refactor suite. Reflekt already matches the stack and the API/Domain/Persistence layout, so the lift is low-risk.
 
