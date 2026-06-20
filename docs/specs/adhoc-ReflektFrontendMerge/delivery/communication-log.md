@@ -1,8 +1,8 @@
 # adhoc-ReflektFrontendMerge (RA5) — Communication Log
 
 **Branch:** main
-**Step:** reviewer:review (RA5-D)
-**Cycle:** 1/3
+**Step:** done (all 4 sub-plans shipped)
+**Cycle:** —
 **Team Mode:** standard+codex
 **Review Mode:** plan=critic (done, all 4 approved) · impl=reviewer+codex (round 1), reviewer-only (cycles 2–3)
 **Commit Strategy:** per-sub-plan (1 plan commit done + 1 feat commit per A/C/B/D)
@@ -10,7 +10,7 @@
 **Developer ID:** dev-ra5a (RA5-A done) · ac39668a3e1e9611a (RA5-C, unnamed)
 **Reviewer ID:** a6942a4a4a7fb7555 (RA5-A) · a2383af5f46e40b30 (RA5-C Step 2) · Codex: ab12d11e831bb07f0 (RA5-A) / a957a4c6d0024ec9b (RA5-C)
 **Sub-plan order:** A → C → B → D
-**Plan Steps Completed / Remaining:** [A1–5 ✅ 3070445 · C1–4+Step5 ✅ 4a3bc75 · B1–4 ✅ d59da31] / [D1–4]
+**Plan Steps Completed / Remaining:** [A1–5 ✅ 3070445 · C1–4+Step5 ✅ 4a3bc75 · B1–4 ✅ d59da31 · D1–4 ✅ 669c7cf] / [] — ALL DONE
 **Questions Resolved:** [RA5-C Q1 (DTO 23→26), Q2 (VoteRepo method), Q3 (FOLD IN — user-confirmed), Q4 (claim 17)]
 
 ---
@@ -91,6 +91,9 @@
 | 70 | TL → reviewer + Codex | reviewer:review | RA5-D round 1 (cycle 1/3): reviewer (reuse a2383af5) Step 2 + Codex (a1440773, fresh) cross-check. Codex → review-codex-D.md | — |
 | 71 | reviewer → TL | reviewer:review | APPROVED — no CRIT/HIGH. Analytics + privacy verified (ordering, same-predicate total no-drift, case-fix count==2, AddedAt 0-in-contracts, overflow math, distinct populations). 1 LOW (double-cap 5→3 ships 2 unused, harmless). Builds+suites green | — |
 | 72 | TL (await) → Codex | reviewer:review | Codex finished checks, at write-attempt (job log task-mqmc1bkn); watching for strand flush | — |
+| 73 | Codex → TL | reviewer:review | GO — all 6 analytics/privacy checks CONFIRMED PASS, no findings. Only gap = no .proto (expected, code-first). Recovered from job log (strand). Agrees with reviewer APPROVE | Codex file strand (3rd) |
+| 74 | TL → git | close RA5-D | Commit 669c7cf (Fokus + Blocks.Contracts + Reflekt assembler/tests + docs, scoped). RA5-D DONE — 4/4 sub-plans | — |
+| 75 | TL → docs | shutdown | summary.md written; backlog RA5 → Done; pipeline complete. Closing docs commit to follow | — |
 
 ---
 
