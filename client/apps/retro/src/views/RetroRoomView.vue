@@ -42,9 +42,11 @@
         :writing-timer-default="retroSessionStore.currentSummary?.writingTimerDefault ?? 5"
         :voting-timer-default="retroSessionStore.currentSummary?.votingTimerDefault ?? 3"
         :discussing-timer-default="retroSessionStore.currentSummary?.discussingTimerDefault ?? 10"
+        :sprint-context-open="sprintContextOpen"
         @advance-phase="onAdvanceClick"
         @close-retro-session="onCloseClick"
         @toggle-ready="onToggleReady"
+        @toggle-sprint-context="sprintContextOpen = !sprintContextOpen"
       />
 
       <div v-if="isClosed" class="bg-badge-warning-bg border border-badge-warning-text rounded-[--radius-sm] px-4 py-2 text-sm text-badge-warning-text">
@@ -65,6 +67,13 @@
         @toggle-ready="onToggleReady"
       />
     </div>
+
+    <!-- Sprint context panel (overlay, sibling to main content — always accessible when joined) -->
+    <SprintContextPanel
+      v-if="joined"
+      :open="sprintContextOpen"
+      @close="sprintContextOpen = false"
+    />
 
     <!-- Advance phase confirmation dialog -->
     <BaseModal :open="showAdvanceDialog" :title="advanceDialogTitle" @close="showAdvanceDialog = false">
@@ -111,6 +120,7 @@ import RetroJoinForm from '../components/retro/RetroJoinForm.vue'
 import RetroPhaseHeader from '../components/retro/RetroPhaseHeader.vue'
 import RetroReportPanel from '../components/retro/RetroReportPanel.vue'
 import RetroBoardPanel from '../components/retro/RetroBoardPanel.vue'
+import SprintContextPanel from '../components/retro/SprintContextPanel.vue'
 
 const route = useRoute()
 const participantStore = useParticipantStore()
@@ -120,6 +130,7 @@ const { addToast } = useToast()
 
 const retroSessionId = Number(route.params.retroSessionId)
 const reportingView = ref<'report' | 'board'>('report')
+const sprintContextOpen = ref(false)
 
 const {
   kicked, busy, errorMessage, joined, loading,

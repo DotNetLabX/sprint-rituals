@@ -368,3 +368,109 @@ The plan flagged that `Features/Sprints/` → a board-name **collides** with the
 - **Google-assisted guest join** (`participant.ts` `joinWithGoogle`): posts `{}` to `/join`, which fails `JoinRetroCommand`'s `DisplayName.NotEmpty()` validator (400). The Google-authed auto-join (fill DisplayName from the Person/cookie claim) was never implemented — a pre-existing **functional gap**, tracked as a follow-up (`FEAT: Google-assisted guest join not implemented`). The string repoint to `/join` stands; the behavior fix is out of scope.
 - **`CLAUDE.md` line 16** ("SignalR method/group/claim strings kept `sprint*`-named (Q2)") is now stale narrative after this rename. Left unedited — CLAUDE.md is module documentation, not code; updating its rename-history narrative is a doc follow-up, not part of the identifier sweep.
 - **Manual real-time smoke** (column-config live update across clients; full create/group/vote/close retro) requires `dotnet run` + browser — deferred-by-policy (no automated frontend suite); the reviewer is the runtime gate.
+
+---
+
+# RA5-B — Sprint-Context Panel UI: Implementation
+
+**Status:** Complete
+**Date:** 2026-06-20
+**Plan:** `plan-B-panel.md`
+
+---
+
+## Steps
+
+### Step 1 — Types + API module
+
+**What changed:**
+- Created `client/apps/retro/src/types/sprintContext.ts` — TS interfaces `ScopeAdditionDto`, `SprintContextSection`, `SprintContextResponse` mirroring the wire shape field-for-field (camelCase). All nullable optional fields typed with `| null | undefined`. No assignee field (Rule 4 structurally enforced by DTO).
+- Created `client/apps/retro/src/api/sprintContext.ts` — `getSprintContext(retroSessionId: number): Promise<SprintContextResponse>` using the guest-aware fetch pattern from `report.ts` (`useGuestStore().token` → `X-Guest-Token` header + `credentials: 'include'`). 404 throws a typed error so the store can branch; other non-ok throws similarly. The `getSprintContext` function calls `useGuestStore()` inline (same pattern as `report.ts` / `previousActions.ts` — those stores call `useGuestStore()` inside their actions, not at module level).
+
+**Deviation — API module style vs `create-vue-feature` skill:** The skill prescribes an `apiFetch` wrapper + API object export (dashboard app pattern). The retro app has no `apiFetch` wrapper; all stores use raw `fetch` with inline guest-token headers (see `report.ts`, `previousActions.ts`). Adopted the retro app's native pattern to match the codebase, not the dashboard pattern. Noted per skill gap below.
+
+---
+
+### Step 2 — Pinia store + hydration wire
+
+**What changed:**
+- Created `client/apps/retro/src/stores/sprintContext.ts` — `useSprintContextStore` (Options API, matching `report.ts` / `previousActions.ts` pattern). State: `sections: SprintContextSection[]`, `loading: boolean`, `error: string | null`, `loaded: boolean`. Action `fetchSprintContext(retroSessionId)` no-ops immediately if `loaded` (Rule 8 / AC "reopening does not trigger a second pull"); only sets `error` on transport/404 failure (any 200 including cached/unavailable sections populates `sections` without error).
+- Modified `client/apps/retro/src/composables/useRetroRoom.ts` — added `import { useSprintContextStore }` and `const sprintContextStore = useSprintContextStore()` inside `useRetroRoom(retroSessionId)`. Added `sprintContextStore.fetchSprintContext(retroSessionId)` to the `Promise.all([...])` in `enterRoom()` alongside the other store hydrations.
+
+**Deviation — Setup store vs Options API:** The `pinia-patterns` skill specifies Composition API setup stores. The retro app uses Options API stores exclusively (`report.ts`, `previousActions.ts`, `participant.ts`, etc.). Followed the codebase pattern to maintain consistency.
+
+---
+
+### Step 3 — Panel components + top-bar button
+
+**What changed:**
+
+- Created `client/apps/retro/src/components/retro/RagBadge.vue` (L4 atomic) — maps `"green"/"amber"/"red"` → `BaseBadge` variants `success/warning/danger`. Default variant for null/unknown. All three RAG tokens (`badge-success`, `badge-warning`, `badge-danger`) already in `main.css` `@source inline(...)` safelist — no new entries needed.
+
+- Created `client/apps/retro/src/components/retro/SprintContextSectionCard.vue` (L3 props-only) — displays one `SprintContextSection`. Renders: sprint name + dates; cached badge with tooltip when `freshness === 'cached'`; unavailable text when `freshness === 'unavailable'`; metrics grid (completion/disruption/carry-over rates + health score) each with value + `RagBadge` when freshness is not unavailable; added-mid-sprint block (first 3 items + "+N more" with `addedMidSprintOverflow`) only when `addedMidSprint != null`. All tooltip copy from `help.tooltips.md`. No assignee field — `ScopeAdditionDto` never had one (Rule 4 structurally held).
+
+- Created `client/apps/retro/src/components/retro/SprintContextPanel.vue` (L1 feature, reads `useSprintContextStore`) — slide-out drawer using Vue `<Transition>` + `translate-x-full`/`translate-x-0` classes (not `BaseModal`, per plan). Fixed-position, z-40, right-aligned overlay. States: loading (`LoadingSpinner`), error (danger text), empty (no sections), and section list (`SprintContextSectionCard` per section). Multi-sprint info header shown when `sections.length > 1` with tooltip. Panel emits `close`.
+
+- Modified `client/apps/retro/src/components/retro/RetroPhaseHeader.vue` — added `sprintContextOpen: boolean` to `defineProps<{...}>()` and `'toggle-sprint-context': []` to `defineEmits<{...}>()`. Added `sprintContextButtonTooltip` constant with the help.tooltips copy. Added Sprint Context button in row-1 action cluster (before SM controls), styled to show active state when `sprintContextOpen`, present for all phases and all participants including guests (no phase/role gate per Rule 1 / Flow 4).
+
+---
+
+### Step 4 — Integration + verification
+
+**What changed:**
+- Modified `client/apps/retro/src/views/RetroRoomView.vue` — added `import SprintContextPanel`. Added `sprintContextOpen = ref(false)` as local view state (not store state — same pattern as `reportingView`). Passed `:sprint-context-open="sprintContextOpen"` prop and `@toggle-sprint-context="sprintContextOpen = !sprintContextOpen"` handler to `RetroPhaseHeader`. Added `<SprintContextPanel v-if="joined" :open="sprintContextOpen" :retro-session-id="retroSessionId" @close="sprintContextOpen = false" />` as a sibling overlay element (inside the root div, alongside the modals — NOT inside the `v-else` joined block so it renders as a proper sibling overlay).
+
+**AC checklist (manual smoke deferred-by-policy — no automated frontend suite):**
+
+| AC | Expected | Status |
+|----|----------|--------|
+| Single sprint section renders with correct values | One `SprintContextSectionCard` with metrics from Fokus | Build-verified; manual smoke required |
+| Multi-sprint sections render in backend order | Multiple cards, multi-sprint header shown | Build-verified; manual smoke required |
+| Sprint Context button present in every phase | Button in `RetroPhaseHeader` row-1, no phase gate | Confirmed by code inspection |
+| Sprint Context button present as guest | No role gate on the button | Confirmed by code inspection |
+| Amber-or-worse → added-mid-sprint block shown | `addedMidSprint != null` block renders | Confirmed by code inspection (server gates `addedMidSprint` presence) |
+| Below-band → added-mid-sprint block absent | `v-if="section.addedMidSprint != null"` | Confirmed by code inspection |
+| Fokus down → cached/unavailable states render, panel still works | Cached badge / unavailable text shown | Confirmed by code inspection |
+| Reopen → no second fetch | `loaded` guard in store `fetchSprintContext` | Confirmed by code inspection |
+| No person/assignee rendered anywhere | `ScopeAdditionDto` has no assignee field | Structurally enforced by DTO |
+
+**Build verification:**
+- `npm run build` (workspace) at `client/`: **green** — 0 errors; dashboard and retro both emit.
+- `dotnet build SprintRituals.slnx --no-restore`: **green** — 0 errors, 9 pre-existing warnings (unchanged).
+
+---
+
+## Skills Used
+
+| Step | Skill | Disposition |
+|------|-------|-------------|
+| 1 | `create-vue-feature` | Read-channel deviation — Skill tool failed; read `SKILL.md` from plugin cache at `nexus-dotnet/skills/create-vue-feature/SKILL.md`. Pattern adapted for retro app (no `apiFetch` wrapper in retro; raw fetch with guest-auth inline). |
+| 2 | `pinia-patterns` | Read-channel deviation — Skill tool failed; read `SKILL.md` from plugin cache at `nexus-dotnet/skills/pinia-patterns/SKILL.md`. Pattern adapted: skill prescribes setup stores; retro app uses Options API stores exclusively — followed codebase pattern. |
+| 3 | `vue-component-architecture`, `tailwind-theme`, `vue-patterns` | All Read-channel deviations — Skill tool failed for all three; read SKILL.md files from plugin cache. Applied level hierarchy (L4 `RagBadge`, L3 `SprintContextSectionCard`, L1 `SprintContextPanel`). Token-based classes, no hardcoded colors. |
+| 4 | None | Manual verification — plan Skill: None. |
+
+---
+
+## Carry-Over
+
+- **Manual smoke of panel UI** (button in every phase/as guest, Fokus-down cached/unavailable states, reopen no-second-fetch) requires `dotnet run` + browser. Deferred-by-policy (no automated frontend suite); the reviewer is the runtime gate.
+- **`SprintContextPanel` uses `useSprintContextStore()` inside the component** (L1 accessing store directly) — per `vue-component-architecture` skill, L1 has full store CRUD access, so this is by-design.
+- **Skill tool failures for all 3 non-None steps** — the nexus-dotnet skills (`create-vue-feature`, `pinia-patterns`, `vue-component-architecture`, `tailwind-theme`, `vue-patterns`) are not registered in the Skill tool's available-skills list. All five were read from the plugin cache and applied. Logged in lessons.md.
+
+---
+
+## Fix Cycle 1/3 — 2026-06-20 (RA5-B)
+
+Reviewer + Codex both independently flagged the same cache-keying bug. Two LOW cleanups also applied.
+
+| # | Severity | Finding | Fix |
+|---|----------|---------|-----|
+| 1 | HIGH | `sprintContext` store cache keyed by bare `loaded: boolean` — Pinia singleton never resets, so navigating retro A→B silently shows A's sections under B's header. Plan Step 2 mandates "cache keyed by retroSessionId." | Replaced `loaded: boolean` with `loadedFor: number | null`. Guard changed to `if (this.loadedFor === retroSessionId) return`. `this.sections = []` cleared immediately on a new id before fetch (prevents stale flash). `this.loadedFor = retroSessionId` set only on successful fetch (errors leave it null/prior-id so a retry re-enters). |
+| 2 | LOW | `SprintContextPanel.vue` accepted `retroSessionId: number` prop but never used it (store looked up directly). | Removed the unused prop from `defineProps`. Corresponding `:retro-session-id` attribute removed from `RetroRoomView.vue`. |
+| 3 | LOW | Sprint Context toggle button in `RetroPhaseHeader.vue` missing `type="button"` (could submit a form) and `aria-pressed` (screen readers can't observe toggle state). | Added `type="button"` and `:aria-pressed="sprintContextOpen"` to the button element. |
+
+**Multi-retro nav path reasoning:** With `loadedFor: number | null` — user joins retro A → `fetchSprintContext(A)` runs, `loadedFor = A`, `sections = A-data`. User navigates to retro B → `RetroRoomView` unmounts/remounts (`sprintContextOpen` resets to `false`). `enterRoom()` calls `fetchSprintContext(B)` → `loadedFor (A) !== B` → guard does not early-return → `sections = []` cleared synchronously, then populated with B's response. If B's fetch fails, `loadedFor` stays `A` (not `B`) — but the view remounted fresh and `sprintContextOpen` is `false`; the stale error is only visible if the user explicitly opens the panel, in which case a subsequent `fetchSprintContext(B)` call still passes the guard and retries (because `loadedFor = A !== B`).
+
+**Build verification post-fix:**
+- `npm run build` (workspace) → **green** — 0 errors; both dashboard and retro emit (609 ms retro build).
+- `dotnet build SprintRituals.slnx --no-restore` → **green** — 0 errors, 9 pre-existing warnings (unchanged).

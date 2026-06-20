@@ -1,7 +1,7 @@
 # adhoc-ReflektFrontendMerge (RA5) — Communication Log
 
 **Branch:** main
-**Step:** reviewer:review (RA5-C re-review)
+**Step:** reviewer:review (RA5-B re-review)
 **Cycle:** 2/3
 **Team Mode:** standard+codex
 **Review Mode:** plan=critic (done, all 4 approved) · impl=reviewer+codex (round 1), reviewer-only (cycles 2–3)
@@ -10,7 +10,7 @@
 **Developer ID:** dev-ra5a (RA5-A done) · ac39668a3e1e9611a (RA5-C, unnamed)
 **Reviewer ID:** a6942a4a4a7fb7555 (RA5-A) · a2383af5f46e40b30 (RA5-C Step 2) · Codex: ab12d11e831bb07f0 (RA5-A) / a957a4c6d0024ec9b (RA5-C)
 **Sub-plan order:** A → C → B → D
-**Plan Steps Completed / Remaining:** [A1–5 ✅ committed 3070445] / [C1–4, B1–4, D1–4]
+**Plan Steps Completed / Remaining:** [A1–5 ✅ 3070445 · C1–4+Step5 ✅ 4a3bc75] / [B1–4, D1–4]
 **Questions Resolved:** [RA5-C Q1 (DTO 23→26), Q2 (VoteRepo method), Q3 (FOLD IN — user-confirmed), Q4 (claim 17)]
 
 ---
@@ -64,6 +64,21 @@
 | 43 | developer → TL | developer:implement | Step 5 COMPLETE. Collision resolved by merging Sprints INTO RetroSessions (GetSprintContext carve-out kept). 9 folder moves, 18 ns fixes, ~8 class renames, 5a/5c done, *Wire adapters removed. Gate PASS (7 survivors all carve-out). Builds+tests green. BLOCKER held byte-identical | — |
 | 44 | TL (verify) → src | reviewer:review | Verify clean: no rogue commits (git mv stages only), no fabrication. Gate spot-check independent: 29 sprint-files = Fokus carve-outs + `@sprint-rituals` package name; ZERO board-meaning. Confirmed | — |
 | 45 | TL → reviewer (resume) | reviewer:review | Re-review cycle 2/3: full Step-5 cleanup + 2 runtime fixes vs amended plan; verify gate + carve-out invariant + ns merge soundness + builds | — |
+| 46 | reviewer → TL | reviewer:review | APPROVED (cycle 2/3). BLOCKER fix byte-matched; gate PASS (survivors all Fokus carve-outs + @sprint-rituals); ns merge sound; carve-out held; builds+tests green; cycle-1 MEDIUM resolved. 1 LOW (CLAUDE.md prose) | — |
+| 47 | TL → git | close RA5-C | Commit 4a3bc75 (Reflekt + retro + RA5 docs, scoped). RA5-C DONE | — |
+| 48 | TL → dev-ra5a (resume) | developer:analyze | RA5-B Phase 1 analyze (plan-B-panel.md). Reusing live frontend dev (nexus spawns unavailable); briefed on RA5-C renames | — |
+| 49 | dev-ra5a → TL | developer:analyze | All clear, no questions. Folded findings closed: button host RetroPhaseHeader (mounted once joined), hydration in enterRoom() w/ loaded guard. sprintContextOpen = local ref (not store) | — |
+| 50 | TL → dev-ra5a (resume) | developer:implement | Implement RA5-B as analyzed | — |
+| 51 | dev-ra5a → TL | developer:implement | RA5-B complete: types+api, sprintContext store hydrated in enterRoom, RagBadge + SprintContextSectionCard + SprintContextPanel (slide-out), button on RetroPhaseHeader, RetroRoomView integration. Builds green. Skill-channel deviation (Options API per codebase convention) | — |
+| 52 | TL (verify) → audit | architect:donecheck | Verify clean: no rogue commits/fabrication; RA5-B files present | — |
+| 53 | TL → architect a7143bab (resume) | architect:donecheck | RA5-B done-check (reuse live architect). Verify folded findings + carve-out endpoint + re-run builds | — |
+| 54 | architect → TL | architect:donecheck | RA5-B Step 1 PASS — 4/4 implemented, both folded findings closed (mounted button host + enterRoom hydration), carve-out endpoint intact, wire shape field-for-field, Rule 4 (no assignee) held, builds re-run green. Non-blocking: skill read-channel substitution, smoke deferred | — |
+| 55 | TL → reviewer + Codex | reviewer:review | RA5-B round 1 (cycle 1/3): reviewer (reuse a2383af5) Step 2 + Codex (abdf7ac, fresh) cross-check. Codex → review-codex-B.md | — |
+| 56 | reviewer → TL | reviewer:review | REQUEST CHANGES. HIGH: sprintContext store cached by bare `loaded` not keyed by retroSessionId → retro A→B shows A's data (plan mandates retroSessionId key). 2 LOW (unused prop, button aria/type). All else correct (wire shape, RAG, guest fetch, mount/hydration). Done-check missed it | Done-check confirmed "loaded guard" but missed multi-retro stale-cache |
+| 57 | Codex → TL | reviewer:review | NO-GO. MAJOR: SAME cache-keying bug (independent confirm). BLOCKER FILE_MISSING (Fokus GetSprintContext path) = path artifact, DISMISSED (endpoint is in Reflekt.API, reviewed+passed). All else PASS. Recovered from job log (strand) | Codex file write blocked (read-only sandbox) |
+| 58 | TL → dev-ra5a (resume) | developer:implement | Fix cycle 1/3: HIGH cache-keying (loadedFor keyed) + 2 LOW. Codex FILE_MISSING dismissed | — |
+| 59 | dev-ra5a → TL | developer:implement | Fixes applied: loadedFor keying (guard + set-on-success + sections cleared on id change), unused prop removed, button type+aria-pressed. Builds green. TL confirmed keying at source | — |
+| 60 | TL → reviewer (resume) | reviewer:review | Re-review cycle 2/3: verify keying fix + 2 LOWs | — |
 
 ---
 
@@ -77,6 +92,7 @@
 |---|------|-------|-------------|
 | R1 | 07:29 RA5-A | Verify gate (`verify-gate.js`) recorded `verdict: skipped — unrecognized agent_type: dev-ra5a` for both analyze and implement stops. Custom spawn name not recognized by the gate → no automated verify signal this sub-plan. | Non-blocking. Rely on developer-reported green builds + architect done-check + reviewer. Attended, so advisory anyway. |
 | R2 | 07:28 RA5-A | Boundary detector false-positive: `dev-ra5a Write → implementation.md` logged as ADR-18 owner violation. Custom name `dev-ra5a` ≠ base role `developer`, but developer owns implementation.md (known false positive — strip suffix, compare base role). | No void. Not a real breach; implementation kept. |
+| R6 | 12:00 RA5-B | Codex review file strand (3rd): `review-codex-B.md` write blocked by read-only sandbox. Recovered verbatim from job log `task-mqmatp73-ywegs8.log`; TL wrote the file. Also: Codex emitted a spurious FILE_MISSING "BLOCKER" for a Fokus GetSprintContext path that doesn't exist by design (prompt-path artifact) — dismissed. | Pattern confirmed across all 3 Codex runs: file write always strands; recover from job log, never re-run. |
 | R5 | ~RA5-C review | nexus:* subagent types (architect/developer/reviewer/critic/po/learner/solo/team-lead) became UNAVAILABLE for NEW Agent spawns mid-run (platform change). Live agents already spawned remain addressable via SendMessage by agentId. | RA5-C completing by resuming existing live agents. Risk for RA5-B/RA5-D: no fresh nexus spawns — will resume existing agents or use codex/general-purpose/claude fallbacks; flag to user before RA5-B. |
 | R4 | 09:16 RA5-C | Verify gate ran on the unnamed main developer (agent_type recognized → verdict `pass`) but project verify set is empty (`commands_count: 0`) → vacuous pass, not a real build signal. Helper subagents (`general-purpose`) still recorded `skipped`. | Architect done-check re-runs builds itself. Unnamed spawn fixed agent-type recognition but the gate has no commands to run. |
 | R3 | 07:45 RA5-A | Codex review file strand: Codex computed NO-GO + F1–F4 but its `review-codex.md` write was blocked by the read-only session sandbox (apply_patch + Set-Content both declined). | Recovered verbatim from runtime job log `task-mqm1ntv0-tt5kqd.log`; TL wrote `review-codex.md` from recovery. Did NOT re-run Codex. |

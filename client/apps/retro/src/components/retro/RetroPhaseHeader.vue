@@ -44,6 +44,18 @@
           Votes: {{ remainingBudget }}/{{ votesPerParticipant }}
         </BaseBadge>
 
+        <!-- Sprint Context button (all phases, all roles incl. guests) -->
+        <button
+          type="button"
+          class="px-3 py-1.5 text-sm font-medium rounded-[--radius-sm] transition-colors cursor-pointer"
+          :class="sprintContextOpen ? 'bg-primary-600 text-white' : 'bg-surface-raised text-text-secondary hover:bg-border'"
+          :title="sprintContextButtonTooltip"
+          :aria-pressed="sprintContextOpen"
+          @click="$emit('toggle-sprint-context')"
+        >
+          Sprint Context
+        </button>
+
         <!-- SM controls -->
         <template v-if="isScrumMaster && !isClosed">
           <button
@@ -100,15 +112,19 @@ const props = defineProps<{
   writingTimerDefault: number
   votingTimerDefault: number
   discussingTimerDefault: number
+  sprintContextOpen: boolean
 }>()
 
 defineEmits<{
   'advance-phase': []
   'close-retro-session': []
   'toggle-ready': []
+  'toggle-sprint-context': []
 }>()
 
 const showReadinessTooltip = ref(false)
+
+const sprintContextButtonTooltip = "Open the sprint context panel — anonymized Fokus metrics for the sprint(s) this retro covers."
 
 const isTimedPhase = computed(() =>
   props.currentPhase === 'Writing' ||

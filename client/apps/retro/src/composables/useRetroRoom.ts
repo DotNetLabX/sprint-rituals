@@ -11,6 +11,7 @@ import { useCardGroupStore } from '../stores/cardGroup'
 import { useReportStore } from '../stores/report'
 import { useReadinessStore } from '../stores/readiness'
 import { usePreviousActionsStore } from '../stores/previousActions'
+import { useSprintContextStore } from '../stores/sprintContext'
 
 export function useRetroRoom(retroSessionId: number) {
   const guestStore = useGuestStore()
@@ -25,6 +26,7 @@ export function useRetroRoom(retroSessionId: number) {
   const readinessStore = useReadinessStore()
 
   const previousActionsStore = usePreviousActionsStore()
+  const sprintContextStore = useSprintContextStore()
 
   const kicked = ref(false)
   const busy = ref(false)
@@ -53,6 +55,7 @@ export function useRetroRoom(retroSessionId: number) {
       cardGroupStore.fetchGroups(retroSessionId),
       retroSessionStore.fetchRetroSessionSummary(retroSessionId),
       previousActionsStore.fetchPreviousActions(retroSessionId),
+      sprintContextStore.fetchSprintContext(retroSessionId),
     ])
     if (retroSessionStore.currentSummary) voteStore.votesPerParticipant = retroSessionStore.currentSummary.votesPerParticipant
     await voteStore.fetchMyVotes(retroSessionId)

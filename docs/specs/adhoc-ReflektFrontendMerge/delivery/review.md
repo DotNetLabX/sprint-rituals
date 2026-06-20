@@ -298,3 +298,203 @@ None. No sub-80-confidence findings.
 | Migration shape | PASS | Read `20260620090016_RenameBoardFkSprintIdToRetroSessionId.cs` | `RenameColumn` for all 4 columns; FK drop/recreate for SQLite constraint update (data preserved) |
 
 *Status: SUPERSEDED by Cycle 2/3 — reviewer, 2026-06-20 (Cycle 1/3 record)*
+
+---
+
+# RA5-B — Sprint-Context Panel UI: Review
+
+## RA5-B — Step 1 Done-Check
+
+**Plan:** `plan-B-panel.md` · **Implementation:** `implementation.md` (RA5-B section, lines 374-459)
+
+**Pre-commitment predictions (before reading implementation against source):** given the critic-folded H1/H2, the three most likely gaps were (1) the button still mounted on a never-rendered host (`PageToolbar`) so AC2 silently fails; (2) the TS types drifting from `GetSprintContextQuery.cs` on a nullable/camelCase field; (3) `sprintContextOpen` smuggled into store state rather than a local view ref. All three were checked at source — none materialized.
+
+**Verify-gate note:** the platform verify gate skipped this run (developer agent is named). Build claims were **re-run by the architect** — `dotnet build` (green, 0 errors) and `npm run build` (both apps green, `vue-tsc --build` clean) — not assumed from implementation.md.
+
+### Required panel-UI checks
+
+**1 — Folded critic findings closed (H1 + H2).**
+- **H1 (button host actually mounts):** the "Sprint Context" button lives on `RetroPhaseHeader.vue:47-54` (`@click="$emit('toggle-sprint-context')"`), which `RetroRoomView.vue` renders inside the `v-else` branch (line 23-24) — the `joined === true` arm (reached only after `kicked`/`loading`/`!joined` are ruled out). So it mounts on an actually-rendered host, not the never-mounted `PageToolbar`. AC2/AC4 (button in every phase, incl. guest) holds: no phase or role gate on the button.
+- **H2 (hydration locus):** `useRetroRoom.ts:58` calls `sprintContextStore.fetchSprintContext(retroSessionId)` inside `enterRoom()`'s `Promise.all([...])` (line 51-58) — the existing hydration orchestrator, after guest join. The store (`stores/sprintContext.ts`) is **cache-only**: a `fetchSprintContext` action with a `loaded` guard (`if (this.loaded) return`, line 14), no self-`onMounted`. Composable-orchestrates / store-holds split honored.
+
+**2 — Endpoint + carve-out + guest-aware fetch.**
+- The panel reads `GET /api/retro-sessions/${retroSessionId}/sprint-context` (`api/sprintContext.ts:9`). The backend carve-out endpoint `GetSprintContextEndpoint.cs:13` is `[HttpGet("/api/retro-sessions/{retroSessionId}/sprint-context")]` — **NOT renamed** (the `sprint-context` segment means a *Fokus* sprint; it survived RA5-C, re-confirmed). Client targets it correctly, byte-for-byte.
+- **Guest-aware fetch:** `X-Guest-Token` header set from `useGuestStore().token` when present + `credentials: 'include'` (lines 5-12), matching the `report.ts`/`previousActions.ts` convention (critic M1 closed). 404 → typed error (`{ status: 404 }`) the store can branch on; the store only sets `error` on transport/404, treats any 200 (incl. `cached`/`unavailable`) as success — Flow 3 honored.
+
+**3 — Wire shape field-for-field vs `GetSprintContextQuery.cs` (camelCase) + RAG tokens.**
+Verified field-by-field against the shipped DTO — exact camelCase match:
+
+| C# (`GetSprintContextQuery.cs`) | TS (`types/sprintContext.ts`) |
+|---|---|
+| `SprintContextResponse(Sprints)` | `{ sprints }` |
+| `SprintContextSection`: `SprintId/SprintName/StartDate/EndDate/Freshness` | `sprintId/sprintName/startDate/endDate/freshness` |
+| `CompletionRate/CompletionRag/DisruptionRate/DisruptionRag/CarryOverRate/CarryOverRag/HealthScore/HealthRag` | matching camelCase, all `?: number\|null` / `string\|null` |
+| `AddedMidSprint/AddedMidSprintOverflow` | `addedMidSprint?: ScopeAdditionDto[]\|null` / `addedMidSprintOverflow?` |
+| `ScopeAdditionDto(TicketKey, Summary, StoryPoints)` | `{ ticketKey, summary, storyPoints? }` — **no assignee** (Rule 4 structurally held) |
+
+RAG mapping (`RagBadge.vue:15-20`): `"green"→success`, `"amber"→warning`, `"red"→danger`, else `default` — badge tokens (`badge-success/warning/danger`, already in the `main.css` safelist). Plan's "green/amber/red → badge tokens" satisfied.
+
+**4 — `sprintContextOpen` is a local view ref (not store state).** `RetroRoomView.vue:134` `const sprintContextOpen = ref(false)` — local view state, same pattern as `reportingView`. Passed down as `:sprint-context-open` prop and toggled via `@toggle-sprint-context="sprintContextOpen = !sprintContextOpen"`. The store holds only data (`sections/loading/error/loaded`), never panel open/close. Confirmed correct.
+
+**5 — Builds re-run (not assumed).** `dotnet build SprintRituals.slnx` → **0 errors**, 6 pre-existing NU1903 warnings. `npm run build` → **both apps green**, retro 1881 modules transformed, `vue-tsc --build` clean (the new panel SFCs + TS types compile without type errors). (implementation.md line 439 says "9 warnings"; actual is 6 — benign count drift, not load-bearing, same as the RA5-A section.)
+
+### Step dispositions
+
+| Step | Disposition | Notes |
+|------|-------------|-------|
+| 1 — Types + API module | Implemented | `types/sprintContext.ts` mirrors the DTO field-for-field (camelCase, no assignee); `api/sprintContext.ts` `getSprintContext()` hits the carve-out endpoint with guest-aware fetch + typed 404. Documented deviation: retro app has no `apiFetch` wrapper → raw `fetch` + inline guest headers per `report.ts` (valid — codebase convention; skill prescribes the dashboard pattern). |
+| 2 — Pinia store + hydration wire | Implemented | `stores/sprintContext.ts` cache-only with `loaded` guard (Rule 8); fetch wired into `useRetroRoom.enterRoom()` `Promise.all` (H2). Documented deviation: Options API store (not setup store) to match retro app's exclusive Options-API convention (valid). |
+| 3 — Panel components + top-bar button | Implemented | `RagBadge.vue` (L4), `SprintContextSectionCard.vue` (L3, null-guards every metric, `addedMidSprint != null` gate, first-3 + "+N more" overflow, cached/unavailable states, no assignee), `SprintContextPanel.vue` (L1, `<Transition>` slide-out not `BaseModal`, multi-sprint header on `sections.length > 1`); button on `RetroPhaseHeader.vue` (H1), every phase/role/guest. |
+| 4 — Integration + verification | Implemented | Panel + `sprintContextOpen` local ref wired into `RetroRoomView.vue` as `v-if="joined"` sibling overlay; AC checklist documented (code-inspection + build-verified; manual browser smoke deferred-by-policy — no automated frontend suite). |
+
+### Skill-conformance note (not a gap)
+
+Steps 1-3 carried non-`None` skills (`create-vue-feature`, `pinia-patterns`, `vue-component-architecture`, `tailwind-theme`, `vue-patterns`). implementation.md `## Skills Used` reports the **Skill tool failed to invoke all five** (not registered in this run's available-skills list) — the developer read each `SKILL.md` from the plugin cache and applied the pattern (the levels hierarchy L4/L3/L1, token-based classes, cache-once store are all visibly present in the code). This is a **read-channel substitution**, honestly disclosed, not a skipped skill — the skill *content* was applied, only the Skill-tool invocation channel failed. Two documented pattern deviations (raw `fetch` vs `apiFetch`; Options API vs setup store) are both "match the established retro-app convention" — valid, not violations. Logged as a tooling/skill-gap lesson (the nexus-dotnet frontend skills not being surfaced to a named developer agent is the recurring seam). No conformance gap that blocks the done-check.
+
+### Notes / non-blocking observations (for the reviewer)
+
+- **Manual browser smoke** of the AC checklist (button visible in every phase + as guest, Fokus-down → cached/unavailable rendering, reopen → no second fetch) is deferred-by-policy — the reviewer is the runtime gate. Code inspection confirms each AC's structural mechanism (the `loaded` guard, the `v-if`/`v-else-if` state branches, the no-gate button).
+- **`storyPoints` type:** C# `decimal? StoryPoints` ↔ TS `storyPoints?: number | null` — JSON serializes `decimal` as a number, so the TS `number` is correct (System.Text.Json default). Same for the `*Rate` decimals. No precision concern at the display layer (rendered as `Math.round(rate * 100)%`).
+
+**Verdict: PASS**
+
+*Status: COMPLETE — architect, 2026-06-20*
+
+---
+
+## RA5-B — Step 2 Code Review
+
+## Reviewed By
+Reviewer agent (nexus:reviewer). Cycle 2/3 verdict 2026-06-20 (re-review after fixes); Cycle 1/3 record retained below. All fixes traced at source; frontend build re-run independently.
+
+## Verdict: APPROVED
+
+The Cycle-1 HIGH (cache not keyed by `retroSessionId`) and both LOWs are fixed correctly, with no regressions. All Cycle-1 positives (wire shape, RAG tokens, guest fetch, states, slide-out, mount gate, hydration) still hold.
+
+---
+
+## Cycle 2/3 — Re-review of fixes
+
+**Re-review verdict: APPROVED.** Three fixes verified at source + a behavioral trace of the multi-retro path; frontend build green.
+
+### HIGH fix — cache now keyed by `retroSessionId` (verified)
+
+`stores/sprintContext.ts:11-28`:
+- `loadedFor: number | null` replaces the bare `loaded` boolean (line 11).
+- Guard `if (this.loadedFor === retroSessionId) return` (line 15) — same-retro reopen still triggers exactly one pull (Rule 8 / AC honored).
+- `loadedFor` set **only on success** (line 22, inside `try` after the await) — a failed fetch leaves `loadedFor` at its prior value (≠ the failed id), so re-entry retries.
+- `sections` cleared at fetch entry (line 18, before the await) — combined with `loading = true` (line 16), the panel shows the loading state during the B-fetch, never A's stale sections.
+
+**Behavioral trace (the path the bug was on):**
+- A→B: `enterRoom(B)` → `fetchSprintContext(B)` → `loadedFor===A` ≠ B → proceeds → `sections=[]` + `loading=true` → on success `sections=B`, `loadedFor=B`. **No stale-flash** (loading state covers the gap; sections cleared synchronously before await).
+- B-fetch failure: `catch` sets `error`, leaves `loadedFor=A` (≠B). Panel shows error, sections empty. Re-entering B re-runs `enterRoom(B)` → guard `A≠B` → **retries**. Correct.
+- No lingering readers of the old `.loaded` field on this store (`rg` confirms the only `.loaded` hit is the unrelated `authStore.loaded`).
+
+### LOW fixes — verified
+
+- **Unused prop removed:** `SprintContextPanel.vue:69-71` declares only `open` now; `RetroRoomView.vue:72-76` no longer passes `:retro-session-id`. No `retroSessionId` reference remains in the panel.
+- **Button a11y:** `RetroPhaseHeader.vue:48-54` — `type="button"` (line 49) + `:aria-pressed="sprintContextOpen"` (line 53) added. Toggle state now exposed to assistive tech; the close button's `aria-label` was already correct.
+
+### Cycle-2 Evidence
+
+| Check | Result | Command | Output |
+|-------|--------|---------|--------|
+| Cache keyed by retroSessionId | PASS | Read `stores/sprintContext.ts:11-28` | `loadedFor` guard; set on success only; sections cleared at entry |
+| No stale `.loaded` readers | PASS | `rg "\.loaded\b"` over store/panel/room/view | Only unrelated `authStore.loaded` |
+| Unused prop removed | PASS | Read `SprintContextPanel.vue:69-71` + `RetroRoomView.vue:72-76` | `open` only; no `:retro-session-id` |
+| Button a11y | PASS | Read `RetroPhaseHeader.vue:48-54` | `type="button"` + `:aria-pressed="sprintContextOpen"` |
+| Frontend build | PASS | `npm run build` at `client/` | `vue-tsc --build` clean; retro 1881 modules; emits `wwwroot/retro/`; 0 type errors |
+
+### Gaps (unchanged from Cycle 1, non-blocking)
+- Manual browser smoke of the AC checklist (incl. the now-fixed multi-retro nav: A→B shows B's context, no stale-flash) remains deferred-by-policy — no automated frontend suite, reviewer/operator is the runtime gate. The fix makes the multi-retro path correct by construction; a smoke would confirm it end-to-end.
+
+*Status: COMPLETE — reviewer, 2026-06-20 (Cycle 2/3)*
+
+---
+
+## Cycle 1/3 — original review (record; superseded by Cycle 2 above)
+
+## Pre-commitment Predictions
+
+| Prediction | Outcome |
+|-----------|---------|
+| TS types drift from `GetSprintContextQuery.cs` on a nullable/camelCase field | Refuted — field-for-field exact match, all nullables optional. |
+| RAG green/amber/red → badge tokens inverted | Refuted — `green→success`, `amber→warning`, `red→danger`, `default` fallback. Correct, not inverted. |
+| `addedMidSprint` first-3 + overflow logic wrong | Refuted — `slice(0, 3)` + `addedMidSprintOverflow` "+N more"; matches Rule 7 (ordering is backend-owned, deferred to RA5-D, transparent to panel). |
+| `loaded` guard satisfies "fetch once" but loses per-`retroSessionId` keying | **Confirmed — HIGH finding below.** The done-check verified the guard against Rule 8 "fetch once" but not against the plan's "keyed by `retroSessionId`" clause. |
+| Button mounted on a never-rendered host / phase-gated | Refuted — on `RetroPhaseHeader` (renders every phase), no phase/role gate. |
+
+## Findings
+
+### [HIGH] Session cache is not keyed by `retroSessionId` — second retro shows the first retro's context
+**File:** `client/apps/retro/src/stores/sprintContext.ts:13-20`
+**Origin:** implementation
+**Issue:** The store's fetch-once guard is a bare boolean `loaded`, not keyed by `retroSessionId`. The plan Step 2 instruction is explicit: *"fetch the context at most once per retro session (Rule 8) and cache it for the session, **keyed by `retroSessionId`**"*. The implementation dropped the keying.
+
+The `sprintContext` store is a Pinia **singleton** (app-global, survives component remount) and is **never reset** (`rg "\$reset|loaded = false"` over `client/apps/retro/src` → zero). Critically, it is the **only** room-hydration store with a permanent fetch-once guard — every sibling store (`card`, `cardGroup`, `participant`, `report`, `previousActions`) re-fetches unconditionally in `enterRoom()`, so they self-correct on re-entry. `sprintContext` will not:
+
+1. User opens retro A → `enterRoom(A)` → `fetchSprintContext(A)` sets `loaded = true`, caches A's `sections`.
+2. User navigates to retro B (`/retro/:retroSessionId` deep-link or `router.push({ name: 'retro-session' })` from the list — both mount `RetroRoomView`) → `enterRoom(B)` → `fetchSprintContext(B)` hits `if (this.loaded) return` and **no-ops**.
+3. The panel for retro B renders the cached **retro-A** `sections` — wrong sprint metrics for the retro the user is in.
+
+This is a cross-retro data-correctness bug (silent wrong data, not an error), and it directly contradicts the plan mandate + the spec's privacy/accuracy intent (showing one retro's Fokus metrics under another retro's header). Reachable in normal SPA navigation: switching between two retros without a hard page reload is a first-class flow (the retro list → retro detail → room path, and guest tokens are per-retro).
+**Fix:** Key the guard by the requested id. Minimal change in `fetchSprintContext`:
+```ts
+async fetchSprintContext(retroSessionId: number) {
+  if (this.loadedFor === retroSessionId) return   // replace the bare `loaded` flag
+  this.loading = true; this.error = null
+  try {
+    const response = await getSprintContext(retroSessionId)
+    this.sections = response.sprints
+    this.loadedFor = retroSessionId
+  } catch (e) { this.error = ...; this.loadedFor = null }
+  finally { this.loading = false }
+}
+```
+(add `loadedFor: number | null` to state, drop `loaded`; update `SprintContextPanel`'s no-op reads if any). Reopening the *same* retro's panel still triggers exactly one pull (Rule 8 / AC honored); entering a *different* retro re-fetches. Alternatively, `$reset()` the store on room unmount in `useRetroRoom.onUnmounted`, but per-id keying is the plan's stated design and is more robust.
+**Confidence:** 92/100
+
+### [LOW] `SprintContextPanel` declares `retroSessionId` prop but never uses it
+**File:** `client/apps/retro/src/components/retro/SprintContextPanel.vue:71`; passed at `RetroRoomView.vue:75`
+**Origin:** implementation
+**Issue:** The panel takes a `retroSessionId` prop but never reads it — the fetch is orchestrated by `useRetroRoom.enterRoom()`, and the panel reads `useSprintContextStore()` directly. Dead prop. (It would become *used* if the keyed-fetch fix moved a guard into the panel, but as written it is unused.)
+**Fix:** Remove the prop (and the `:retro-session-id` binding) unless the HIGH fix repurposes it. Non-blocking.
+**Confidence:** 88/100
+
+### [LOW] Sprint Context toggle button has no `aria-pressed` / `type="button"`
+**File:** `client/apps/retro/src/components/retro/RetroPhaseHeader.vue:48-55`
+**Origin:** implementation
+**Issue:** The button is a real toggle (open/closed, reflected visually via the `sprintContextOpen` class swap) but exposes no `aria-pressed` state to assistive tech, and omits `type="button"`. The visible text label "Sprint Context" + `title` tooltip satisfy *labeling*, so this is a minor a11y polish, not a labeling failure. (No enclosing `<form>`, so the missing `type` is harmless here.)
+**Fix:** Add `type="button"` and `:aria-pressed="sprintContextOpen"`. The close button (`SprintContextPanel.vue:19`) already has a correct `aria-label` — good. Non-blocking.
+**Confidence:** 85/100
+
+## Positive Observations
+- **Wire shape is exact.** `types/sprintContext.ts` matches `GetSprintContextQuery.cs` field-for-field in camelCase, including top-level `Sprints`→`sprints` and every nullable metric as optional. No JSON naming-policy override exists in Host/Reflekt, so default camelCase serialization holds the contract. `ScopeAdditionDto` has no assignee field — Rule 4 privacy structurally guaranteed end-to-end.
+- **RAG mapping correct and not inverted:** `green→success→badge-success`, `amber→warning→badge-warning`, `red→danger→badge-danger`, `default` for null/unknown. Per-field RagBadge gated on the rag string being present.
+- **Metric/state gating sound:** metrics grid suppressed for `unavailable`; each rate null-guarded (shows "—"); cached badge + tooltip on `freshness === 'cached'`; `addedMidSprint != null` gate; first-3 (`slice(0,3)`) + `addedMidSprintOverflow` "+N more" — matches Rule 6/7. Health score displayed raw (Rule 3 — never recomputed).
+- **Tooltip copy byte-matches `help.tooltips.md`** for all 10 elements (button, multi-sprint header, 4 metrics, added-mid-sprint, +N more, cached, unavailable).
+- **Mount gate + hydration sound:** button on `RetroPhaseHeader` (every phase, no role gate — Rule 1/Flow 4); panel is a `v-if="joined"` **sibling** overlay (not nested in the joined block); fetch in `enterRoom()`'s `Promise.all` after join; `loaded` guard prevents double-fetch within a single retro entry. `sprintContextOpen` is a local view `ref` (not store state) — correct local-ref toggle.
+- **Guest-aware fetch** (`X-Guest-Token` + `credentials: 'include'`) matches `report.ts`; endpoint is `[AllowAnonymous]` so the header is harmless and convention-uniform; 404 → typed error; any 200 (incl. cached/unavailable) → success, error only on transport/404 (Flow 3).
+- **Slide-out** uses `<Transition>` with `translate-x-full`↔`translate-x-0` (not `BaseModal`, per plan); right-aligned `fixed inset-y-0 right-0`, z-40.
+
+## Gaps
+- Manual browser smoke of the AC checklist (button in every phase/as guest; Fokus-down cached/unavailable rendering; reopen → no second fetch) remains deferred-by-policy (no automated frontend suite). Note the HIGH bug means the "reopen → no second fetch" AC passes for the *same* retro but the cache is *wrong* across *different* retros — a manual smoke that only reopens within one retro would not surface it; the multi-retro path must be smoked after the fix.
+- Initial-fetch failure leaves `loaded=false` (or `loadedFor=null` after the fix) and shows the error state with no in-panel retry — acceptable (a fresh room entry retries), not a finding.
+
+## Open Questions
+None — all findings ≥80 confidence.
+
+## Evidence
+| Check | Result | Command | Output |
+|-------|--------|---------|--------|
+| Frontend build | PASS | `npm run build` at `client/` | `vue-tsc --build` clean; retro 1881 modules; emits `wwwroot/retro/`; 0 type errors |
+| Wire shape vs DTO | PASS | Read `types/sprintContext.ts` vs `GetSprintContextQuery.cs` | Field-for-field camelCase match; no assignee |
+| Endpoint route match | PASS | Read `api/sprintContext.ts:9` vs `GetSprintContextEndpoint.cs:13` | `/api/retro-sessions/{retroSessionId}/sprint-context` byte-match; `[AllowAnonymous]` |
+| JSON casing override | PASS (none) | `rg "PropertyNamingPolicy\|JsonSerializerOptions"` Host + Reflekt | Zero — default camelCase holds |
+| RAG token mapping | PASS | Read `RagBadge.vue:15-20` + `BaseBadge.vue:21-28` | green→success, amber→warning, red→danger, default fallback — not inverted |
+| Tooltip copy | PASS | Diff components vs `help.tooltips.md` | All 10 strings byte-match |
+| Cache keyed by retroSessionId | **FAIL** | Read `stores/sprintContext.ts:13-20`; `rg "\$reset\|loaded = false"` → zero | Bare `loaded` boolean, never reset, not keyed by id — HIGH finding |
+| Mount gate / hydration | PASS | Read `RetroRoomView.vue:23,72-77`, `useRetroRoom.ts:51-67` | Button in joined arm; panel `v-if="joined"` sibling; fetch in `enterRoom` Promise.all |
+| Sibling stores re-fetch pattern | PASS | `rg "loaded\|return"` across stores | sprintContext is the ONLY store with a permanent fetch-once guard (others self-correct) |
+
+*Status: SUPERSEDED by Cycle 2/3 — reviewer, 2026-06-20 (Cycle 1/3 record)*
