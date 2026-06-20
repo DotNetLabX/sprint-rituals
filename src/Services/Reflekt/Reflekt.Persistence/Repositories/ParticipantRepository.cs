@@ -19,5 +19,11 @@ public sealed class ParticipantRepository(ReflektDbContext db) : Repository<Part
         => Db.Participants
             .AnyAsync(p => p.RetroSessionId == retroSessionId && p.DisplayName.ToLower() == displayName.ToLower(), ct);
 
+    // Authenticated suite members are keyed by Identity Person, not display name — used to make the
+    // join idempotent so a returning member (reload, or re-opening a closed retro) re-enters cleanly.
+    public Task<Participant?> FindByPersonIdAsync(int retroSessionId, int personId, CancellationToken ct)
+        => Db.Participants
+            .SingleOrDefaultAsync(p => p.RetroSessionId == retroSessionId && p.PersonId == personId, ct);
+
     public void Remove(Participant participant) => Db.Participants.Remove(participant);
 }
