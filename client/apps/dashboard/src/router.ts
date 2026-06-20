@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from './stores/authStore'
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory('/dashboard/'),
   routes: [
     {
       path: '/login',

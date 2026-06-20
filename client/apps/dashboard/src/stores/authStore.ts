@@ -1,7 +1,8 @@
-import { defineStore } from 'pinia'
+﻿import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { AuthUser } from '../types'
-import { getMe, logout as apiLogout } from '../api/auth'
+import { fetchMe as sharedFetchMe } from '@sprint-rituals/shared'
+import { logout as apiLogout } from '../api/auth'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<AuthUser | null>(null)
@@ -15,7 +16,8 @@ export const useAuthStore = defineStore('auth', () => {
   async function fetchMe() {
     loading.value = true
     try {
-      user.value = await getMe()
+      // Shared helper sends credentials: 'same-origin' explicitly; returns null on 401
+      user.value = await sharedFetchMe() as AuthUser | null
     } catch {
       user.value = null
     } finally {
@@ -31,7 +33,7 @@ export const useAuthStore = defineStore('auth', () => {
       // ignore errors on logout
     }
     user.value = null
-    window.location.href = '/login'
+    window.location.href = '/dashboard/login'
   }
 
   return {
@@ -45,3 +47,4 @@ export const useAuthStore = defineStore('auth', () => {
     logout
   }
 })
+

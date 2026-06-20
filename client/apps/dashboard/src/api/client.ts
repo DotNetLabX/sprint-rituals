@@ -1,4 +1,4 @@
-const BASE_URL = '/api'
+﻿const BASE_URL = '/api'
 
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const headers: Record<string, string> = { ...options?.headers as Record<string, string> }
@@ -12,7 +12,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
   })
 
   if (response.status === 401 && path !== '/auth/me') {
-    window.location.href = '/login'
+    window.location.href = '/dashboard/login'
     return undefined as unknown as T
   }
 
@@ -27,3 +27,4 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
 
   return response.json()
 }
+

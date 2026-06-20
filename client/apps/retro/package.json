@@ -1,0 +1,17 @@
+{
+  "name": "retro",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --build && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@sprint-rituals/shared": "*",
+    "lucide-vue-next": "^1.0.0",
+    "vue-router": "^5.0.4"
+  },
+  "devDependencies": {}
+}

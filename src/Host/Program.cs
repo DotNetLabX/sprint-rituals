@@ -48,10 +48,26 @@ await app.Services.SeedReflektDataAsync();
 
 // === Use ===
 app.UseMiddleware<GlobalExceptionMiddleware>();
-app.UseStaticFiles();
+
+// Per-prefix static file serving — each SPA lives in its own wwwroot subfolder.
+// Registration order matters: static files before auth so assets are served without cookie checks.
+app.UseStaticFiles(new StaticFileOptions
+{
+    RequestPath = "/dashboard",
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
+        Path.Combine(builder.Environment.WebRootPath, "dashboard"))
+});
+app.UseStaticFiles(new StaticFileOptions
+{
+    RequestPath = "/retro",
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
+        Path.Combine(builder.Environment.WebRootPath, "retro"))
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
 
+// API + hub endpoints registered before any SPA fallback so /api/*, /auth/*, /hubs/retro always match first.
 app.MapIdentityEndpoints();
 app.MapIdentityGrpcServices();
 
@@ -73,7 +89,18 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
-app.MapFallbackToFile("index.html");
+// Per-prefix SPA fallbacks — deep links under each prefix serve the right index.html on hard refresh.
+// Registered after all API/hub routes so /api/*, /auth/*, /hubs/* are never swallowed.
+app.MapFallbackToFile("/dashboard/{*path:nonfile}", "dashboard/index.html");
+app.MapFallbackToFile("/retro/{*path:nonfile}", "retro/index.html");
+
+// Thin routing shell at /: redirect signed-in users to /dashboard, unauthenticated to /dashboard/login.
+// Default is dashboard login — per plan Step 4 open question resolved to dashboard as the default module.
+app.MapGet("/", (HttpContext ctx) =>
+    ctx.User.Identity?.IsAuthenticated == true
+        ? Results.Redirect("/dashboard/")
+        : Results.Redirect("/dashboard/login"))
+    .ExcludeFromDescription();
 
 app.Run();
 
