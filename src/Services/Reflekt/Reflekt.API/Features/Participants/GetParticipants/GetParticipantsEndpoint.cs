@@ -6,10 +6,10 @@ using AuthPolicies = Reflekt.API.Auth.Policies;
 
 namespace Reflekt.API.Features.Participants.GetParticipants;
 
-public sealed record GetParticipantsRequest(int SprintId);
+public sealed record GetParticipantsRequest(int RetroSessionId);
 
 [Authorize(Policy = AuthPolicies.OwnerOrScrumMaster)]
-[HttpGet("/api/sprints/{sprintId}/participants")]
+[HttpGet("/api/retro-sessions/{retroSessionId}/participants")]
 [Tags("Participants")]
 public sealed class GetParticipantsEndpoint(
     RetroSessionRepository retroSessionRepository,
@@ -19,14 +19,14 @@ public sealed class GetParticipantsEndpoint(
 {
     public override async Task HandleAsync(GetParticipantsRequest request, CancellationToken ct)
     {
-        var sprint = await retroSessionRepository.GetByIdAsync(request.SprintId, ct);
-        if (sprint is null) { await Send.NotFoundAsync(ct); return; }
+        var session = await retroSessionRepository.GetByIdAsync(request.RetroSessionId, ct);
+        if (session is null) { await Send.NotFoundAsync(ct); return; }
 
         var isGuestToken = User.FindFirstValue("participantId") is not null;
 
         if (isGuestToken)
         {
-            if (!int.TryParse(User.FindFirstValue("sprintId"), out var claimSprintId) || claimSprintId != request.SprintId)
+            if (!int.TryParse(User.FindFirstValue("retroSessionId"), out var claimRetroSessionId) || claimRetroSessionId != request.RetroSessionId)
             {
                 await Send.UnauthorizedAsync(ct);
                 return;
@@ -35,7 +35,7 @@ public sealed class GetParticipantsEndpoint(
         else
         {
             var userId = User.GetPersonId();
-            var team = await teamRepository.GetByIdAsync(sprint.TeamId, ct);
+            var team = await teamRepository.GetByIdAsync(session.TeamId, ct);
             if (team is null || team.OwnerId != userId)
             {
                 await Send.ForbiddenAsync(ct);
@@ -43,7 +43,7 @@ public sealed class GetParticipantsEndpoint(
             }
         }
 
-        var participants = await participantRepository.GetBySprintIdAsync(request.SprintId, ct);
+        var participants = await participantRepository.GetByRetroSessionIdAsync(request.RetroSessionId, ct);
         await Send.OkAsync(participants.Select(p => p.Adapt<ParticipantResponse>()).ToList(), ct);
     }
 }

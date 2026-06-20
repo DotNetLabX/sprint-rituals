@@ -30,46 +30,46 @@ internal static class DbInitializer
             team = await db.Teams.FirstAsync(ct);
         }
 
-        RetroSession sprint;
+        RetroSession session;
         if (!await db.RetroSessions.AnyAsync(s => s.TeamId == team.Id, ct))
         {
             // dev-only seed: placeholder Fokus sprint id [1] satisfies the ≥1 invariant; no real Fokus sprint 1 guaranteed (same spirit as SeedOwnerPersonId sentinel)
-            sprint = RetroSession.Create("Sprint 1", team.Id, fokusSprintIds: [1]);
-            sprint.Start();
-            sprint.ClearDomainEvents();
-            db.RetroSessions.Add(sprint);
+            session = RetroSession.Create("Retro 1", team.Id, fokusSprintIds: [1]);
+            session.Start();
+            session.ClearDomainEvents();
+            db.RetroSessions.Add(session);
             await db.SaveChangesAsync(ct);
         }
         else
         {
-            sprint = await db.RetroSessions.FirstAsync(s => s.TeamId == team.Id, ct);
+            session = await db.RetroSessions.FirstAsync(s => s.TeamId == team.Id, ct);
         }
 
-        if (!await db.Participants.AnyAsync(p => p.SprintId == sprint.Id, ct))
+        if (!await db.Participants.AnyAsync(p => p.RetroSessionId == session.Id, ct))
         {
             string[] names = ["Ana", "Mihai", "Elena"];
             foreach (var name in names)
             {
-                var participant = Participant.Join(name, sprint.Id);
+                var participant = Participant.Join(name, session.Id);
                 participant.ClearDomainEvents();
                 db.Participants.Add(participant);
             }
             await db.SaveChangesAsync(ct);
         }
 
-        if (!await db.Cards.AnyAsync(c => c.SprintId == sprint.Id, ct))
+        if (!await db.Cards.AnyAsync(c => c.RetroSessionId == session.Id, ct))
         {
             var participants = await db.Participants
-                .Where(p => p.SprintId == sprint.Id)
+                .Where(p => p.RetroSessionId == session.Id)
                 .ToListAsync(ct);
 
             var cards = new[]
             {
-                Card.Create("Great team collaboration this sprint!", sprint.Id, participants[0].Id, ColumnType.Column1, CardType.Note, null),
-                Card.Create("CI pipeline was reliable throughout.", sprint.Id, participants[1].Id, ColumnType.Column1, CardType.Note, null),
-                Card.Create("Sprint planning took too long.", sprint.Id, participants[2].Id, ColumnType.Column2, CardType.Note, null),
-                Card.Create("Communication gaps between front and back.", sprint.Id, participants[0].Id, ColumnType.Column2, CardType.Note, null),
-                Card.Create("Update onboarding docs.", sprint.Id, participants[1].Id, ColumnType.ActionItems, CardType.ActionItem, participants[2].DisplayName),
+                Card.Create("Great team collaboration this retro!", session.Id, participants[0].Id, ColumnType.Column1, CardType.Note, null),
+                Card.Create("CI pipeline was reliable throughout.", session.Id, participants[1].Id, ColumnType.Column1, CardType.Note, null),
+                Card.Create("Planning took too long.", session.Id, participants[2].Id, ColumnType.Column2, CardType.Note, null),
+                Card.Create("Communication gaps between front and back.", session.Id, participants[0].Id, ColumnType.Column2, CardType.Note, null),
+                Card.Create("Update onboarding docs.", session.Id, participants[1].Id, ColumnType.ActionItems, CardType.ActionItem, participants[2].DisplayName),
             };
 
             foreach (var card in cards)
@@ -80,16 +80,16 @@ internal static class DbInitializer
             await db.SaveChangesAsync(ct);
         }
 
-        if (!await db.CardGroups.AnyAsync(g => g.SprintId == sprint.Id, ct))
+        if (!await db.CardGroups.AnyAsync(g => g.RetroSessionId == session.Id, ct))
         {
             var noteCards = await db.Cards
-                .Where(c => c.SprintId == sprint.Id && c.CardType == CardType.Note)
+                .Where(c => c.RetroSessionId == session.Id && c.CardType == CardType.Note)
                 .OrderBy(c => c.CreatedAt)
                 .ToListAsync(ct);
 
             foreach (var card in noteCards)
             {
-                var group = CardGroup.Create(sprint.Id, card.ColumnType);
+                var group = CardGroup.Create(session.Id, card.ColumnType);
                 group.ClearDomainEvents();
                 db.CardGroups.Add(group);
                 await db.SaveChangesAsync(ct);
@@ -99,7 +99,7 @@ internal static class DbInitializer
         }
 
         var firstWentWellCard = await db.Cards
-            .FirstOrDefaultAsync(c => c.SprintId == sprint.Id && c.ColumnType == ColumnType.Column1, ct);
+            .FirstOrDefaultAsync(c => c.RetroSessionId == session.Id && c.ColumnType == ColumnType.Column1, ct);
 
         if (firstWentWellCard is not null && !await db.EvidenceLinks.AnyAsync(e => e.CardId == firstWentWellCard.Id, ct))
         {
@@ -113,11 +113,11 @@ internal static class DbInitializer
         if (!await db.Votes.AnyAsync(ct))
         {
             var participants = await db.Participants
-                .Where(p => p.SprintId == sprint.Id)
+                .Where(p => p.RetroSessionId == session.Id)
                 .ToListAsync(ct);
 
             var cards = await db.Cards
-                .Where(c => c.SprintId == sprint.Id)
+                .Where(c => c.RetroSessionId == session.Id)
                 .OrderBy(c => c.CreatedAt)
                 .ToListAsync(ct);
 

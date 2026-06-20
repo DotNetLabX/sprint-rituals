@@ -141,3 +141,230 @@ Reviewer + Codex round-1 findings addressed. All blockers and majors resolved.
 **Build verification post-fix:**
 - `dotnet build SprintRituals.slnx --no-restore`: **green** — 0 errors, 6 warnings (pre-existing, unchanged).
 - `npm run build` (workspace): **green** — dashboard and retro both emit into `wwwroot/{dashboard,retro}` with 0 type errors.
+
+---
+
+# RA5-C — Board-Meaning Rename (sprint→RetroSession): Implementation
+
+**Status:** Complete
+**Date:** 2026-06-20
+**Plan:** `plan-C-renames.md`
+
+---
+
+## Steps
+
+### Step 1 — Domain properties, repo method renames, EF migration
+
+**What changed:**
+
+**Domain (already done in prior session):**
+- `Card.SprintId` → `Card.RetroSessionId`
+- `Card.ReviewedInSprintId` → `Card.ReviewedInRetroSessionId`
+- `CardGroup.SprintId` → `CardGroup.RetroSessionId`
+- `Participant.SprintId` → `Participant.RetroSessionId`
+- `Card.Create(sprintId)`, `Card.SetReviewStatus(reviewingSprintId)` → `retroSessionId`, `reviewingRetroSessionId`
+- `CardGroup.Create(sprintId)` → `retroSessionId`
+- `Participant.Join(sprintId)` → `retroSessionId`
+
+**Repository method renames (Reflekt.Persistence):**
+- `CardRepository`: `GetBySprintIdAsync` → `GetByRetroSessionIdAsync`, `GetUnreviewedActionItemsBySprintIdAsync` → `GetUnreviewedActionItemsByRetroSessionIdAsync`, `CountActionItemsBySprintIdAsync` → `CountActionItemsByRetroSessionIdAsync`, `GetActionItemsReviewedInSprintAsync` → `GetActionItemsReviewedInRetroSessionAsync`
+- `CardGroupRepository`: `GetBySprintIdAsync` → `GetByRetroSessionIdAsync`
+- `ParticipantRepository`: `GetBySprintIdAsync` → `GetByRetroSessionIdAsync`, `ExistsByDisplayNameAsync(sprintId)` → `retroSessionId`
+- `VoteRepository`: `GetParticipantIdsWithVotesInSprintAsync` → `GetParticipantIdsWithVotesForRetroSessionAsync`
+
+**Entity configurations (Reflekt.Persistence):**
+- Removed `.HasColumnName("SprintId")` from `CardConfiguration`, `CardGroupConfiguration`, `ParticipantConfiguration` — this was a mistake from the prior session that prevented EF from generating `RenameColumn`. Also removed `.HasColumnName("ReviewedInSprintId")` from `CardConfiguration`.
+
+**EF migration:**
+- `20260620090016_RenameBoardFkSprintIdToRetroSessionId.cs` — contains `RenameColumn` for `Cards.SprintId`, `Cards.ReviewedInSprintId`, `CardGroups.SprintId`, `Participants.SprintId` + matching index renames and FK drop/recreate.
+
+**API feature files — 26 request/command DTOs:**
+All 26 `SprintId` request fields renamed to `RetroSessionId` in: AddCardToGroup, ClearFocus, CreateGroup, DissolveGroup, FocusGroup, GetGroups, RemoveCardFromGroup, ToggleDiscussed, UpdateGroupTitle (CardGroups); CreateCard, DeleteCard, EditCard, ListCards (Cards); AttachEvidenceLink, DetachEvidenceLink (EvidenceLinks); GetCurrentParticipant, GetParticipants, JoinSprint, KickParticipant (Participants); GetPreviousActions (PreviousActions); GetParticipantReport, GetSprintReport (Reports); GetSprintSummary, UpdateColumns (Sprints); CastVote, GetMyVotes, RetractVote (Votes).
+
+**Additional files updated by Step 1:**
+- `TeamRepository.cs` — `g.SprintId`, `c.SprintId`, `p.SprintId` in cascade-delete LINQ → `RetroSessionId`
+- `DbInitializer.cs` — same property accesses in seed queries → `RetroSessionId`
+- `GuestTokenAuthenticationHandler.cs` — `participant.SprintId.ToString()` → `participant.RetroSessionId.ToString()` (claim value source; claim key `"sprintId"` renamed in Step 3)
+- `CardContracts.cs` — `CardResponse.SprintId` → `CardResponse.RetroSessionId` (already done prior session)
+- `CardGroupContracts.cs` — `CardGroupResponse.SprintId` → `CardGroupResponse.RetroSessionId`
+- `ParticipantContracts.cs` — `JoinSprintResponse.SprintId`, `ParticipantResponse.SprintId` → `RetroSessionId`
+- `FetchJob.cs` — `int SprintId` → `int RetroSessionId`
+- `ParticipantJoinTests.cs` — `const int SprintId = 42` → `const int RetroSessionId = 42`
+
+**Carve-outs respected:** `FokusSprintSnapshot.*`, `FokusSprintRef`, `GetSprintContext*`, all existing migrations — untouched.
+
+---
+
+### Step 2 — Backend route renames + frontend store URL + team-scoped (Q3 fold-in)
+
+**What changed:**
+
+**Backend routes (27 endpoint files):**
+All `[HttpXxx("/api/sprints/{sprintId}/...")]` → `[HttpXxx("/api/retro-sessions/{retroSessionId}/...")]`. Files: ListCards, CreateCard, EditCard, DeleteCard; AddCardToGroup, CreateGroup, DissolveGroup, FocusGroup, ClearFocus, GetGroups, RemoveCardFromGroup, ToggleDiscussed, UpdateGroupTitle; GetCurrentParticipant, GetParticipants, JoinSprint, KickParticipant; CastVote, GetMyVotes, RetractVote; AttachEvidenceLink, DetachEvidenceLink; GetParticipantReport, GetPreviousActions; GetSprintSummary, UpdateColumns.
+
+No team-scoped `/api/teams/{teamId}/sprints/{sprintId}` routes existed in Reflekt.API backend.
+
+**Frontend stores — flat routes (27 URL strings across 7 files):**
+- `stores/card.ts` (6), `stores/cardGroup.ts` (10), `stores/participant.ts` (5), `stores/previousActions.ts` (1), `stores/report.ts` (1), `stores/sprint.ts` (2), `stores/vote.ts` (3)
+
+**Frontend stores — team-scoped routes (Q3 fold-in, 9 URL strings):**
+- `stores/sprint.ts` (7): `fetchTeamSprints`, `fetchSprint`, `createSprint`, `startSprint`, `advancePhaseCheck`, `advancePhase`, `closeSprint`
+- `stores/report.ts` (1): `fetchReport`
+- `components/retro/PreviousActionsPanel.vue` (1): `setStatus`
+
+**Frontend TypeScript interfaces:**
+- `stores/card.ts` — `Card.sprintId` → `Card.retroSessionId`; all `sprintId` params → `retroSessionId`
+- `stores/cardGroup.ts` — `CardGroup.sprintId` → `CardGroup.retroSessionId`; all `sprintId` params → `retroSessionId`
+- `stores/participant.ts` — `Participant.sprintId` → `Participant.retroSessionId`; all `sprintId` params → `retroSessionId`
+- `stores/previousActions.ts`, `stores/vote.ts` — `sprintId` params → `retroSessionId`
+
+**Acceptance grep result:** `rg '/api/teams/[^/]*/sprints' client/apps/retro` → zero matches.
+
+---
+
+### Step 3 — Hub, claim, group-string, event renames
+
+**What changed:**
+
+**RetroHub (new) / SprintHub (deleted):**
+- `Hubs/SprintHub.cs` deleted; `Hubs/RetroHub.cs` created with class renamed `SprintHub` → `RetroHub`
+- Hub methods: `JoinSprint` → `JoinRetro`, `LeaveSprint` → `LeaveRetro`
+- `"sprintId"` claim reads in hub → `"retroSessionId"` (all 3 occurrences in `JoinRetro`, `ToggleReady`, `RequireScrumMasterAsync`)
+- `"sprint:{sprintId}"` group strings in hub → `"retro:{sprintId}"`
+
+**DependencyInjection.cs:**
+- `MapHub<SprintHub>` → `MapHub<RetroHub>`
+- Timer expiry `"sprint:{sprintId}"` → `"retro:{sprintId}"`
+
+**IHubContext<SprintHub> → IHubContext<RetroHub> (27 broadcast handlers):**
+All `Broadcast*Handler` files across CardGroups, Cards, EvidenceLinks, Participants, PreviousActions, Sprints, Votes updated. Using namespace updated.
+
+**"sprintId" claim key → "retroSessionId" (17 occurrences):**
+- `GuestTokenAuthenticationHandler.cs` (claim issue)
+- Hub `RetroHub.cs` (3 reads)
+- 13 endpoint files with guest-auth claim check (ListCards, GetGroups, CastVote, RetractVote, GetMyVotes, GetParticipants, GetCurrentParticipant, GetPreviousActions, GetParticipantReport, GetSprintReport, CreateCard, JoinSprint endpoints, plus AddCardToGroup)
+
+**"sprint:{id}" group prefix → "retro:{id}" (all broadcast handlers):**
+All `$"sprint:{...}"` interpolations in broadcast handlers and hub changed to `$"retro:{...}"`.
+
+**"SprintClosed" → "RetroClosed" + payload key:**
+- `BroadcastSprintClosedHandler.cs` — `"SprintClosed"` → `"RetroClosed"`, `sprintId = ...` → `retroSessionId = ...`
+
+**Frontend composable `useSprintHub.ts`:**
+- `.invoke('JoinSprint', ...)` → `.invoke('JoinRetro', ...)`
+- `.on('SprintClosed', ...)` → `.on('RetroClosed', ...)`
+- `ColumnConfigUpdated` payload field `sprintId` → `retroSessionId`
+- `build(sprintId)` / `connect(sprintId)` params → `retroSessionId`
+- `retroSessionId` used in `fetchCards`, `fetchGroups` calls
+- `ParticipantJoined` push constructs `{ retroSessionId, ... }` instead of `{ sprintId, ... }`
+
+**Stale comments removed:**
+- `SetReviewStatusEndpoint.cs` — 2 DO-NOT-TOUCH Q1/Q2 comments removed
+- `GetSprintReportEndpoint.cs` — stale claim carve-out comment removed
+
+---
+
+### Step 4 — Verification
+
+**Acceptance grep 1 — `SprintId` (non-migration, non-carve-out):** Confirmed zero board-meaning `SprintId` remain. All remaining occurrences are: old migration files (immutable history), model snapshot, `FokusSprintId`/`FokusSprintIds` carve-outs, `GetSprintContext` carve-outs, `PreviousSprintId` (Fokus sprint meaning), local variables (`claimSprintId`, `parsedSprintId`, `sprintId` method params in hub — camelCase, not matched by the `SprintId` grep).
+
+**Acceptance grep 2 — `/api/teams/{teamId}/sprints` in client/apps/retro:** Zero matches.
+
+**Build:** `dotnet build SprintRituals.slnx --no-restore` → 0 errors, 6 pre-existing warnings. `npm run build` (workspace) → 0 errors, both apps built.
+
+---
+
+## Skills Used
+
+| Step | Skill | Disposition |
+|------|-------|-------------|
+| 1–4 | None | Plan-C Skill Mapping: all steps `Skill: None` |
+
+---
+
+## Carry-Over
+
+- **Camelcase local vars in endpoints** (`claimSprintId`, `parsedSprintId`) — functional but not cosmetically renamed. These are local-scope only and don't appear in the acceptance grep (`SprintId` grep is PascalCase). A future cosmetic pass could rename them to `claimRetroSessionId`.
+- **RetroHub camelCase param `sprintId`** — hub method parameters are still named `sprintId` (they're SignalR wire-method params). Wire name is irrelevant to the client (client passes a value, not a name), but a future cleanup could align them to `retroSessionId`.
+- **`PreviousActionsContracts.cs` `PreviousSprintId`** — deliberately left as-is per carve-out rule (references a Fokus sprint, not the board FK).
+- **`AdvancePhaseCheckEndpoint.cs` line 86 (`GetParticipantIdsWithVotesForRetroSessionAsync`)** — VoteRepository.GetParticipantIdsWithVotesInSprintAsync renamed per Q2 ruling; call site updated.
+
+---
+
+## Fix Cycle 1/3 — 2026-06-20 (RA5-C)
+
+Codex round-1 cross-check surfaced two runtime breaks the green build hid, plus the `JoinSprint*` type family which the **already-approved Step 3 acceptance grep** (`rg 'JoinSprint' src/Services/Reflekt → zero`) had not yet been satisfied for. All three addressed.
+
+| # | Severity | Finding | Fix |
+|---|----------|---------|-----|
+| 1 | BLOCKER | `ColumnConfigUpdated` wire-key mismatch. `BroadcastColumnConfigUpdatedHandler.cs:14` broadcast `sprintId = ev.RetroSession.Id` but client `useSprintHub.ts:155` gates on `payload.retroSessionId` → column-config updates silently dropped. | Server payload key `sprintId` → `retroSessionId`. Audited all `Broadcast*Handler` anonymous-payload property keys (grep `sprintId\s*=` in Reflekt .cs) — this was the only wire-payload miss; `BroadcastPhaseChangedHandler.cs:13` and `DependencyInjection.cs:79` `sprintId` are internal local/lambda vars, not wire keys (verified). |
+| 2 | BLOCKER | `/join/google` 404. `participant.ts:34` `joinWithGoogle` POSTed `/api/retro-sessions/${id}/join/google`; backend exposes only `/join` (`JoinRetroEndpoint`, handles cookie-claim path via `User.GetPersonIdOrNull()`). | Frontend `/join/google` → `/join` (kept `credentials: 'include'`). The `/join/google` call was a pre-existing dead call flagged in plan-C Step 2; this corrects it to the real endpoint. |
+| 3 | (plan-gate) | `JoinSprint*` type family unrenamed — fails the approved Step 3 grep `rg 'JoinSprint' src/Services/Reflekt`. | `git mv` folder `Features/Participants/JoinSprint/` → `JoinRetro/`; renamed `JoinSprintEndpoint`→`JoinRetroEndpoint`, `JoinSprintCommand(+Validator)`→`JoinRetroCommand`, `JoinSprintResponse`→`JoinRetroResponse`, namespace `…JoinSprint`→`…JoinRetro`; updated `ParticipantContracts.cs`, `ParticipantMappings.cs`, and frontend `participant.ts` TS interface `JoinSprintResponse`→`JoinRetroResponse`. |
+
+**Scope note (handed back, NOT executed):** the fix-list also requested (a) renaming the `Features/Sprints/` C# folder + namespace, (b) renaming ALL frontend board-meaning `sprint` identifiers — Vue components (`SprintList`, `SprintView`, `SprintDetailPanel`, `CreateSprintForm`, `SprintReportPanel`), composables (`useSprintHub`, `useSprintStore`), view files, vue-router route names (`sprint`, `team-sprints`), `${sprintId}` route params/props, and the `reflekt:sprint:${id}:token` localStorage key — and (c) adopting a new acceptance gate `rg -i "sprint" → only carve-out hits`. These are a **substantial expansion beyond the critic-approved plan-C-renames.md scope**, whose acceptance gates are the three carve-out-scoped greps (`SprintId` PascalCase, `/api/sprints/`, and the Step 3 wire-string set) — not a case-insensitive `sprint` sweep. plan-C line 17 explicitly warns a blanket replace is "catastrophic." Per the standing rule that coordinator-relayed approval is not user authority, the structural-folder/namespace rename, the frontend `sprint`-identifier sweep, and the `rg -i "sprint"` gate are **deferred pending a plan amendment or direct user confirmation.** The two runtime breaks (genuine bugs) and the `JoinSprint*` family (required by the existing approved gate) were completed.
+
+**Build/test verification post-fix:**
+- `dotnet build SprintRituals.slnx --no-restore` → 0 errors, 6 pre-existing warnings.
+- `npm run build` (workspace) → 0 errors, both apps emit.
+- Reflekt tests: `Reflekt.Domain.Tests` 7/7, `Reflekt.Persistence.Tests` 14/14 — all green.
+- Approved-plan acceptance greps re-confirmed zero: `rg '"sprintId"|sprint:\{|"SprintClosed"|JoinSprint|LeaveSprint|class SprintHub' src/Services/Reflekt` → zero; `rg 'JoinSprint|SprintClosed' client/apps/retro` → zero; `rg 'api/sprints' client/apps/retro/src` → zero.
+- Stale agent worktree `.claude/worktrees/agent-a5ebd51c4a7e68eaf` removed (was polluting grep results).
+
+---
+
+## Step 5 — Complete board-meaning cleanup (RA5-C, 2026-06-20)
+
+**Authority:** plan-C-renames.md was **amended** to add Step 5 (an enumerated, carve-out-scoped full cleanup with a strengthened `rg -i "sprint"` gate — NOT the blanket replace earlier refused). My deferral condition (a plan amendment) was met by the artifact; implemented against the amended plan. The plan's own changelog records the expansion as relayed-not-architect-user-verified; the revert unit if "complete" is later narrowed to wire-only is all of Step 5 (Steps 1–3 stand independently).
+
+### 5b — Structural rename + collision resolution (decided deliberately)
+
+The plan flagged that `Features/Sprints/` → a board-name **collides** with the existing `Features/RetroSessions/` (which holds the `GetSprintContext/` carve-out + `RetroSessionContracts.cs`). **Resolution: merged `Features/Sprints/` INTO `Features/RetroSessions/`** — these board-lifecycle slices operate on the `RetroSession` aggregate, so they belong under that namespace; convention-consistent, no parallel `Board/` namespace invented. The `GetSprintContext/` carve-out subfolder stays untouched inside `RetroSessions/`.
+
+- Folder moves (git mv, history preserved): `Sprints/{AdvancePhase,CloseSprint→CloseRetro,CreateSprint→CreateRetro,GetSprint→GetRetro,GetSprintSummary→GetRetroSummary,GetTeamSprints→GetTeamRetros,StartSprint→StartRetro,Timer,UpdateColumns}` → `RetroSessions/...`. `Sprints/` folder removed.
+- 18 `namespace Reflekt.API.Features.Sprints.*` → `RetroSessions.*` (remapped to new subfolder names).
+- Class/file renames: `CloseSprintEndpoint`→`CloseRetroEndpoint`, `BroadcastSprintClosedHandler`→`BroadcastRetroClosedHandler`, `GetSprintEndpoint`→`GetRetroEndpoint`, `GetSprintSummaryEndpoint`(+`Request`)→`GetRetroSummaryEndpoint`, `GetTeamSprintsEndpoint`(+`Request`)→`GetTeamRetrosEndpoint`, `StartSprintEndpoint`→`StartRetroEndpoint`. (`CreateSprintCommand/Endpoint` were already `CreateRetroSessionCommand/Endpoint` — only namespace fixed.)
+- Filename-only Persistence renames: `SprintRepository.cs`→`RetroSessionRepository.cs`, `SprintConfiguration.cs`→`RetroSessionConfiguration.cs` (classes already `RetroSession*`).
+- Reports: `Features/Reports/GetSprintReport/`→`GetRetroReport/`, `GetSprintReportEndpoint`(+`Request`)→`GetRetroReportEndpoint`(+`Request`).
+- `JoinSprint*`→`JoinRetro*` was already done in the prior cycle (recorded, not re-flagged).
+
+### 5a — Backend locals / params / strings / comments / contracts
+
+- `RetroHub.cs`: all `sprintId` params→`retroSessionId`; `claimSprintId`/`parsedSprintId`/`sprintIdClaim`/`sprintRepo`→retro-named; `var sprint`→`var session`; `LoadTimedSprintAsync`→`LoadTimedRetroAsync`; HubException strings + `// sprintId ->` comments retro-worded. `retro:{…}` group + claim strings kept byte-identical.
+- `TimerService.cs`: 10 `sprintId` params + "for sprint {…}" string → retro.
+- `DependencyInjection.cs`: timer-expiry lambda param + "to sprint group" comment → retro. `/hubs/retro` + `retro:{…}` kept.
+- `BroadcastPhaseChangedHandler.cs`: `var sprintId`→`retroSessionId`.
+- `TeamRepository.cs`: `sprintIds`→`retroSessionIds`; `TeamSummaryDto` `SprintCount`/`LastSprintDate`/`HasActiveSprint`→`RetroSessionCount`/`LastRetroSessionDate`/`HasActiveRetroSession`.
+- 11 endpoint guest-claim locals `claimSprintId`/`sprintIdClaim`→`claimRetroSessionId`/`retroSessionIdClaim` (claim NAME `"retroSessionId"` already correct).
+- All endpoints: `var sprint`→`var session`; user-facing `"Sprint …"` error strings → `"Retro …"`; `[Tags("Sprints")]`→`[Tags("RetroSessions")]`.
+- Contracts (response-body wire names, frontend-consumed): `ReportContracts.cs` `ReportSprintInfo`→`ReportRetroSessionInfo` + field `Sprint`→`RetroSession`; `PreviousActionsContracts.cs` `PreviousSprintId`/`PreviousSprintName`→`PreviousRetroSessionId`/`PreviousRetroSessionName`; `GetMyTeamsEndpoint`/`TeamSummaryDto` fields (above).
+- `ClaimsPrincipalExtensions.cs` comment `(Team/Sprint)`→`(Team/RetroSession)`; `DbInitializer.cs` seed local + seed strings retro-neutral; `RetroSessionCreateTests.cs` test const `"Sprint 1 Retro"`→`"Retro 1"`.
+
+### 5c — Frontend board-meaning identifiers (lockstep)
+
+- File renames (git mv): `stores/sprint.ts`→`stores/retroSession.ts`, `composables/useSprintHub.ts`→`useRetroHub.ts`, `views/SprintView.vue`→`RetroSessionView.vue`, `views/SprintListView.vue`→`RetroSessionListView.vue`, `components/sprints/`→`components/retro-sessions/` (3 files → `RetroSessionDetailPanel`/`RetroSessionList`/`CreateRetroSessionForm`), `components/reports/SprintReportPanel.vue`→`RetroSessionReportPanel.vue`.
+- `useSprintStore`→`useRetroSessionStore`, interfaces/state/actions/locals retro-named; router paths `/teams/:teamId/sprints…`→`/retro-sessions…`, guest deep-link `/sprint/:sprintId`→`/retro/:retroSessionId`, route names `team-sprints`/`sprint`→`team-retro-sessions`/`retro-session`, `:sprintId` param→`:retroSessionId`; props/events `:sprint-id`/`@close-sprint`/`@create-sprint`→retro equivalents; UI text retro-worded.
+- Storage key `reflekt:sprint:${id}:token`→`reflekt:retro-session:${id}:token` — **sanctioned clean break** (orphans old-key tokens; guest tokens per-retro + short-lived, frontend sole reader).
+- **Wire-adapter cleanup:** the frontend agent initially shimmed the report/teams/previous-actions DTOs with `*Wire` adapter types (reading the then-still-`sprint`-named JSON keys) to avoid runtime breakage. Since 5a renamed those backend contracts in lockstep (JSON now camelCase `retroSession`/`previousRetroSessionId`/`retroSessionCount`/etc.), the adapters were **removed** and the stores now read the new keys directly. Verified backend↔frontend key match.
+
+### BLOCKER preservation (round-1 fix held through the rename)
+
+`ColumnConfigUpdated` stays matched: `BroadcastColumnConfigUpdatedHandler.cs:14` sends `retroSessionId = ev.RetroSession.Id`; `useRetroHub.ts:155` reads `payload.retroSessionId` — byte-identical. `RetroClosed` event + `JoinRetro` invoke also matched in `useRetroHub.ts`.
+
+### Strengthened acceptance gate — PASS
+
+`rg -i "sprint" src/Services/Reflekt client/apps/retro -g '!**/Migrations/**'` through the carve-out exclusion → **7 surviving hits, all genuine carve-out:** 5 Fokus references (`Fokus sprint` doc-comments in RetroSessionRepository/DbInitializer/RetroSessionConfiguration, the `SprintAnalytics` gRPC config key, the `/hubs/sprint`/`Fokus.SprintHub` cross-module comments in DependencyInjection) + 2 CLAUDE.md product-doc prose lines ("sprint-retrospective tool", "anonymized sprint analytics from Fokus"). **Zero board-meaning identifier/route/UI/filename hits.** With the Fokus-comment patterns additionally filtered, the gate returns empty.
+
+### Verification
+
+- `dotnet build SprintRituals.slnx --no-restore` → 0 errors, 6 pre-existing warnings.
+- `npm run build` (workspace) → 0 errors, both apps emit.
+- `Reflekt.Domain.Tests` 7/7, `Reflekt.Persistence.Tests` 14/14 — green.
+- `dotnet ef migrations has-pending-model-changes` → "No changes" (rename is identifier/contract only; no schema drift).
+- Prior scoped gates re-confirmed zero: `api/sprints` in retro; the Step-3 wire-string set; `Features.Sprints` namespace.
+
+### Known gaps / follow-ups (recorded, out of this rename's scope)
+
+- **Google-assisted guest join** (`participant.ts` `joinWithGoogle`): posts `{}` to `/join`, which fails `JoinRetroCommand`'s `DisplayName.NotEmpty()` validator (400). The Google-authed auto-join (fill DisplayName from the Person/cookie claim) was never implemented — a pre-existing **functional gap**, tracked as a follow-up (`FEAT: Google-assisted guest join not implemented`). The string repoint to `/join` stands; the behavior fix is out of scope.
+- **`CLAUDE.md` line 16** ("SignalR method/group/claim strings kept `sprint*`-named (Q2)") is now stale narrative after this rename. Left unedited — CLAUDE.md is module documentation, not code; updating its rename-history narrative is a doc follow-up, not part of the identifier sweep.
+- **Manual real-time smoke** (column-config live update across clients; full create/group/vote/close retro) requires `dotnet run` + browser — deferred-by-policy (no automated frontend suite); the reviewer is the runtime gate.

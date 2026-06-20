@@ -1,8 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import WelcomeView from '../views/WelcomeView.vue'
 import TeamDashboardView from '../views/TeamDashboardView.vue'
-import SprintListView from '../views/SprintListView.vue'
-import SprintView from '../views/SprintView.vue'
+import RetroSessionListView from '../views/RetroSessionListView.vue'
+import RetroSessionView from '../views/RetroSessionView.vue'
 import RetroRoomView from '../views/RetroRoomView.vue'
 import ReportView from '../views/ReportView.vue'
 import { useAuthStore } from '../stores/auth'
@@ -30,25 +30,25 @@ const router = createRouter({
       meta: { title: 'Teams — Reflekt', requiresAuth: true },
     },
     {
-      path: '/teams/:teamId/sprints',
-      name: 'team-sprints',
-      component: SprintListView,
-      meta: { title: 'Sprints — Reflekt', requiresAuth: true },
+      path: '/teams/:teamId/retro-sessions',
+      name: 'team-retro-sessions',
+      component: RetroSessionListView,
+      meta: { title: 'Retros — Reflekt', requiresAuth: true },
     },
     {
-      path: '/teams/:teamId/sprints/:sprintId',
-      name: 'sprint',
-      component: SprintView,
-      meta: { title: 'Sprint — Reflekt' },
+      path: '/teams/:teamId/retro-sessions/:retroSessionId',
+      name: 'retro-session',
+      component: RetroSessionView,
+      meta: { title: 'Retro — Reflekt' },
     },
     {
-      path: '/sprint/:sprintId',
+      path: '/retro/:retroSessionId',
       name: 'retro-room',
       component: RetroRoomView,
       meta: { title: 'Retro Room — Reflekt' },
     },
     {
-      path: '/teams/:teamId/sprints/:sprintId/report',
+      path: '/teams/:teamId/retro-sessions/:retroSessionId/report',
       name: 'report',
       component: ReportView,
       meta: { title: 'Report — Reflekt' },

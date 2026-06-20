@@ -30,15 +30,15 @@ public sealed class TeamRepository(ReflektDbContext db) : Repository<Team>(db)
     {
         await using var tx = await Db.Database.BeginTransactionAsync(ct);
 
-        var sprintIds = await Db.RetroSessions
+        var retroSessionIds = await Db.RetroSessions
             .Where(s => s.TeamId == teamId)
             .Select(s => s.Id)
             .ToListAsync(ct);
 
-        if (sprintIds.Count > 0)
+        if (retroSessionIds.Count > 0)
         {
             var groupIds = await Db.CardGroups
-                .Where(g => sprintIds.Contains(g.SprintId))
+                .Where(g => retroSessionIds.Contains(g.RetroSessionId))
                 .Select(g => g.Id)
                 .ToListAsync(ct);
 
@@ -46,16 +46,16 @@ public sealed class TeamRepository(ReflektDbContext db) : Repository<Team>(db)
                 await Db.Votes.Where(v => groupIds.Contains(v.GroupId)).ExecuteDeleteAsync(ct);
 
             var cardIds = await Db.Cards
-                .Where(c => sprintIds.Contains(c.SprintId))
+                .Where(c => retroSessionIds.Contains(c.RetroSessionId))
                 .Select(c => c.Id)
                 .ToListAsync(ct);
 
             if (cardIds.Count > 0)
                 await Db.EvidenceLinks.Where(e => cardIds.Contains(e.CardId)).ExecuteDeleteAsync(ct);
 
-            await Db.Cards.Where(c => sprintIds.Contains(c.SprintId)).ExecuteDeleteAsync(ct);
-            await Db.CardGroups.Where(g => sprintIds.Contains(g.SprintId)).ExecuteDeleteAsync(ct);
-            await Db.Participants.Where(p => sprintIds.Contains(p.SprintId)).ExecuteDeleteAsync(ct);
+            await Db.Cards.Where(c => retroSessionIds.Contains(c.RetroSessionId)).ExecuteDeleteAsync(ct);
+            await Db.CardGroups.Where(g => retroSessionIds.Contains(g.RetroSessionId)).ExecuteDeleteAsync(ct);
+            await Db.Participants.Where(p => retroSessionIds.Contains(p.RetroSessionId)).ExecuteDeleteAsync(ct);
             await Db.RetroSessions.Where(s => s.TeamId == teamId).ExecuteDeleteAsync(ct);
         }
 
@@ -69,7 +69,7 @@ public sealed record TeamSummaryDto(
     int Id,
     string Name,
     DateTime CreatedAt,
-    int SprintCount,
-    DateTime? LastSprintDate,
-    bool HasActiveSprint);
+    int RetroSessionCount,
+    DateTime? LastRetroSessionDate,
+    bool HasActiveRetroSession);
 

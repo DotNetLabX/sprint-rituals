@@ -8,10 +8,10 @@ using AuthPolicies = Reflekt.API.Auth.Policies;
 
 namespace Reflekt.API.Features.EvidenceLinks.DetachEvidenceLink;
 
-public sealed record DetachEvidenceLinkRequest(int SprintId, int CardId, int EvidenceLinkId);
+public sealed record DetachEvidenceLinkRequest(int RetroSessionId, int CardId, int EvidenceLinkId);
 
 [Authorize(Policy = AuthPolicies.OwnerOrScrumMaster)]
-[HttpDelete("/api/sprints/{sprintId}/cards/{cardId}/evidence-links/{evidenceLinkId}")]
+[HttpDelete("/api/retro-sessions/{retroSessionId}/cards/{cardId}/evidence-links/{evidenceLinkId}")]
 [Tags("EvidenceLinks")]
 public sealed class DetachEvidenceLinkEndpoint(
     RetroSessionRepository retroSessionRepository,
@@ -23,18 +23,18 @@ public sealed class DetachEvidenceLinkEndpoint(
     public override async Task HandleAsync(DetachEvidenceLinkRequest req, CancellationToken ct)
     {
         var card = await cardRepository.GetByIdAsync(req.CardId, ct);
-        if (card is null || card.SprintId != req.SprintId) { await Send.NotFoundAsync(ct); return; }
+        if (card is null || card.RetroSessionId != req.RetroSessionId) { await Send.NotFoundAsync(ct); return; }
 
         if (!card.EvidenceLinks.Any(e => e.Id == req.EvidenceLinkId)) { await Send.NotFoundAsync(ct); return; }
 
-        var sprint = await retroSessionRepository.GetByIdAsync(req.SprintId, ct);
-        if (sprint is null) { await Send.NotFoundAsync(ct); return; }
+        var session = await retroSessionRepository.GetByIdAsync(req.RetroSessionId, ct);
+        if (session is null) { await Send.NotFoundAsync(ct); return; }
 
-        if (sprint.State == RetroSessionState.Closed)
-            ThrowError("Sprint is closed.", StatusCodes.Status409Conflict);
+        if (session.State == RetroSessionState.Closed)
+            ThrowError("Retro is closed.", StatusCodes.Status409Conflict);
 
-        if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, RetroAction.DetachEvidenceLink))
-            ThrowError($"{RetroAction.DetachEvidenceLink} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
+        if (!phaseActionCache.IsAllowed(session.CurrentPhase, RetroAction.DetachEvidenceLink))
+            ThrowError($"{RetroAction.DetachEvidenceLink} is not allowed in phase {session.CurrentPhase}.", StatusCodes.Status409Conflict);
 
         var participantIdClaim = User.FindFirstValue("participantId");
         if (participantIdClaim is not null)
@@ -48,7 +48,7 @@ public sealed class DetachEvidenceLinkEndpoint(
         else
         {
             var userId = User.GetPersonId();
-            var team = await teamRepository.GetByIdAsync(sprint.TeamId, ct);
+            var team = await teamRepository.GetByIdAsync(session.TeamId, ct);
             if (team is null || team.OwnerId != userId)
             {
                 await Send.ForbiddenAsync(ct);

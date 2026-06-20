@@ -10,15 +10,15 @@ namespace Reflekt.API.Features.EvidenceLinks.AttachEvidenceLink;
 
 public sealed class BroadcastAndFetchOnEvidenceLinkAttachedHandler(
     ChannelWriter<FetchJob> channel,
-    IHubContext<SprintHub> hubContext)
+    IHubContext<RetroHub> hubContext)
     : IEventHandler<EvidenceLinkAttachedEvent>
 {
     public async Task HandleAsync(EvidenceLinkAttachedEvent ev, CancellationToken ct)
     {
-        await hubContext.Clients.Group($"sprint:{ev.Card.SprintId}")
+        await hubContext.Clients.Group($"retro:{ev.Card.RetroSessionId}")
             .SendAsync("CardUpdated", ev.Card.Adapt<CardResponse>(), ct);
 
         if (ev.EvidenceLink.FetchStatus == FetchStatus.Pending)
-            await channel.WriteAsync(new FetchJob(ev.Card.Id, ev.EvidenceLink.Id, ev.EvidenceLink.Url, ev.Card.SprintId), ct);
+            await channel.WriteAsync(new FetchJob(ev.Card.Id, ev.EvidenceLink.Id, ev.EvidenceLink.Url, ev.Card.RetroSessionId), ct);
     }
 }

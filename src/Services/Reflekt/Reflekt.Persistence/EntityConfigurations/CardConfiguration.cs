@@ -14,9 +14,8 @@ internal sealed class CardConfiguration : EntityConfiguration<Card>
     {
         base.Configure(builder);
         builder.ToTable("Cards");
-        builder.Property(c => c.SprintId).IsRequired();
-        // SprintId FK column name preserved per Q1=b DO-NOT-TOUCH
-        builder.HasOne<RetroSession>().WithMany().HasForeignKey(c => c.SprintId).OnDelete(DeleteBehavior.Cascade);
+        builder.Property(c => c.RetroSessionId).IsRequired();
+        builder.HasOne<RetroSession>().WithMany().HasForeignKey(c => c.RetroSessionId).OnDelete(DeleteBehavior.Cascade);
         builder.Property(c => c.ParticipantId).IsRequired();
         builder.HasOne<Participant>().WithMany().HasForeignKey(c => c.ParticipantId).OnDelete(DeleteBehavior.Restrict);
         builder.Property(c => c.ColumnType).IsRequired();
@@ -24,15 +23,15 @@ internal sealed class CardConfiguration : EntityConfiguration<Card>
         builder.Property(c => c.Text).IsRequired().HasMaxLength(2000);
         builder.Property(c => c.AssigneeName).HasMaxLength(50);
         builder.HasOne<CardGroup>().WithMany().HasForeignKey(c => c.GroupId).OnDelete(DeleteBehavior.SetNull);
-        builder.HasIndex(c => c.SprintId);
+        builder.HasIndex(c => c.RetroSessionId);
         builder.HasIndex(c => c.GroupId);
         builder.Property(c => c.CreatedAt).IsRequired();
         builder.Property(c => c.UpdatedAt).IsRequired();
 
         builder.Property(c => c.ReviewStatus).IsRequired().HasDefaultValue(ReviewStatus.None);
-        // ReviewedInSprintId column name preserved per Q1=b DO-NOT-TOUCH (4th FK)
-        builder.HasOne<RetroSession>().WithMany().HasForeignKey(c => c.ReviewedInSprintId).OnDelete(DeleteBehavior.SetNull);
-        builder.HasIndex(c => c.ReviewedInSprintId);
+        builder.Property(c => c.ReviewedInRetroSessionId);
+        builder.HasOne<RetroSession>().WithMany().HasForeignKey(c => c.ReviewedInRetroSessionId).OnDelete(DeleteBehavior.SetNull);
+        builder.HasIndex(c => c.ReviewedInRetroSessionId);
 
         builder.HasMany(c => c.EvidenceLinks)
             .WithOne()

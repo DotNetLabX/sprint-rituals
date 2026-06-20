@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 
-// localStorage key format locked at Foundation: reflekt:sprint:{sprintId}:token
-export const guestTokenKey = (sprintId: number) => `reflekt:sprint:${sprintId}:token`
+// localStorage key format locked at Foundation: reflekt:retro-session:{retroSessionId}:token
+export const guestTokenKey = (retroSessionId: number) => `reflekt:retro-session:${retroSessionId}:token`
 
 export const useGuestStore = defineStore('guest', {
   state: () => ({
@@ -9,16 +9,16 @@ export const useGuestStore = defineStore('guest', {
     displayName: null as string | null,
   }),
   actions: {
-    loadToken(sprintId: number) {
-      this.token = localStorage.getItem(guestTokenKey(sprintId))
+    loadToken(retroSessionId: number) {
+      this.token = localStorage.getItem(guestTokenKey(retroSessionId))
     },
-    saveToken(sprintId: number, token: string, displayName: string) {
-      localStorage.setItem(guestTokenKey(sprintId), token)
+    saveToken(retroSessionId: number, token: string, displayName: string) {
+      localStorage.setItem(guestTokenKey(retroSessionId), token)
       this.token = token
       this.displayName = displayName
     },
-    clearToken(sprintId: number) {
-      localStorage.removeItem(guestTokenKey(sprintId))
+    clearToken(retroSessionId: number) {
+      localStorage.removeItem(guestTokenKey(retroSessionId))
       this.token = null
       this.displayName = null
     },

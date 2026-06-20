@@ -15,7 +15,7 @@ public sealed record EvidenceLinkResponse(
 
 public sealed record CardResponse(
     int Id,
-    int SprintId,
+    int RetroSessionId,
     int ParticipantId,
     string ColumnType,
     string CardType,

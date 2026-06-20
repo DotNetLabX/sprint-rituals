@@ -5,14 +5,14 @@ namespace Reflekt.Domain.CardGroups;
 
 public sealed partial class CardGroup
 {
-    public static CardGroup Create(int sprintId, ColumnType columnType, string? title = null)
+    public static CardGroup Create(int retroSessionId, ColumnType columnType, string? title = null)
     {
         if (title is not null && title.Length > 100)
             throw new ArgumentException("Title must be 100 characters or fewer.", nameof(title));
 
         var group = new CardGroup
         {
-            SprintId = sprintId,
+            RetroSessionId = retroSessionId,
             ColumnType = columnType,
             Title = title,
             CreatedAt = DateTime.UtcNow,

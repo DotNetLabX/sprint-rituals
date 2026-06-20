@@ -12,12 +12,12 @@
     </div>
 
     <!-- Signed in, has team -->
-    <SprintList
+    <RetroSessionList
       v-else-if="teamsStore.hasTeams"
       :team-name="teamsStore.teams[0]!.name"
-      :sprints="sprintStore.sprints"
-      @select="(id) => router.push({ name: 'sprint', params: { teamId: teamsStore.teams[0]!.id, sprintId: id } })"
-      @create-sprint="handleCreateSprint"
+      :retro-sessions="retroSessionStore.retroSessions"
+      @select="(id) => router.push({ name: 'retro-session', params: { teamId: teamsStore.teams[0]!.id, retroSessionId: id } })"
+      @create-retro-session="handleCreateRetroSession"
     />
 
     <!-- Signed in, no team -->
@@ -30,14 +30,14 @@ import { watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useTeamsStore } from '../../stores/teams'
-import { useSprintStore } from '../../stores/sprint'
-import SprintList from '../sprints/SprintList.vue'
+import { useRetroSessionStore } from '../../stores/retroSession'
+import RetroSessionList from '../retro-sessions/RetroSessionList.vue'
 import CreateTeamForm from './CreateTeamForm.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const teamsStore = useTeamsStore()
-const sprintStore = useSprintStore()
+const retroSessionStore = useRetroSessionStore()
 
 watch(
   () => authStore.loaded,
@@ -47,7 +47,7 @@ watch(
 
 watch(
   () => teamsStore.teams[0],
-  (team) => { if (team) sprintStore.fetchTeamSprints(team.id) },
+  (team) => { if (team) retroSessionStore.fetchTeamRetroSessions(team.id) },
   { immediate: true },
 )
 
@@ -55,7 +55,7 @@ async function handleCreateTeam(name: string) {
   await teamsStore.createTeam(name)
 }
 
-async function handleCreateSprint(payload: { name: string; votesPerParticipant: number | undefined }) {
-  await sprintStore.createSprint(teamsStore.teams[0]!.id, payload)
+async function handleCreateRetroSession(payload: { name: string; votesPerParticipant: number | undefined }) {
+  await retroSessionStore.createRetroSession(teamsStore.teams[0]!.id, payload)
 }
 </script>

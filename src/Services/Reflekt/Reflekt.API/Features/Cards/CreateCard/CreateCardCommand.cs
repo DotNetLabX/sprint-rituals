@@ -3,7 +3,7 @@ using Reflekt.Domain.RetroSessions;
 
 namespace Reflekt.API.Features.Cards.CreateCard;
 
-public sealed record CreateCardCommand(int SprintId, string Text, string ColumnType, string CardType, string? AssigneeName)
+public sealed record CreateCardCommand(int RetroSessionId, string Text, string ColumnType, string CardType, string? AssigneeName)
     : IRetroAction
 {
     public RetroAction ActionType =>

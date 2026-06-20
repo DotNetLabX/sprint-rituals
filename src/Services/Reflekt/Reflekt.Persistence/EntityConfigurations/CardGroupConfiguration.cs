@@ -12,13 +12,12 @@ internal sealed class CardGroupConfiguration : EntityConfiguration<CardGroup>
     {
         base.Configure(builder);
         builder.ToTable("CardGroups");
-        builder.Property(g => g.SprintId).IsRequired();
-        // SprintId FK column name preserved per Q1=b DO-NOT-TOUCH
-        builder.HasOne<RetroSession>().WithMany().HasForeignKey(g => g.SprintId).OnDelete(DeleteBehavior.Cascade);
+        builder.Property(g => g.RetroSessionId).IsRequired();
+        builder.HasOne<RetroSession>().WithMany().HasForeignKey(g => g.RetroSessionId).OnDelete(DeleteBehavior.Cascade);
         builder.Property(g => g.ColumnType).IsRequired();
         builder.Property(g => g.Title).HasMaxLength(100);
         builder.Property(g => g.CreatedAt).IsRequired();
         builder.Property(g => g.DiscussedAt);
-        builder.HasIndex(g => g.SprintId);
+        builder.HasIndex(g => g.RetroSessionId);
     }
 }

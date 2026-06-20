@@ -35,29 +35,29 @@
     <!-- Team name -->
     <h3 class="text-base font-semibold text-text-primary pr-8 mb-3">{{ team.name }}</h3>
 
-    <!-- Sprint count -->
+    <!-- Retro count -->
     <div class="flex items-center gap-1 text-sm text-text-muted mb-1">
-      <span>{{ team.sprintCount }} sprint{{ team.sprintCount !== 1 ? 's' : '' }}</span>
+      <span>{{ team.retroSessionCount }} retro{{ team.retroSessionCount !== 1 ? 's' : '' }}</span>
       <div class="relative group/tip">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-text-muted cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z" />
         </svg>
         <div class="absolute left-1/2 -translate-x-1/2 bottom-5 w-64 bg-surface-raised text-text-primary border border-border text-xs rounded px-2 py-1 opacity-0 group-hover/tip:opacity-100 transition-opacity pointer-events-none z-10 whitespace-normal">
-          The total number of sprints created under this team, including draft, active, and closed.
+          The total number of retros created under this team, including draft, active, and closed.
         </div>
       </div>
     </div>
 
-    <!-- Last sprint date -->
+    <!-- Last retro date -->
     <div class="flex items-center gap-1 text-sm text-text-muted">
-      <span v-if="team.lastSprintDate">Last sprint {{ formatDate(team.lastSprintDate) }}</span>
-      <span v-else>No sprints yet</span>
-      <div v-if="team.lastSprintDate" class="relative group/tip">
+      <span v-if="team.lastRetroSessionDate">Last retro {{ formatDate(team.lastRetroSessionDate) }}</span>
+      <span v-else>No retros yet</span>
+      <div v-if="team.lastRetroSessionDate" class="relative group/tip">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-text-muted cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z" />
         </svg>
         <div class="absolute left-1/2 -translate-x-1/2 bottom-5 w-64 bg-surface-raised text-text-primary border border-border text-xs rounded px-2 py-1 opacity-0 group-hover/tip:opacity-100 transition-opacity pointer-events-none z-10 whitespace-normal">
-          The date when the most recent sprint was created in this team.
+          The date when the most recent retro was created in this team.
         </div>
       </div>
     </div>

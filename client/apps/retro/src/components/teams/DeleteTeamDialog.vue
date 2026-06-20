@@ -5,11 +5,11 @@
     @click.self="$emit('close')"
   >
     <div class="bg-surface rounded-lg shadow-modal p-6 w-full max-w-md mx-4">
-      <!-- Active sprint blocked state -->
-      <template v-if="team.hasActiveSprint">
+      <!-- Active retro blocked state -->
+      <template v-if="team.hasActiveRetroSession">
         <h2 class="text-lg font-semibold text-text-primary mb-3">Cannot Delete Team</h2>
         <p class="text-sm text-text-secondary mb-4">
-          This team has an active sprint. Close or delete it before deleting the team.
+          This team has an active retro. Close or delete it before deleting the team.
         </p>
         <button
           class="w-full px-4 py-2 bg-surface-raised text-text-secondary rounded hover:bg-border text-sm"
@@ -23,7 +23,7 @@
       <template v-else>
         <h2 class="text-lg font-semibold text-text-primary mb-2">Delete Team</h2>
         <p class="text-sm text-text-secondary mb-4">
-          Delete team <strong>"{{ team.name }}"</strong> and all its sprints? This cannot be undone.
+          Delete team <strong>"{{ team.name }}"</strong> and all its retros? This cannot be undone.
         </p>
 
         <div class="mb-4">

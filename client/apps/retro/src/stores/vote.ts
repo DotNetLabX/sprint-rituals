@@ -27,17 +27,17 @@ export const useVoteStore = defineStore('vote', {
         state.voteCounts.get(groupId) ?? 0,
   },
   actions: {
-    async fetchMyVotes(sprintId: number): Promise<void> {
+    async fetchMyVotes(retroSessionId: number): Promise<void> {
       const guestStore = useGuestStore()
       if (!guestStore.token) return
-      const res = await fetch(`/api/sprints/${sprintId}/votes/mine`, {
+      const res = await fetch(`/api/retro-sessions/${retroSessionId}/votes/mine`, {
         headers: { 'X-Guest-Token': guestStore.token },
       })
       if (!res.ok) return
       this.myVotes = (await res.json()) as VoteDistribution[]
     },
 
-    async castVote(sprintId: number, groupId: number): Promise<void> {
+    async castVote(retroSessionId: number, groupId: number): Promise<void> {
       const guestStore = useGuestStore()
       if (!guestStore.token) return
 
@@ -53,7 +53,7 @@ export const useVoteStore = defineStore('vote', {
       this.voteCounts.set(groupId, prevTotal + 1)
 
       try {
-        const res = await fetch(`/api/sprints/${sprintId}/card-groups/${groupId}/votes`, {
+        const res = await fetch(`/api/retro-sessions/${retroSessionId}/card-groups/${groupId}/votes`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Guest-Token': guestStore.token },
           body: JSON.stringify({}),
@@ -74,7 +74,7 @@ export const useVoteStore = defineStore('vote', {
       }
     },
 
-    async retractVote(sprintId: number, groupId: number): Promise<void> {
+    async retractVote(retroSessionId: number, groupId: number): Promise<void> {
       const guestStore = useGuestStore()
       if (!guestStore.token) return
 
@@ -90,7 +90,7 @@ export const useVoteStore = defineStore('vote', {
       this.voteCounts.set(groupId, Math.max(0, prevTotal - 1))
 
       try {
-        const res = await fetch(`/api/sprints/${sprintId}/card-groups/${groupId}/votes`, {
+        const res = await fetch(`/api/retro-sessions/${retroSessionId}/card-groups/${groupId}/votes`, {
           method: 'DELETE',
           headers: { 'X-Guest-Token': guestStore.token },
         })

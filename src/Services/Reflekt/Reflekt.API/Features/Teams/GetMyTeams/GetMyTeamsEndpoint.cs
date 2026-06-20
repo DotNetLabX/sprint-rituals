@@ -9,9 +9,9 @@ public sealed record TeamSummary(
     int Id,
     string Name,
     DateTime CreatedAt,
-    int SprintCount,
-    DateTime? LastSprintDate,
-    bool HasActiveSprint);
+    int RetroSessionCount,
+    DateTime? LastRetroSessionDate,
+    bool HasActiveRetroSession);
 
 [Authorize(Policy = AuthPolicies.ScrumMaster)]
 [HttpGet("/api/teams")]
@@ -24,7 +24,7 @@ public sealed class GetMyTeamsEndpoint(TeamRepository teamRepository)
         var userId = User.GetPersonId();
         var summaries = await teamRepository.GetTeamSummariesByOwnerAsync(userId, ct);
         var result = summaries
-            .Select(s => new TeamSummary(s.Id, s.Name, s.CreatedAt, s.SprintCount, s.LastSprintDate, s.HasActiveSprint))
+            .Select(s => new TeamSummary(s.Id, s.Name, s.CreatedAt, s.RetroSessionCount, s.LastRetroSessionDate, s.HasActiveRetroSession))
             .ToList();
         await Send.OkAsync(result, ct);
     }

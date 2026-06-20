@@ -8,13 +8,13 @@ public sealed partial class Participant
     /// (ADR-022). One factory, one nullable parameter — this keeps join a single interceptable
     /// creation point so a future SM-approval gate (ADR-021) slots in before this call.
     /// </summary>
-    public static Participant Join(string displayName, int sprintId, int? personId = null)
+    public static Participant Join(string displayName, int retroSessionId, int? personId = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
 
         var participant = new Participant
         {
-            SprintId = sprintId,
+            RetroSessionId = retroSessionId,
             DisplayName = displayName,
             GuestToken = Guid.NewGuid().ToString(),
             JoinedAt = DateTime.UtcNow,

@@ -9,15 +9,15 @@ public sealed class ParticipantRepository(ReflektDbContext db) : Repository<Part
         => Db.Participants
             .SingleOrDefaultAsync(p => p.GuestToken == guestToken, ct);
 
-    public Task<List<Participant>> GetBySprintIdAsync(int sprintId, CancellationToken ct)
+    public Task<List<Participant>> GetByRetroSessionIdAsync(int retroSessionId, CancellationToken ct)
         => Db.Participants
-            .Where(p => p.SprintId == sprintId)
+            .Where(p => p.RetroSessionId == retroSessionId)
             .OrderBy(p => p.JoinedAt)
             .ToListAsync(ct);
 
-    public Task<bool> ExistsByDisplayNameAsync(int sprintId, string displayName, CancellationToken ct)
+    public Task<bool> ExistsByDisplayNameAsync(int retroSessionId, string displayName, CancellationToken ct)
         => Db.Participants
-            .AnyAsync(p => p.SprintId == sprintId && p.DisplayName.ToLower() == displayName.ToLower(), ct);
+            .AnyAsync(p => p.RetroSessionId == retroSessionId && p.DisplayName.ToLower() == displayName.ToLower(), ct);
 
     public void Remove(Participant participant) => Db.Participants.Remove(participant);
 }

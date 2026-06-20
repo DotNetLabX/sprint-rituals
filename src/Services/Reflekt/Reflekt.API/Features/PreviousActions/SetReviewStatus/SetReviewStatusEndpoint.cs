@@ -8,8 +8,6 @@ using AuthPolicies = Reflekt.API.Auth.Policies;
 
 namespace Reflekt.API.Features.PreviousActions.SetReviewStatus;
 
-// RetroSessionId renames from SprintId in the command (Q2 route rename).
-// Card.ReviewedInSprintId and Card.SetReviewStatus(int sprintId) stay SprintId-named (Q1=b DO-NOT-TOUCH).
 public sealed record SetReviewStatusCommand(int TeamId, int RetroSessionId, int CardId, string ReviewStatus);
 
 public sealed class SetReviewStatusCommandValidator : Validator<SetReviewStatusCommand>
@@ -48,21 +46,21 @@ public sealed class SetReviewStatusEndpoint(
             return;
         }
 
-        var sprint = await retroSessionRepository.GetByIdAsync(command.RetroSessionId, ct);
-        if (sprint is null || sprint.TeamId != command.TeamId) { await Send.NotFoundAsync(ct); return; }
+        var session = await retroSessionRepository.GetByIdAsync(command.RetroSessionId, ct);
+        if (session is null || session.TeamId != command.TeamId) { await Send.NotFoundAsync(ct); return; }
 
-        if (sprint.State != RetroSessionState.Active || sprint.CurrentPhase != RetroPhase.Writing)
+        if (session.State != RetroSessionState.Active || session.CurrentPhase != RetroPhase.Writing)
         {
             AddError("Review status can only be set during the Writing phase.");
             await Send.ErrorsAsync(409, ct);
             return;
         }
 
-        var previousSprint = await retroSessionRepository.GetMostRecentClosedByTeamIdAsync(command.TeamId, ct);
-        if (previousSprint is null) { await Send.NotFoundAsync(ct); return; }
+        var previousSession = await retroSessionRepository.GetMostRecentClosedByTeamIdAsync(command.TeamId, ct);
+        if (previousSession is null) { await Send.NotFoundAsync(ct); return; }
 
         var card = await cardRepository.GetByIdAsync(command.CardId, ct);
-        if (card is null || card.SprintId != previousSprint.Id)
+        if (card is null || card.RetroSessionId != previousSession.Id)
         {
             await Send.NotFoundAsync(ct);
             return;
@@ -74,7 +72,6 @@ public sealed class SetReviewStatusEndpoint(
             return;
         }
 
-        // command.RetroSessionId feeds the kept Card.ReviewedInSprintId FK column (Q1=b; domain method param stays sprintId).
         card.SetReviewStatus(reviewStatus, command.RetroSessionId);
         await cardRepository.SaveChangesAsync(ct);
 
@@ -83,8 +80,8 @@ public sealed class SetReviewStatusEndpoint(
             card.Text,
             card.AssigneeName,
             card.ReviewStatus.ToString(),
-            previousSprint.Id,
-            previousSprint.Name);
+            previousSession.Id,
+            previousSession.Name);
 
         await Send.OkAsync(response, ct);
     }

@@ -5,10 +5,10 @@ using Reflekt.Domain.Cards.Events;
 
 namespace Reflekt.API.Features.EvidenceLinks.DetachEvidenceLink;
 
-public sealed class BroadcastCardUpdatedOnEvidenceLinkDetachedHandler(IHubContext<SprintHub> hubContext)
+public sealed class BroadcastCardUpdatedOnEvidenceLinkDetachedHandler(IHubContext<RetroHub> hubContext)
     : IEventHandler<EvidenceLinkDetachedEvent>
 {
     public Task HandleAsync(EvidenceLinkDetachedEvent ev, CancellationToken ct)
-        => hubContext.Clients.Group($"sprint:{ev.Card.SprintId}")
+        => hubContext.Clients.Group($"retro:{ev.Card.RetroSessionId}")
             .SendAsync("CardUpdated", ev.Card.Adapt<CardResponse>(), ct);
 }

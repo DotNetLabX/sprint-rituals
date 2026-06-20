@@ -6,7 +6,7 @@ public static class ClaimsPrincipalExtensions
 {
     /// <summary>
     /// The Identity <c>Person</c> id of the authenticated suite member, read from the <c>person_id</c>
-    /// cookie claim (RA2/ADR-016). Reflekt ownership (Team/Sprint) keys on Person id, not the User id.
+    /// cookie claim (RA2/ADR-016). Reflekt ownership (Team/RetroSession) keys on Person id, not the User id.
     /// Throws if the claim is absent — call only on cookie-authenticated suite-member paths.
     /// </summary>
     public static int GetPersonId(this ClaimsPrincipal principal)

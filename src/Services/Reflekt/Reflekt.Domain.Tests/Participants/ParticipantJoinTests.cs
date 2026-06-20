@@ -6,14 +6,14 @@ namespace Reflekt.Domain.Tests.Participants;
 
 public class ParticipantJoinTests
 {
-    private const int SprintId = 42;
+    private const int RetroSessionId = 42;
 
     // --- Slice 1: authenticated join sets PersonId from the supplied id ---
 
     [Fact]
     public void Should_SetPersonId_When_PersonIdSupplied()
     {
-        var participant = Participant.Join("Ana", SprintId, personId: 7);
+        var participant = Participant.Join("Ana", RetroSessionId, personId: 7);
 
         participant.PersonId.Should().Be(7);
     }
@@ -23,7 +23,7 @@ public class ParticipantJoinTests
     [Fact]
     public void Should_LeavePersonIdNull_When_NoPersonIdSupplied()
     {
-        var participant = Participant.Join("Mihai", SprintId);
+        var participant = Participant.Join("Mihai", RetroSessionId);
 
         participant.PersonId.Should().BeNull();
     }

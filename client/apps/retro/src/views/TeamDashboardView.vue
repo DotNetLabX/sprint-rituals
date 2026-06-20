@@ -96,12 +96,12 @@ watch(
 );
 
 function navigateToTeam(teamId: number) {
-  router.push({ name: 'team-sprints', params: { teamId } });
+  router.push({ name: 'team-retro-sessions', params: { teamId } });
 }
 
 function handleTeamCreated(team: TeamSummary) {
   showCreateForm.value = false;
-  router.push({ name: 'team-sprints', params: { teamId: team.id } });
+  router.push({ name: 'team-retro-sessions', params: { teamId: team.id } });
 }
 
 function handleDeleteRequest(teamId: number) {

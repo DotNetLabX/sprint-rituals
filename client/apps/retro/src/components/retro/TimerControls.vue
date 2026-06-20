@@ -38,12 +38,12 @@
 </template>
 
 <script setup lang="ts">
-import { getHubConnection } from '../../composables/useSprintHub'
+import { getHubConnection } from '../../composables/useRetroHub'
 import { useToast } from '../../composables/useToast'
 import type { TimerStatus } from '../../composables/useTimer'
 
 const props = defineProps<{
-  sprintId: number
+  retroSessionId: number
   timerStatus: TimerStatus
 }>()
 
@@ -57,7 +57,7 @@ async function invoke(method: string) {
   const conn = getHubConnection()
   if (!conn) { addToast('Not connected to server.', 'error'); return }
   try {
-    await conn.invoke(method, props.sprintId)
+    await conn.invoke(method, props.retroSessionId)
   } catch (e: any) {
     addToast(e?.message ?? 'Timer action failed.', 'error')
   }
@@ -68,7 +68,7 @@ async function invokeAddTime(minutes: number) {
   const conn = getHubConnection()
   if (!conn) { addToast('Not connected to server.', 'error'); return }
   try {
-    await conn.invoke('AddTime', props.sprintId, minutes)
+    await conn.invoke('AddTime', props.retroSessionId, minutes)
   } catch (e: any) {
     addToast(e?.message ?? 'Failed to add time.', 'error')
   }

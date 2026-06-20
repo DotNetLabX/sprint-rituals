@@ -1,16 +1,16 @@
 import { computed } from 'vue'
 import { useReadinessStore } from '../stores/readiness'
 import { useParticipantStore } from '../stores/participant'
-import { getHubConnection } from './useSprintHub'
+import { getHubConnection } from './useRetroHub'
 
 export function useReadiness() {
   const readinessStore = useReadinessStore()
   const participantStore = useParticipantStore()
 
-  async function toggleReady(sprintId: number) {
+  async function toggleReady(retroSessionId: number) {
     const connection = getHubConnection()
     if (!connection) return
-    await connection.invoke('ToggleReady', sprintId)
+    await connection.invoke('ToggleReady', retroSessionId)
   }
 
   const isCurrentParticipantReady = computed(() => {

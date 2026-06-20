@@ -29,7 +29,7 @@ public class GuestTokenAuthenticationHandler(
         var claims = new[]
         {
             new Claim("participantId", participant.Id.ToString()),
-            new Claim("sprintId", participant.SprintId.ToString()),
+            new Claim("retroSessionId", participant.RetroSessionId.ToString()),
             new Claim("displayName", participant.DisplayName),
         };
         var identity = new ClaimsIdentity(claims, GuestTokenDefaults.AuthenticationScheme);

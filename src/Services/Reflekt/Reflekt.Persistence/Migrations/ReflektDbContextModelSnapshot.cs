@@ -44,7 +44,7 @@ namespace Reflekt.Persistence.Migrations
                     b.Property<DateTime?>("LastModifiedOn")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("SprintId")
+                    b.Property<int>("RetroSessionId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Title")
@@ -53,7 +53,7 @@ namespace Reflekt.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SprintId");
+                    b.HasIndex("RetroSessionId");
 
                     b.ToTable("CardGroups", (string)null);
                 });
@@ -95,15 +95,15 @@ namespace Reflekt.Persistence.Migrations
                     b.Property<int>("ParticipantId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("RetroSessionId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("ReviewStatus")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER")
                         .HasDefaultValue(0);
 
-                    b.Property<int?>("ReviewedInSprintId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("SprintId")
+                    b.Property<int?>("ReviewedInRetroSessionId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Text")
@@ -120,9 +120,9 @@ namespace Reflekt.Persistence.Migrations
 
                     b.HasIndex("ParticipantId");
 
-                    b.HasIndex("ReviewedInSprintId");
+                    b.HasIndex("RetroSessionId");
 
-                    b.HasIndex("SprintId");
+                    b.HasIndex("ReviewedInRetroSessionId");
 
                     b.ToTable("Cards", (string)null);
                 });
@@ -234,7 +234,7 @@ namespace Reflekt.Persistence.Migrations
                     b.Property<int?>("PersonId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("SprintId")
+                    b.Property<int>("RetroSessionId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
@@ -244,9 +244,9 @@ namespace Reflekt.Persistence.Migrations
 
                     b.HasIndex("PersonId");
 
-                    b.HasIndex("SprintId");
+                    b.HasIndex("RetroSessionId");
 
-                    b.HasIndex("SprintId", "PersonId")
+                    b.HasIndex("RetroSessionId", "PersonId")
                         .IsUnique()
                         .HasFilter("\"PersonId\" IS NOT NULL");
 
@@ -578,7 +578,7 @@ namespace Reflekt.Persistence.Migrations
                 {
                     b.HasOne("Reflekt.Domain.RetroSessions.RetroSession", null)
                         .WithMany()
-                        .HasForeignKey("SprintId")
+                        .HasForeignKey("RetroSessionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -598,14 +598,14 @@ namespace Reflekt.Persistence.Migrations
 
                     b.HasOne("Reflekt.Domain.RetroSessions.RetroSession", null)
                         .WithMany()
-                        .HasForeignKey("ReviewedInSprintId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .HasForeignKey("RetroSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Reflekt.Domain.RetroSessions.RetroSession", null)
                         .WithMany()
-                        .HasForeignKey("SprintId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ReviewedInRetroSessionId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("Reflekt.Domain.Cards.EvidenceLink", b =>
@@ -621,7 +621,7 @@ namespace Reflekt.Persistence.Migrations
                 {
                     b.HasOne("Reflekt.Domain.RetroSessions.RetroSession", null)
                         .WithMany()
-                        .HasForeignKey("SprintId")
+                        .HasForeignKey("RetroSessionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

@@ -1,13 +1,13 @@
 <template>
   <div class="flex flex-col gap-3 bg-surface rounded-[--radius-md] shadow-card px-4 py-3">
-    <!-- Row 1: Sprint name | timer + badges + action button -->
+    <!-- Row 1: Retro name | timer + badges + action button -->
     <div class="flex items-center justify-between gap-3">
-      <h1 class="text-xl font-bold text-text-primary truncate">{{ sprintName }}</h1>
+      <h1 class="text-xl font-bold text-text-primary truncate">{{ retroSessionName }}</h1>
       <div class="flex items-center gap-2 flex-shrink-0">
         <!-- Timer display (Writing/Voting/Discussing phases only) -->
         <TimerDisplay
           v-if="isTimedPhase"
-          :sprint-id="sprintId"
+          :retro-session-id="retroSessionId"
           :is-scrum-master="isScrumMaster"
           :current-phase="currentPhase"
           :writing-timer-default="writingTimerDefault"
@@ -56,9 +56,9 @@
           <button
             v-else
             class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-[--radius-sm] transition-colors cursor-pointer"
-            @click="$emit('close-sprint')"
+            @click="$emit('close-retro-session')"
           >
-            Close Sprint
+            Close Retro
           </button>
         </template>
       </div>
@@ -80,8 +80,8 @@ import RetroParticipantList from './RetroParticipantList.vue'
 import TimerDisplay from './TimerDisplay.vue'
 
 const props = defineProps<{
-  sprintId: number
-  sprintName: string
+  retroSessionId: number
+  retroSessionName: string
   currentPhase: string
   isScrumMaster: boolean
   nextPhaseName: string
@@ -104,7 +104,7 @@ const props = defineProps<{
 
 defineEmits<{
   'advance-phase': []
-  'close-sprint': []
+  'close-retro-session': []
   'toggle-ready': []
 }>()
 

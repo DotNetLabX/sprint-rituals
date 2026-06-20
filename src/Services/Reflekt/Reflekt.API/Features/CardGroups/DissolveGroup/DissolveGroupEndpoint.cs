@@ -11,10 +11,10 @@ using AuthPolicies = Reflekt.API.Auth.Policies;
 
 namespace Reflekt.API.Features.CardGroups.DissolveGroup;
 
-public sealed record DissolveGroupRequest(int SprintId, int GroupId);
+public sealed record DissolveGroupRequest(int RetroSessionId, int GroupId);
 
 [Authorize(Policy = AuthPolicies.ScrumMaster)]
-[HttpDelete("/api/sprints/{sprintId}/card-groups/{groupId}")]
+[HttpDelete("/api/retro-sessions/{retroSessionId}/card-groups/{groupId}")]
 [Tags("CardGroups")]
 public sealed class DissolveGroupEndpoint(
     RetroSessionRepository retroSessionRepository,
@@ -22,30 +22,30 @@ public sealed class DissolveGroupEndpoint(
     CardRepository cardRepository,
     CardGroupRepository cardGroupRepository,
     PhaseActionCache phaseActionCache,
-    IHubContext<SprintHub> hubContext)
+    IHubContext<RetroHub> hubContext)
     : Endpoint<DissolveGroupRequest>
 {
     public override async Task HandleAsync(DissolveGroupRequest req, CancellationToken ct)
     {
         var userId = User.GetPersonId();
 
-        var sprint = await retroSessionRepository.GetByIdAsync(req.SprintId, ct);
-        if (sprint is null) { await Send.NotFoundAsync(ct); return; }
+        var session = await retroSessionRepository.GetByIdAsync(req.RetroSessionId, ct);
+        if (session is null) { await Send.NotFoundAsync(ct); return; }
 
-        var team = await teamRepository.GetByIdAsync(sprint.TeamId, ct);
+        var team = await teamRepository.GetByIdAsync(session.TeamId, ct);
         if (team is null || team.OwnerId != userId)
         {
             await Send.ForbiddenAsync(ct);
             return;
         }
 
-        if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, RetroAction.UngroupCards))
-            ThrowError($"{RetroAction.UngroupCards} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
+        if (!phaseActionCache.IsAllowed(session.CurrentPhase, RetroAction.UngroupCards))
+            ThrowError($"{RetroAction.UngroupCards} is not allowed in phase {session.CurrentPhase}.", StatusCodes.Status409Conflict);
 
         var group = await cardGroupRepository.GetByIdAsync(req.GroupId, ct);
-        if (group is null || group.SprintId != req.SprintId) { await Send.NotFoundAsync(ct); return; }
+        if (group is null || group.RetroSessionId != req.RetroSessionId) { await Send.NotFoundAsync(ct); return; }
 
-        var groupCards = (await cardRepository.GetBySprintIdAsync(req.SprintId, ct))
+        var groupCards = (await cardRepository.GetByRetroSessionIdAsync(req.RetroSessionId, ct))
             .Where(c => c.GroupId == req.GroupId)
             .ToList();
 
@@ -54,7 +54,7 @@ public sealed class DissolveGroupEndpoint(
 
         foreach (var card in groupCards)
         {
-            var soloGroup = CardGroup.Create(req.SprintId, card.ColumnType);
+            var soloGroup = CardGroup.Create(req.RetroSessionId, card.ColumnType);
             soloGroup.ClearDomainEvents();
             await cardGroupRepository.AddAsync(soloGroup, ct);
             await cardGroupRepository.SaveChangesAsync(ct);
@@ -64,7 +64,7 @@ public sealed class DissolveGroupEndpoint(
         cardGroupRepository.Remove(group);
         await cardGroupRepository.SaveChangesAsync(ct);
 
-        await hubContext.Clients.Group($"sprint:{req.SprintId}")
+        await hubContext.Clients.Group($"retro:{req.RetroSessionId}")
             .SendAsync("GroupDissolved", new { groupId = req.GroupId }, ct);
 
         await Send.NoContentAsync(ct);

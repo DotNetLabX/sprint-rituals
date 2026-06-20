@@ -6,7 +6,7 @@ using Reflekt.Persistence.Repositories;
 namespace Reflekt.API.Features.Votes.RetractVote;
 
 public sealed class BroadcastVoteCountOnVoteRetractedHandler(
-    IHubContext<SprintHub> hubContext,
+    IHubContext<RetroHub> hubContext,
     CardGroupRepository cardGroupRepository,
     VoteRepository voteRepository)
     : IEventHandler<VoteRetractedEvent>
@@ -18,7 +18,7 @@ public sealed class BroadcastVoteCountOnVoteRetractedHandler(
         if (group is null) return;
 
         var newCount = await voteRepository.CountByGroupAsync(groupId, ct);
-        await hubContext.Clients.Group($"sprint:{group.SprintId}")
+        await hubContext.Clients.Group($"retro:{group.RetroSessionId}")
             .SendAsync("VoteRetracted", new { groupId, newCount }, ct);
     }
 }

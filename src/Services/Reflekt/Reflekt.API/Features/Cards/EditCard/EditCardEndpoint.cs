@@ -10,7 +10,7 @@ using AuthPolicies = Reflekt.API.Auth.Policies;
 namespace Reflekt.API.Features.Cards.EditCard;
 
 [Authorize(Policy = AuthPolicies.OwnerOrScrumMaster)]
-[HttpPut("/api/sprints/{sprintId}/cards/{cardId}")]
+[HttpPut("/api/retro-sessions/{retroSessionId}/cards/{cardId}")]
 [Tags("Cards")]
 public sealed class EditCardEndpoint(
     RetroSessionRepository retroSessionRepository,
@@ -22,13 +22,13 @@ public sealed class EditCardEndpoint(
     public override async Task HandleAsync(EditCardCommand command, CancellationToken ct)
     {
         var card = await cardRepository.GetByIdAsync(command.CardId, ct);
-        if (card is null || card.SprintId != command.SprintId) { await Send.NotFoundAsync(ct); return; }
+        if (card is null || card.RetroSessionId != command.RetroSessionId) { await Send.NotFoundAsync(ct); return; }
 
-        var sprint = await retroSessionRepository.GetByIdAsync(command.SprintId, ct);
-        if (sprint is null) { await Send.NotFoundAsync(ct); return; }
+        var session = await retroSessionRepository.GetByIdAsync(command.RetroSessionId, ct);
+        if (session is null) { await Send.NotFoundAsync(ct); return; }
 
-        if (sprint.State == RetroSessionState.Closed)
-            ThrowError("Sprint is closed.", StatusCodes.Status409Conflict);
+        if (session.State == RetroSessionState.Closed)
+            ThrowError("Retro is closed.", StatusCodes.Status409Conflict);
 
         var participantIdClaim = User.FindFirstValue("participantId");
         if (participantIdClaim is not null)
@@ -41,7 +41,7 @@ public sealed class EditCardEndpoint(
         }
         else
         {
-            var team = await teamRepository.GetByIdAsync(sprint.TeamId, ct);
+            var team = await teamRepository.GetByIdAsync(session.TeamId, ct);
             var personId = User.GetPersonId();
             if (team is null || team.OwnerId != personId)
             {
@@ -51,10 +51,10 @@ public sealed class EditCardEndpoint(
         }
 
         var action = card.CardType == CardType.ActionItem ? RetroAction.EditActionItem : RetroAction.EditNote;
-        if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, action))
-            ThrowError($"{action} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
+        if (!phaseActionCache.IsAllowed(session.CurrentPhase, action))
+            ThrowError($"{action} is not allowed in phase {session.CurrentPhase}.", StatusCodes.Status409Conflict);
 
-        if (sprint.CurrentPhase == RetroPhase.Discussing && card.CardType == CardType.ActionItem)
+        if (session.CurrentPhase == RetroPhase.Discussing && card.CardType == CardType.ActionItem)
         {
             // Presence check: only a cookie-authenticated suite user may edit an action item in
             // Discussing. Any Identity cookie carries person_id (RA2), so this is behavior-equivalent

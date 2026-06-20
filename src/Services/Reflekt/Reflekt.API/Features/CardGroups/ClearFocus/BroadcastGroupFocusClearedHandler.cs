@@ -4,11 +4,11 @@ using Reflekt.Domain.RetroSessions.Events;
 
 namespace Reflekt.API.Features.CardGroups.ClearFocus;
 
-public sealed class BroadcastGroupFocusClearedHandler(IHubContext<SprintHub> hubContext)
+public sealed class BroadcastGroupFocusClearedHandler(IHubContext<RetroHub> hubContext)
     : IEventHandler<GroupFocusClearedEvent>
 {
     public Task HandleAsync(GroupFocusClearedEvent ev, CancellationToken ct)
-        => hubContext.Clients.Group($"sprint:{ev.RetroSession.Id}")
+        => hubContext.Clients.Group($"retro:{ev.RetroSession.Id}")
             .SendAsync("GroupFocusCleared", new
             {
                 previousGroupId = ev.PreviousGroupId

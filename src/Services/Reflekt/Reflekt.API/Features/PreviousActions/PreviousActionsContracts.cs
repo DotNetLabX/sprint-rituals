@@ -5,5 +5,5 @@ public sealed record PreviousActionItemResponse(
     string Text,
     string? AssigneeName,
     string ReviewStatus,
-    int PreviousSprintId,
-    string PreviousSprintName);
+    int PreviousRetroSessionId,
+    string PreviousRetroSessionName);

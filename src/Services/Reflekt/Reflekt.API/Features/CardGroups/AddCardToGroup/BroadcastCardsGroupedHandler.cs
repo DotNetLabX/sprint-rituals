@@ -5,12 +5,12 @@ using Reflekt.Domain.CardGroups.Events;
 namespace Reflekt.API.Features.CardGroups.AddCardToGroup;
 
 public sealed class BroadcastCardsGroupedHandler(
-    IHubContext<SprintHub> hubContext)
+    IHubContext<RetroHub> hubContext)
     : IEventHandler<CardsGroupedEvent>
 {
     public async Task HandleAsync(CardsGroupedEvent ev, CancellationToken ct)
     {
-        await hubContext.Clients.Group($"sprint:{ev.Group.SprintId}")
+        await hubContext.Clients.Group($"retro:{ev.Group.RetroSessionId}")
             .SendAsync("CardsGrouped", new
             {
                 groupId = ev.Group.Id,

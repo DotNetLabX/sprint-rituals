@@ -5,7 +5,7 @@ using MassTransit;
 using Microsoft.AspNetCore.SignalR;
 using Reflekt.API.Auth;
 using Reflekt.API.Features.PhaseActions;
-using Reflekt.API.Features.Sprints.Timer;
+using Reflekt.API.Features.RetroSessions.Timer;
 using Reflekt.API.Features.Teams;
 using Reflekt.API.Hubs;
 using Reflekt.API.OpenGraph;
@@ -71,14 +71,14 @@ public static class DependencyInjection
     {
         // Hub route: /hubs/retro (NOT /hubs/sprint — taken by Fokus.SprintHub per F2)
         // Frontend URL updated in RA5.
-        app.MapHub<SprintHub>("/hubs/retro");
+        app.MapHub<RetroHub>("/hubs/retro");
 
-        // Wire timer expiry callback: on expiry, broadcast TimerUpdated(expired) to sprint group
+        // Wire timer expiry callback: on expiry, broadcast TimerUpdated(expired) to retro group
         var timerService = app.Services.GetRequiredService<TimerService>();
-        var hubContext = app.Services.GetRequiredService<IHubContext<SprintHub>>();
-        timerService.RegisterExpiryCallback(async sprintId =>
+        var hubContext = app.Services.GetRequiredService<IHubContext<RetroHub>>();
+        timerService.RegisterExpiryCallback(async retroSessionId =>
         {
-            await hubContext.Clients.Group($"sprint:{sprintId}").SendAsync("TimerUpdated", new
+            await hubContext.Clients.Group($"retro:{retroSessionId}").SendAsync("TimerUpdated", new
             {
                 status = "expired",
                 remainingSeconds = 0,

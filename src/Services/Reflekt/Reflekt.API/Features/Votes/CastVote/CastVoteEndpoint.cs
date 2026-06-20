@@ -10,22 +10,22 @@ using AuthPolicies = Reflekt.API.Auth.Policies;
 
 namespace Reflekt.API.Features.Votes.CastVote;
 
-public sealed record CastVoteRequest(int SprintId, int GroupId);
+public sealed record CastVoteRequest(int RetroSessionId, int GroupId);
 
 [Authorize(Policy = AuthPolicies.Participant)]
-[HttpPost("/api/sprints/{sprintId}/card-groups/{groupId}/votes")]
+[HttpPost("/api/retro-sessions/{retroSessionId}/card-groups/{groupId}/votes")]
 [Tags("Votes")]
 public sealed class CastVoteEndpoint(
     RetroSessionRepository retroSessionRepository,
     CardGroupRepository cardGroupRepository,
     VoteRepository voteRepository,
     PhaseActionCache phaseActionCache,
-    IHubContext<SprintHub> hubContext)
+    IHubContext<RetroHub> hubContext)
     : Endpoint<CastVoteRequest, VoteResponse>
 {
     public override async Task HandleAsync(CastVoteRequest req, CancellationToken ct)
     {
-        if (!int.TryParse(User.FindFirstValue("sprintId"), out var claimSprintId) || claimSprintId != req.SprintId)
+        if (!int.TryParse(User.FindFirstValue("retroSessionId"), out var claimRetroSessionId) || claimRetroSessionId != req.RetroSessionId)
         {
             await Send.UnauthorizedAsync(ct);
             return;
@@ -38,21 +38,21 @@ public sealed class CastVoteEndpoint(
         }
 
         var group = await cardGroupRepository.GetByIdAsync(req.GroupId, ct);
-        if (group is null || group.SprintId != req.SprintId) { await Send.NotFoundAsync(ct); return; }
+        if (group is null || group.RetroSessionId != req.RetroSessionId) { await Send.NotFoundAsync(ct); return; }
 
-        var sprint = await retroSessionRepository.GetByIdAsync(req.SprintId, ct);
-        if (sprint is null) { await Send.NotFoundAsync(ct); return; }
+        var session = await retroSessionRepository.GetByIdAsync(req.RetroSessionId, ct);
+        if (session is null) { await Send.NotFoundAsync(ct); return; }
 
-        if (sprint.State == RetroSessionState.Closed)
-            ThrowError("Sprint is closed.", StatusCodes.Status409Conflict);
+        if (session.State == RetroSessionState.Closed)
+            ThrowError("Retro is closed.", StatusCodes.Status409Conflict);
 
-        if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, RetroAction.CastVote))
-            ThrowError($"{RetroAction.CastVote} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
+        if (!phaseActionCache.IsAllowed(session.CurrentPhase, RetroAction.CastVote))
+            ThrowError($"{RetroAction.CastVote} is not allowed in phase {session.CurrentPhase}.", StatusCodes.Status409Conflict);
 
         await using var tx = await voteRepository.BeginSerializableAsync(ct);
 
         var usedVotes = await voteRepository.CountByParticipantAsync(participantId, ct);
-        if (usedVotes >= sprint.VotesPerParticipant)
+        if (usedVotes >= session.VotesPerParticipant)
             ThrowError("Vote budget exhausted.", StatusCodes.Status409Conflict);
 
         var existingVote = await voteRepository.GetOneByParticipantAndGroupAsync(participantId, req.GroupId, ct);
@@ -69,7 +69,7 @@ public sealed class CastVoteEndpoint(
 
         await tx.CommitAsync(ct);
 
-        await hubContext.Clients.Group($"sprint:{req.SprintId}")
+        await hubContext.Clients.Group($"retro:{req.RetroSessionId}")
             .SendAsync("VoteCast", new { groupId = req.GroupId, newCount = voteCount }, ct);
 
         await Send.ResponseAsync(new VoteResponse(req.GroupId, voteCount, myVoteCount), 201, ct);

@@ -11,14 +11,14 @@ using AuthPolicies = Reflekt.API.Auth.Policies;
 namespace Reflekt.API.Features.Cards.CreateCard;
 
 [Authorize(Policy = AuthPolicies.Participant)]
-[HttpPost("/api/sprints/{sprintId}/cards")]
+[HttpPost("/api/retro-sessions/{retroSessionId}/cards")]
 [Tags("Cards")]
 public sealed class CreateCardEndpoint(RetroSessionRepository retroSessionRepository, CardRepository cardRepository, PhaseActionCache phaseActionCache)
     : Endpoint<CreateCardCommand, CardResponse>
 {
     public override async Task HandleAsync(CreateCardCommand command, CancellationToken ct)
     {
-        if (!int.TryParse(User.FindFirstValue("sprintId"), out var claimSprintId) || claimSprintId != command.SprintId)
+        if (!int.TryParse(User.FindFirstValue("retroSessionId"), out var claimRetroSessionId) || claimRetroSessionId != command.RetroSessionId)
         {
             await Send.UnauthorizedAsync(ct);
             return;
@@ -42,17 +42,17 @@ public sealed class CreateCardEndpoint(RetroSessionRepository retroSessionReposi
             return;
         }
 
-        var sprint = await retroSessionRepository.GetByIdAsync(command.SprintId, ct);
-        if (sprint is null) { await Send.NotFoundAsync(ct); return; }
+        var session = await retroSessionRepository.GetByIdAsync(command.RetroSessionId, ct);
+        if (session is null) { await Send.NotFoundAsync(ct); return; }
 
-        if (sprint.State == RetroSessionState.Closed)
-            ThrowError("Sprint is closed.", StatusCodes.Status409Conflict);
+        if (session.State == RetroSessionState.Closed)
+            ThrowError("Retro is closed.", StatusCodes.Status409Conflict);
 
         var action = cardType == CardType.ActionItem ? RetroAction.CreateActionItem : RetroAction.CreateNote;
-        if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, action))
-            ThrowError($"{action} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
+        if (!phaseActionCache.IsAllowed(session.CurrentPhase, action))
+            ThrowError($"{action} is not allowed in phase {session.CurrentPhase}.", StatusCodes.Status409Conflict);
 
-        if (sprint.CurrentPhase == RetroPhase.Discussing && cardType == CardType.ActionItem)
+        if (session.CurrentPhase == RetroPhase.Discussing && cardType == CardType.ActionItem)
         {
             var cookieResult = await HttpContext.AuthenticateAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme);
@@ -63,7 +63,7 @@ public sealed class CreateCardEndpoint(RetroSessionRepository retroSessionReposi
             }
         }
 
-        var card = Card.Create(command.Text, command.SprintId, participantId, columnType, cardType, command.AssigneeName);
+        var card = Card.Create(command.Text, command.RetroSessionId, participantId, columnType, cardType, command.AssigneeName);
 
         await cardRepository.AddAsync(card, ct);
         await cardRepository.SaveChangesAsync(ct);

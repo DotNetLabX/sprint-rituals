@@ -6,7 +6,7 @@ using Reflekt.Persistence.Repositories;
 namespace Reflekt.API.Features.Votes.CastVote;
 
 public sealed class BroadcastVoteCountOnVoteCastHandler(
-    IHubContext<SprintHub> hubContext,
+    IHubContext<RetroHub> hubContext,
     CardGroupRepository cardGroupRepository,
     VoteRepository voteRepository)
     : IEventHandler<VoteCastEvent>
@@ -18,7 +18,7 @@ public sealed class BroadcastVoteCountOnVoteCastHandler(
         if (group is null) return;
 
         var newCount = await voteRepository.CountByGroupAsync(groupId, ct);
-        await hubContext.Clients.Group($"sprint:{group.SprintId}")
+        await hubContext.Clients.Group($"retro:{group.RetroSessionId}")
             .SendAsync("VoteCast", new { groupId, newCount }, ct);
     }
 }

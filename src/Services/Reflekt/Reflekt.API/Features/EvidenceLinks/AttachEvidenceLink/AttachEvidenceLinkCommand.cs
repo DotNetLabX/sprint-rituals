@@ -2,7 +2,7 @@ using FluentValidation;
 
 namespace Reflekt.API.Features.EvidenceLinks.AttachEvidenceLink;
 
-public sealed record AttachEvidenceLinkCommand(int SprintId, int CardId, string Url);
+public sealed record AttachEvidenceLinkCommand(int RetroSessionId, int CardId, string Url);
 
 public sealed class AttachEvidenceLinkValidator : Validator<AttachEvidenceLinkCommand>
 {

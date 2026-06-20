@@ -32,7 +32,7 @@ export interface ReportColumnSection {
   groups: ReportGroupEntry[]
 }
 
-export interface ReportSprintInfo {
+export interface ReportRetroSessionInfo {
   id: number
   name: string
   createdAt: string
@@ -55,12 +55,12 @@ export interface ReportPreviousActionEntry {
 }
 
 export interface ReportPreviousActionsSection {
-  previousSprintName: string
+  previousRetroSessionName: string
   items: ReportPreviousActionEntry[]
 }
 
 export interface ReportResponse {
-  sprint: ReportSprintInfo
+  retroSession: ReportRetroSessionInfo
   team: ReportTeamInfo
   participants: ReportParticipantInfo[]
   columns: ReportColumnSection[]
@@ -75,19 +75,19 @@ export const useReportStore = defineStore('report', {
     error: null as string | null,
   }),
   actions: {
-    async fetchReport(teamId: number, sprintId: number): Promise<void> {
+    async fetchReport(teamId: number, retroSessionId: number): Promise<void> {
       this.loading = true
       this.error = null
       try {
         const guestStore = useGuestStore()
         const headers: Record<string, string> = {}
         if (guestStore.token) headers['X-Guest-Token'] = guestStore.token
-        const res = await fetch(`/api/teams/${teamId}/sprints/${sprintId}/report`, {
+        const res = await fetch(`/api/teams/${teamId}/retro-sessions/${retroSessionId}/report`, {
           headers,
           credentials: 'include',
         })
         if (res.status === 404) {
-          this.error = 'Sprint not found'
+          this.error = 'Retro not found'
           return
         }
         if (res.status === 401 || res.status === 403) {
@@ -104,19 +104,19 @@ export const useReportStore = defineStore('report', {
       }
     },
 
-    async fetchParticipantReport(sprintId: number): Promise<void> {
+    async fetchParticipantReport(retroSessionId: number): Promise<void> {
       this.loading = true
       this.error = null
       try {
         const guestStore = useGuestStore()
         const headers: Record<string, string> = {}
         if (guestStore.token) headers['X-Guest-Token'] = guestStore.token
-        const res = await fetch(`/api/sprints/${sprintId}/report`, {
+        const res = await fetch(`/api/retro-sessions/${retroSessionId}/report`, {
           headers,
           credentials: 'include',
         })
         if (res.status === 404) {
-          this.error = 'Sprint not found'
+          this.error = 'Retro not found'
           return
         }
         if (res.status === 401 || res.status === 403) {
@@ -136,11 +136,11 @@ export const useReportStore = defineStore('report', {
     async copyAsMarkdown(): Promise<boolean> {
       if (!this.report) return false
       const r = this.report
-      const date = new Date(r.sprint.createdAt).toLocaleDateString()
+      const date = new Date(r.retroSession.createdAt).toLocaleDateString()
       const participants = r.participants.map((p) => p.displayName).join(', ')
 
       const lines: string[] = []
-      lines.push(`# ${r.sprint.name} — Sprint Report`)
+      lines.push(`# ${r.retroSession.name} — Retro Report`)
       lines.push('')
       lines.push(`**Team:** ${r.team.name}`)
       lines.push(`**Date:** ${date}`)
@@ -175,7 +175,7 @@ export const useReportStore = defineStore('report', {
 
       if (r.previousActionsReview) {
         lines.push('')
-        lines.push(`## Previous Actions Review (from: ${r.previousActionsReview.previousSprintName})`)
+        lines.push(`## Previous Actions Review (from: ${r.previousActionsReview.previousRetroSessionName})`)
         lines.push('')
         for (const entry of r.previousActionsReview.items) {
           const assignee = entry.assigneeName ? ` — @${entry.assigneeName}` : ''

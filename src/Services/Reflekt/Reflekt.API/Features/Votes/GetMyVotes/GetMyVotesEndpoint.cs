@@ -5,10 +5,10 @@ using AuthPolicies = Reflekt.API.Auth.Policies;
 
 namespace Reflekt.API.Features.Votes.GetMyVotes;
 
-public sealed record GetMyVotesRequest(int SprintId);
+public sealed record GetMyVotesRequest(int RetroSessionId);
 
 [Authorize(Policy = AuthPolicies.Participant)]
-[HttpGet("/api/sprints/{sprintId}/votes/mine")]
+[HttpGet("/api/retro-sessions/{retroSessionId}/votes/mine")]
 [Tags("Votes")]
 public sealed class GetMyVotesEndpoint(
     RetroSessionRepository retroSessionRepository,
@@ -17,7 +17,7 @@ public sealed class GetMyVotesEndpoint(
 {
     public override async Task HandleAsync(GetMyVotesRequest req, CancellationToken ct)
     {
-        if (!int.TryParse(User.FindFirstValue("sprintId"), out var claimSprintId) || claimSprintId != req.SprintId)
+        if (!int.TryParse(User.FindFirstValue("retroSessionId"), out var claimRetroSessionId) || claimRetroSessionId != req.RetroSessionId)
         {
             await Send.UnauthorizedAsync(ct);
             return;
@@ -29,8 +29,8 @@ public sealed class GetMyVotesEndpoint(
             return;
         }
 
-        var sprint = await retroSessionRepository.GetByIdAsync(req.SprintId, ct);
-        if (sprint is null) { await Send.NotFoundAsync(ct); return; }
+        var session = await retroSessionRepository.GetByIdAsync(req.RetroSessionId, ct);
+        if (session is null) { await Send.NotFoundAsync(ct); return; }
 
         var distribution = await voteRepository.GetVoteDistributionAsync(participantId, ct);
         await Send.OkAsync(distribution.Select(e => new VoteDistributionEntry(e.GroupId, e.Count)).ToList(), ct);

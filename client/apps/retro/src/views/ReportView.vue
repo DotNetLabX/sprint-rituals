@@ -10,7 +10,7 @@
       </div>
     </template>
 
-    <SprintReportPanel v-if="report" :report="report" @copy-markdown="handleCopy" />
+    <RetroSessionReportPanel v-if="report" :report="report" @copy-markdown="handleCopy" />
   </PageLayout>
 </template>
 
@@ -21,7 +21,7 @@ import { useGuestStore } from '../stores/guest'
 import { useReportStore } from '../stores/report'
 import { useToast } from '../composables/useToast'
 import PageLayout from '../components/layout/PageLayout.vue'
-import SprintReportPanel from '../components/reports/SprintReportPanel.vue'
+import RetroSessionReportPanel from '../components/reports/RetroSessionReportPanel.vue'
 
 const route = useRoute()
 const guestStore = useGuestStore()
@@ -29,7 +29,7 @@ const reportStore = useReportStore()
 const { addToast } = useToast()
 
 const teamId = Number(route.params.teamId)
-const sprintId = Number(route.params.sprintId)
+const retroSessionId = Number(route.params.retroSessionId)
 
 const report = computed(() => reportStore.report)
 
@@ -39,7 +39,7 @@ async function handleCopy() {
 }
 
 onMounted(() => {
-  guestStore.loadToken(sprintId)
-  reportStore.fetchReport(teamId, sprintId)
+  guestStore.loadToken(retroSessionId)
+  reportStore.fetchReport(teamId, retroSessionId)
 })
 </script>

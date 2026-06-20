@@ -7,12 +7,12 @@ using AuthPolicies = Reflekt.API.Auth.Policies;
 
 namespace Reflekt.API.Features.CardGroups.ToggleDiscussed;
 
-public sealed record ToggleDiscussedRequest(int SprintId, int GroupId);
+public sealed record ToggleDiscussedRequest(int RetroSessionId, int GroupId);
 
 public sealed record ToggleDiscussedResponse(int GroupId, bool IsDiscussed, DateTime? DiscussedAt);
 
 [Authorize(Policy = AuthPolicies.ScrumMaster)]
-[HttpPost("/api/sprints/{sprintId}/card-groups/{groupId}/toggle-discussed")]
+[HttpPost("/api/retro-sessions/{retroSessionId}/card-groups/{groupId}/toggle-discussed")]
 [Tags("CardGroups")]
 public sealed class ToggleDiscussedEndpoint(
     RetroSessionRepository retroSessionRepository,
@@ -25,28 +25,28 @@ public sealed class ToggleDiscussedEndpoint(
     {
         var userId = User.GetPersonId();
 
-        var sprint = await retroSessionRepository.GetByIdAsync(req.SprintId, ct);
-        if (sprint is null) { await Send.NotFoundAsync(ct); return; }
+        var session = await retroSessionRepository.GetByIdAsync(req.RetroSessionId, ct);
+        if (session is null) { await Send.NotFoundAsync(ct); return; }
 
-        var team = await teamRepository.GetByIdAsync(sprint.TeamId, ct);
+        var team = await teamRepository.GetByIdAsync(session.TeamId, ct);
         if (team is null || team.OwnerId != userId)
         {
             await Send.ForbiddenAsync(ct);
             return;
         }
 
-        if (sprint.State != RetroSessionState.Active)
+        if (session.State != RetroSessionState.Active)
         {
-            AddError("Sprint must be Active.");
+            AddError("Retro must be Active.");
             await Send.ErrorsAsync(409, ct);
             return;
         }
 
-        if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, RetroAction.ToggleDiscussed))
-            ThrowError($"{RetroAction.ToggleDiscussed} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
+        if (!phaseActionCache.IsAllowed(session.CurrentPhase, RetroAction.ToggleDiscussed))
+            ThrowError($"{RetroAction.ToggleDiscussed} is not allowed in phase {session.CurrentPhase}.", StatusCodes.Status409Conflict);
 
         var group = await cardGroupRepository.GetByIdAsync(req.GroupId, ct);
-        if (group is null || group.SprintId != req.SprintId) { await Send.NotFoundAsync(ct); return; }
+        if (group is null || group.RetroSessionId != req.RetroSessionId) { await Send.NotFoundAsync(ct); return; }
 
         if (group.DiscussedAt.HasValue)
             group.UnmarkDiscussed();

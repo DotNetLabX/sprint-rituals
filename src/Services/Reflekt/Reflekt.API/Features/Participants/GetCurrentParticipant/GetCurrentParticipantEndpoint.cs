@@ -5,10 +5,10 @@ using AuthPolicies = Reflekt.API.Auth.Policies;
 
 namespace Reflekt.API.Features.Participants.GetCurrentParticipant;
 
-public sealed record GetCurrentParticipantRequest(int SprintId);
+public sealed record GetCurrentParticipantRequest(int RetroSessionId);
 
 [Authorize(Policy = AuthPolicies.Participant)]
-[HttpGet("/api/sprints/{sprintId}/participants/me")]
+[HttpGet("/api/retro-sessions/{retroSessionId}/participants/me")]
 [Tags("Participants")]
 public sealed class GetCurrentParticipantEndpoint(ParticipantRepository participantRepository)
     : Endpoint<GetCurrentParticipantRequest, ParticipantResponse>
@@ -16,9 +16,9 @@ public sealed class GetCurrentParticipantEndpoint(ParticipantRepository particip
     public override async Task HandleAsync(GetCurrentParticipantRequest request, CancellationToken ct)
     {
         var participantIdClaim = User.FindFirstValue("participantId");
-        var sprintIdClaim = User.FindFirstValue("sprintId");
+        var retroSessionIdClaim = User.FindFirstValue("retroSessionId");
 
-        if (!int.TryParse(sprintIdClaim, out var claimSprintId) || claimSprintId != request.SprintId)
+        if (!int.TryParse(retroSessionIdClaim, out var claimRetroSessionId) || claimRetroSessionId != request.RetroSessionId)
         {
             await Send.UnauthorizedAsync(ct);
             return;

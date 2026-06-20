@@ -6,10 +6,10 @@ using AuthPolicies = Reflekt.API.Auth.Policies;
 
 namespace Reflekt.API.Features.Participants.KickParticipant;
 
-public sealed record KickParticipantRequest(int SprintId, int ParticipantId);
+public sealed record KickParticipantRequest(int RetroSessionId, int ParticipantId);
 
 [Authorize(Policy = AuthPolicies.ScrumMaster)]
-[HttpDelete("/api/sprints/{sprintId}/participants/{participantId}")]
+[HttpDelete("/api/retro-sessions/{retroSessionId}/participants/{participantId}")]
 [Tags("Participants")]
 public sealed class KickParticipantEndpoint(
     RetroSessionRepository retroSessionRepository,
@@ -19,14 +19,14 @@ public sealed class KickParticipantEndpoint(
 {
     public override async Task HandleAsync(KickParticipantRequest req, CancellationToken ct)
     {
-        var sprint = await retroSessionRepository.GetByIdAsync(req.SprintId, ct);
-        if (sprint is null) { await Send.NotFoundAsync(ct); return; }
+        var session = await retroSessionRepository.GetByIdAsync(req.RetroSessionId, ct);
+        if (session is null) { await Send.NotFoundAsync(ct); return; }
 
-        if (sprint.State != RetroSessionState.Active)
-            ThrowError("Cannot kick participants from a non-active sprint.", StatusCodes.Status409Conflict);
+        if (session.State != RetroSessionState.Active)
+            ThrowError("Cannot kick participants from a non-active session.", StatusCodes.Status409Conflict);
 
         var userId = User.GetPersonId();
-        var team = await teamRepository.GetByIdAsync(sprint.TeamId, ct);
+        var team = await teamRepository.GetByIdAsync(session.TeamId, ct);
         if (team is null || team.OwnerId != userId)
         {
             await Send.ForbiddenAsync(ct);
@@ -34,7 +34,7 @@ public sealed class KickParticipantEndpoint(
         }
 
         var participant = await participantRepository.GetByIdAsync(req.ParticipantId, ct);
-        if (participant is null || participant.SprintId != req.SprintId)
+        if (participant is null || participant.RetroSessionId != req.RetroSessionId)
         {
             await Send.NotFoundAsync(ct);
             return;

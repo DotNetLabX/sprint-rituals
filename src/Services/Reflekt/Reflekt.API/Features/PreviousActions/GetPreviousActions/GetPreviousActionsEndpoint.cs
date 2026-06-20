@@ -6,10 +6,10 @@ using AuthPolicies = Reflekt.API.Auth.Policies;
 
 namespace Reflekt.API.Features.PreviousActions.GetPreviousActions;
 
-public sealed record GetPreviousActionsRequest(int SprintId);
+public sealed record GetPreviousActionsRequest(int RetroSessionId);
 
 [Authorize(Policy = AuthPolicies.OwnerOrScrumMaster)]
-[HttpGet("/api/sprints/{sprintId}/previous-actions")]
+[HttpGet("/api/retro-sessions/{retroSessionId}/previous-actions")]
 [Tags("PreviousActions")]
 public sealed class GetPreviousActionsEndpoint(
     RetroSessionRepository retroSessionRepository,
@@ -19,13 +19,13 @@ public sealed class GetPreviousActionsEndpoint(
 {
     public override async Task HandleAsync(GetPreviousActionsRequest req, CancellationToken ct)
     {
-        var sprint = await retroSessionRepository.GetByIdAsync(req.SprintId, ct);
-        if (sprint is null) { await Send.NotFoundAsync(ct); return; }
+        var session = await retroSessionRepository.GetByIdAsync(req.RetroSessionId, ct);
+        if (session is null) { await Send.NotFoundAsync(ct); return; }
 
         var participantIdClaim = User.FindFirstValue("participantId");
         if (participantIdClaim is not null)
         {
-            if (!int.TryParse(User.FindFirstValue("sprintId"), out var claimSprintId) || claimSprintId != req.SprintId)
+            if (!int.TryParse(User.FindFirstValue("retroSessionId"), out var claimRetroSessionId) || claimRetroSessionId != req.RetroSessionId)
             {
                 await Send.UnauthorizedAsync(ct);
                 return;
@@ -34,7 +34,7 @@ public sealed class GetPreviousActionsEndpoint(
         else
         {
             var userId = User.GetPersonId();
-            var team = await teamRepository.GetByIdAsync(sprint.TeamId, ct);
+            var team = await teamRepository.GetByIdAsync(session.TeamId, ct);
             if (team is null || team.OwnerId != userId)
             {
                 await Send.ForbiddenAsync(ct);
@@ -42,14 +42,14 @@ public sealed class GetPreviousActionsEndpoint(
             }
         }
 
-        var previousSprint = await retroSessionRepository.GetMostRecentClosedByTeamIdAsync(sprint.TeamId, ct);
-        if (previousSprint is null)
+        var previousSession = await retroSessionRepository.GetMostRecentClosedByTeamIdAsync(session.TeamId, ct);
+        if (previousSession is null)
         {
             await Send.OkAsync([], ct);
             return;
         }
 
-        var unreviewedItems = await cardRepository.GetUnreviewedActionItemsBySprintIdAsync(previousSprint.Id, ct);
+        var unreviewedItems = await cardRepository.GetUnreviewedActionItemsByRetroSessionIdAsync(previousSession.Id, ct);
 
         var response = unreviewedItems
             .Select(c => new PreviousActionItemResponse(
@@ -57,8 +57,8 @@ public sealed class GetPreviousActionsEndpoint(
                 c.Text,
                 c.AssigneeName,
                 c.ReviewStatus.ToString(),
-                previousSprint.Id,
-                previousSprint.Name))
+                previousSession.Id,
+                previousSession.Name))
             .ToList();
 
         await Send.OkAsync(response, ct);

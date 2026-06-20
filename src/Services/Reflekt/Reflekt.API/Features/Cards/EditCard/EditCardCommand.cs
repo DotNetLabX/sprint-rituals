@@ -2,7 +2,7 @@ using FluentValidation;
 
 namespace Reflekt.API.Features.Cards.EditCard;
 
-public sealed record EditCardCommand(int SprintId, int CardId, string Text, string? AssigneeName);
+public sealed record EditCardCommand(int RetroSessionId, int CardId, string Text, string? AssigneeName);
 
 public sealed class EditCardCommandValidator : Validator<EditCardCommand>
 {

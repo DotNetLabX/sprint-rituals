@@ -7,10 +7,10 @@ using AuthPolicies = Reflekt.API.Auth.Policies;
 
 namespace Reflekt.API.Features.Reports.GetParticipantReport;
 
-public sealed record GetParticipantReportRequest(int SprintId);
+public sealed record GetParticipantReportRequest(int RetroSessionId);
 
 [Authorize(Policy = AuthPolicies.OwnerOrScrumMaster)]
-[HttpGet("/api/sprints/{sprintId}/report")]
+[HttpGet("/api/retro-sessions/{retroSessionId}/report")]
 [Tags("Reports")]
 public sealed class GetParticipantReportEndpoint(
     RetroSessionRepository retroSessionRepository,
@@ -23,13 +23,13 @@ public sealed class GetParticipantReportEndpoint(
 {
     public override async Task HandleAsync(GetParticipantReportRequest req, CancellationToken ct)
     {
-        var sprint = await retroSessionRepository.GetByIdAsync(req.SprintId, ct);
-        if (sprint is null) { await Send.NotFoundAsync(ct); return; }
+        var session = await retroSessionRepository.GetByIdAsync(req.RetroSessionId, ct);
+        if (session is null) { await Send.NotFoundAsync(ct); return; }
 
         var participantIdClaim = User.FindFirstValue("participantId");
         if (participantIdClaim is not null)
         {
-            if (!int.TryParse(User.FindFirstValue("sprintId"), out var claimSprintId) || claimSprintId != req.SprintId)
+            if (!int.TryParse(User.FindFirstValue("retroSessionId"), out var claimRetroSessionId) || claimRetroSessionId != req.RetroSessionId)
             {
                 await Send.UnauthorizedAsync(ct);
                 return;
@@ -38,7 +38,7 @@ public sealed class GetParticipantReportEndpoint(
         else
         {
             var userId = User.GetPersonId();
-            var team = await teamRepository.GetByIdAsync(sprint.TeamId, ct);
+            var team = await teamRepository.GetByIdAsync(session.TeamId, ct);
             if (team is null || team.OwnerId != userId)
             {
                 await Send.ForbiddenAsync(ct);
@@ -46,11 +46,11 @@ public sealed class GetParticipantReportEndpoint(
             }
         }
 
-        var cards = await cardRepository.GetBySprintIdAsync(req.SprintId, ct);
-        var groups = await cardGroupRepository.GetBySprintIdAsync(req.SprintId, ct);
+        var cards = await cardRepository.GetByRetroSessionIdAsync(req.RetroSessionId, ct);
+        var groups = await cardGroupRepository.GetByRetroSessionIdAsync(req.RetroSessionId, ct);
         var voteCounts = await voteRepository.GetVoteCountsByGroupIdsAsync(groups.Select(g => g.Id), ct);
-        var participants = await participantRepository.GetBySprintIdAsync(req.SprintId, ct);
-        var teamInfo = await teamRepository.GetByIdAsync(sprint.TeamId, ct);
+        var participants = await participantRepository.GetByRetroSessionIdAsync(req.RetroSessionId, ct);
+        var teamInfo = await teamRepository.GetByIdAsync(session.TeamId, ct);
 
         var cardsByGroup = cards
             .Where(c => c.CardType == CardType.Note && c.GroupId.HasValue)
@@ -72,9 +72,9 @@ public sealed class GetParticipantReportEndpoint(
 
         var columnSections = new List<ReportColumnSection>
         {
-            BuildColumnSection(sprint.Column1Name, sprint.Column1Color.Value, ColumnType.Column1, groupEntries),
-            BuildColumnSection(sprint.Column2Name, sprint.Column2Color.Value, ColumnType.Column2, groupEntries),
-            BuildColumnSection(sprint.Column3Name, sprint.Column3Color.Value, ColumnType.Column3, groupEntries),
+            BuildColumnSection(session.Column1Name, session.Column1Color.Value, ColumnType.Column1, groupEntries),
+            BuildColumnSection(session.Column2Name, session.Column2Color.Value, ColumnType.Column2, groupEntries),
+            BuildColumnSection(session.Column3Name, session.Column3Color.Value, ColumnType.Column3, groupEntries),
         };
 
         var actionItems = cards
@@ -82,10 +82,10 @@ public sealed class GetParticipantReportEndpoint(
             .Select(c => c.Adapt<ReportActionItemEntry>())
             .ToList();
 
-        var previousActionsSection = await BuildPreviousActionsSectionAsync(req.SprintId, sprint.TeamId, ct);
+        var previousActionsSection = await BuildPreviousActionsSectionAsync(req.RetroSessionId, session.TeamId, ct);
 
         var response = new ReportResponse(
-            new ReportSprintInfo(sprint.Id, sprint.Name, sprint.CreatedAt, sprint.ClosedAt),
+            new ReportRetroSessionInfo(session.Id, session.Name, session.CreatedAt, session.ClosedAt),
             new ReportTeamInfo(teamInfo!.Id, teamInfo.Name),
             participants.Select(p => new ReportParticipantInfo(p.DisplayName)).ToList(),
             columnSections,
@@ -108,13 +108,13 @@ public sealed class GetParticipantReportEndpoint(
         return new ReportColumnSection(columnName, columnColor, groups);
     }
 
-    private async Task<ReportPreviousActionsSection?> BuildPreviousActionsSectionAsync(int sprintId, int teamId, CancellationToken ct)
+    private async Task<ReportPreviousActionsSection?> BuildPreviousActionsSectionAsync(int retroSessionId, int teamId, CancellationToken ct)
     {
-        var previousSprint = await retroSessionRepository.GetMostRecentClosedByTeamIdAsync(teamId, ct);
-        if (previousSprint is null) return null;
+        var previousSession = await retroSessionRepository.GetMostRecentClosedByTeamIdAsync(teamId, ct);
+        if (previousSession is null) return null;
 
-        var reviewedItems = await cardRepository.GetActionItemsReviewedInSprintAsync(sprintId, ct);
-        var unreviewedEligible = await cardRepository.GetUnreviewedActionItemsBySprintIdAsync(previousSprint.Id, ct);
+        var reviewedItems = await cardRepository.GetActionItemsReviewedInRetroSessionAsync(retroSessionId, ct);
+        var unreviewedEligible = await cardRepository.GetUnreviewedActionItemsByRetroSessionIdAsync(previousSession.Id, ct);
 
         if (reviewedItems.Count == 0 && unreviewedEligible.Count == 0) return null;
 
@@ -126,7 +126,7 @@ public sealed class GetParticipantReportEndpoint(
         foreach (var card in unreviewedEligible)
             entries.Add(new ReportPreviousActionEntry(card.Text, card.AssigneeName, "Not reviewed"));
 
-        return new ReportPreviousActionsSection(previousSprint.Name, entries);
+        return new ReportPreviousActionsSection(previousSession.Name, entries);
     }
 }
 

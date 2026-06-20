@@ -4,9 +4,9 @@ export interface TeamSummary {
   id: number;
   name: string;
   createdAt: string;
-  sprintCount: number;
-  lastSprintDate: string | null;
-  hasActiveSprint: boolean;
+  retroSessionCount: number;
+  lastRetroSessionDate: string | null;
+  hasActiveRetroSession: boolean;
 }
 
 export const useTeamsStore = defineStore('teams', {

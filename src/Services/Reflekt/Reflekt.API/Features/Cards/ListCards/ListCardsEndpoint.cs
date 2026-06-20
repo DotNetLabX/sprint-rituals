@@ -7,10 +7,10 @@ using AuthPolicies = Reflekt.API.Auth.Policies;
 
 namespace Reflekt.API.Features.Cards.ListCards;
 
-public sealed record ListCardsRequest(int SprintId);
+public sealed record ListCardsRequest(int RetroSessionId);
 
 [Authorize(Policy = AuthPolicies.OwnerOrScrumMaster)]
-[HttpGet("/api/sprints/{sprintId}/cards")]
+[HttpGet("/api/retro-sessions/{retroSessionId}/cards")]
 [Tags("Cards")]
 public sealed class ListCardsEndpoint(
     RetroSessionRepository retroSessionRepository,
@@ -21,13 +21,13 @@ public sealed class ListCardsEndpoint(
 {
     public override async Task HandleAsync(ListCardsRequest req, CancellationToken ct)
     {
-        var sprint = await retroSessionRepository.GetByIdAsync(req.SprintId, ct);
-        if (sprint is null) { await Send.NotFoundAsync(ct); return; }
+        var session = await retroSessionRepository.GetByIdAsync(req.RetroSessionId, ct);
+        if (session is null) { await Send.NotFoundAsync(ct); return; }
 
         var participantIdClaim = User.FindFirstValue("participantId");
         if (participantIdClaim is not null)
         {
-            if (!int.TryParse(User.FindFirstValue("sprintId"), out var claimSprintId) || claimSprintId != req.SprintId)
+            if (!int.TryParse(User.FindFirstValue("retroSessionId"), out var claimRetroSessionId) || claimRetroSessionId != req.RetroSessionId)
             {
                 await Send.UnauthorizedAsync(ct);
                 return;
@@ -36,7 +36,7 @@ public sealed class ListCardsEndpoint(
         else
         {
             var userId = User.GetPersonId();
-            var team = await teamRepository.GetByIdAsync(sprint.TeamId, ct);
+            var team = await teamRepository.GetByIdAsync(session.TeamId, ct);
             if (team is null || team.OwnerId != userId)
             {
                 await Send.ForbiddenAsync(ct);
@@ -44,12 +44,12 @@ public sealed class ListCardsEndpoint(
             }
         }
 
-        var cards = await cardRepository.GetBySprintIdAsync(req.SprintId, ct);
+        var cards = await cardRepository.GetByRetroSessionIdAsync(req.RetroSessionId, ct);
         var groupIds = cards.Where(c => c.GroupId.HasValue).Select(c => c.GroupId!.Value).Distinct();
         var voteCounts = await voteRepository.GetVoteCountsByGroupIdsAsync(groupIds, ct);
 
         var requestingParticipantId = participantIdClaim is not null ? int.Parse(participantIdClaim) : (int?)null;
-        var redactOthers = sprint.CurrentPhase == RetroPhase.Writing && requestingParticipantId is not null;
+        var redactOthers = session.CurrentPhase == RetroPhase.Writing && requestingParticipantId is not null;
 
         await Send.OkAsync(
             cards.Select(c =>

@@ -9,10 +9,10 @@ using AuthPolicies = Reflekt.API.Auth.Policies;
 
 namespace Reflekt.API.Features.CardGroups.AddCardToGroup;
 
-public sealed record AddCardToGroupRequest(int SprintId, int GroupId, int CardId);
+public sealed record AddCardToGroupRequest(int RetroSessionId, int GroupId, int CardId);
 
 [Authorize(Policy = AuthPolicies.ScrumMaster)]
-[HttpPost("/api/sprints/{sprintId}/card-groups/{groupId}/cards")]
+[HttpPost("/api/retro-sessions/{retroSessionId}/card-groups/{groupId}/cards")]
 [Tags("CardGroups")]
 public sealed class AddCardToGroupEndpoint(
     RetroSessionRepository retroSessionRepository,
@@ -26,24 +26,24 @@ public sealed class AddCardToGroupEndpoint(
     {
         var userId = User.GetPersonId();
 
-        var sprint = await retroSessionRepository.GetByIdAsync(req.SprintId, ct);
-        if (sprint is null) { await Send.NotFoundAsync(ct); return; }
+        var session = await retroSessionRepository.GetByIdAsync(req.RetroSessionId, ct);
+        if (session is null) { await Send.NotFoundAsync(ct); return; }
 
-        var team = await teamRepository.GetByIdAsync(sprint.TeamId, ct);
+        var team = await teamRepository.GetByIdAsync(session.TeamId, ct);
         if (team is null || team.OwnerId != userId)
         {
             await Send.ForbiddenAsync(ct);
             return;
         }
 
-        if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, RetroAction.GroupCards))
-            ThrowError($"{RetroAction.GroupCards} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
+        if (!phaseActionCache.IsAllowed(session.CurrentPhase, RetroAction.GroupCards))
+            ThrowError($"{RetroAction.GroupCards} is not allowed in phase {session.CurrentPhase}.", StatusCodes.Status409Conflict);
 
         var group = await cardGroupRepository.GetByIdAsync(req.GroupId, ct);
-        if (group is null || group.SprintId != req.SprintId) { await Send.NotFoundAsync(ct); return; }
+        if (group is null || group.RetroSessionId != req.RetroSessionId) { await Send.NotFoundAsync(ct); return; }
 
         var card = await cardRepository.GetByIdAsync(req.CardId, ct);
-        if (card is null || card.SprintId != req.SprintId) { await Send.NotFoundAsync(ct); return; }
+        if (card is null || card.RetroSessionId != req.RetroSessionId) { await Send.NotFoundAsync(ct); return; }
 
         if (card.CardType != CardType.Note)
             ThrowError("Only Note cards can be grouped.", StatusCodes.Status400BadRequest);
@@ -57,7 +57,7 @@ public sealed class AddCardToGroupEndpoint(
 
         if (sourceGroupId != 0 && sourceGroupId != group.Id)
         {
-            var allCards = await cardRepository.GetBySprintIdAsync(req.SprintId, ct);
+            var allCards = await cardRepository.GetByRetroSessionIdAsync(req.RetroSessionId, ct);
             if (!allCards.Any(c => c.GroupId == sourceGroupId))
             {
                 var sourceGroup = await cardGroupRepository.GetByIdAsync(sourceGroupId, ct);
@@ -68,7 +68,7 @@ public sealed class AddCardToGroupEndpoint(
 
         await cardGroupRepository.SaveChangesAsync(ct);
 
-        var groupCards = (await cardRepository.GetBySprintIdAsync(req.SprintId, ct))
+        var groupCards = (await cardRepository.GetByRetroSessionIdAsync(req.RetroSessionId, ct))
             .Where(c => c.GroupId == group.Id)
             .OrderBy(c => c.CreatedAt)
             .ToList();
@@ -76,7 +76,7 @@ public sealed class AddCardToGroupEndpoint(
         await Send.OkAsync(group.Adapt<CardGroupResponse>() with
         {
             Cards = groupCards.Select(c => c.Adapt<CardGroupCardEntry>()).ToList(),
-            IsFocused = sprint.FocusedGroupId == group.Id
+            IsFocused = session.FocusedGroupId == group.Id
         }, ct);
     }
 }

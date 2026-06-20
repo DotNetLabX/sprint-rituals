@@ -7,7 +7,7 @@ namespace Reflekt.Domain.Tests.RetroSessions;
 public class RetroSessionCreateTests
 {
     private const int TeamId = 1;
-    private const string Name = "Sprint 1 Retro";
+    private const string Name = "Retro 1";
 
     // --- Slice 1: empty fokusSprintIds → ArgumentException ---
 

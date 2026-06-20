@@ -78,7 +78,7 @@ const userInitial = computed(() => {
 });
 
 const showBreadcrumb = computed(() => {
-  return route.name === 'team-sprints' || route.name === 'sprint' || route.name === 'report';
+  return route.name === 'team-retro-sessions' || route.name === 'retro-session' || route.name === 'report';
 });
 
 const teamName = computed(() => {

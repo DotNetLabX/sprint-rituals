@@ -7,7 +7,7 @@ public sealed partial class Card
 {
     public static Card Create(
         string text,
-        int sprintId,
+        int retroSessionId,
         int participantId,
         ColumnType columnType,
         CardType cardType,
@@ -34,7 +34,7 @@ public sealed partial class Card
         var now = DateTime.UtcNow;
         var card = new Card
         {
-            SprintId = sprintId,
+            RetroSessionId = retroSessionId,
             ParticipantId = participantId,
             ColumnType = columnType,
             CardType = cardType,
@@ -100,7 +100,7 @@ public sealed partial class Card
         AddDomainEvent(new EvidenceLinkDetachedEvent(this, evidenceLinkId));
     }
 
-    public void SetReviewStatus(ReviewStatus status, int reviewingSprintId)
+    public void SetReviewStatus(ReviewStatus status, int reviewingRetroSessionId)
     {
         if (status == ReviewStatus.None)
             throw new ArgumentException("Cannot set review status to None. Use Done, CarriedOver, or Dropped.", nameof(status));
@@ -108,11 +108,11 @@ public sealed partial class Card
         if (CardType != CardType.ActionItem)
             throw new InvalidOperationException("Only ActionItem cards can have a review status.");
 
-        if (ReviewStatus == status && ReviewedInSprintId == reviewingSprintId)
+        if (ReviewStatus == status && ReviewedInRetroSessionId == reviewingRetroSessionId)
             return;
 
         ReviewStatus = status;
-        ReviewedInSprintId = reviewingSprintId;
+        ReviewedInRetroSessionId = reviewingRetroSessionId;
         AddDomainEvent(new ReviewStatusChangedEvent(this));
     }
 }

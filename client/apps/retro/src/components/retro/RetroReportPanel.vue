@@ -6,10 +6,10 @@
       <!-- Report header -->
       <div class="bg-surface rounded-[--radius-md] shadow-card p-4 flex items-start justify-between">
         <div>
-          <h2 class="text-xl font-bold text-text-primary">{{ reportStore.report.sprint.name }} — Sprint Report</h2>
+          <h2 class="text-xl font-bold text-text-primary">{{ reportStore.report.retroSession.name }} — Retro Report</h2>
           <p class="text-sm text-text-muted mt-1">
             <span class="font-medium text-text-secondary">{{ reportStore.report.team.name }}</span>
-            &middot; {{ formatDate(reportStore.report.sprint.createdAt) }}
+            &middot; {{ formatDate(reportStore.report.retroSession.createdAt) }}
           </p>
           <div class="flex flex-wrap gap-2 mt-2">
             <BaseBadge v-for="p in reportStore.report.participants" :key="p.displayName" variant="primary">

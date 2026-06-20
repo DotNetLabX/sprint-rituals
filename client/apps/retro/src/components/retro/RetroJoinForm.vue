@@ -7,7 +7,7 @@
           <span class="text-xl font-semibold">Reflekt</span>
         </div>
 
-        <h1 class="text-lg font-semibold text-text-primary text-center">{{ sprintName }}</h1>
+        <h1 class="text-lg font-semibold text-text-primary text-center">{{ retroSessionName }}</h1>
 
         <div v-if="participants.length > 0" class="flex flex-col gap-2">
           <p class="text-xs font-semibold text-text-muted uppercase tracking-wide">Already in this retro:</p>
@@ -71,8 +71,8 @@ import BaseInput from '../ui/BaseInput.vue'
 import BaseButton from '../ui/BaseButton.vue'
 
 const props = defineProps<{
-  sprintName: string
-  sprintId: number
+  retroSessionName: string
+  retroSessionId: number
   participants: { displayName: string }[]
   errorMessage: string
   busy: boolean
@@ -85,6 +85,6 @@ defineEmits<{
 
 const displayName = ref('')
 
-const googleLoginUrl = computed(() => `/auth/login?returnUrl=/retro/sprint/${props.sprintId}`)
+const googleLoginUrl = computed(() => `/auth/login?returnUrl=/retro/retro/${props.retroSessionId}`)
 </script>
 

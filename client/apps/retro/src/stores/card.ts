@@ -17,7 +17,7 @@ export interface EvidenceLink {
 
 export interface Card {
   id: number
-  sprintId: number
+  retroSessionId: number
   participantId: number
   columnType: string
   cardType: string
@@ -53,19 +53,19 @@ export const useCardStore = defineStore('card', {
     actionItemCards: (state) => state.cards.filter((c) => c.columnType === 'ActionItems'),
   },
   actions: {
-    async fetchCards(sprintId: number): Promise<void> {
+    async fetchCards(retroSessionId: number): Promise<void> {
       const guestStore = useGuestStore()
       const headers: Record<string, string> = {}
       if (guestStore.token) headers['X-Guest-Token'] = guestStore.token
-      const res = await fetch(`/api/sprints/${sprintId}/cards`, { headers, credentials: 'include' })
+      const res = await fetch(`/api/retro-sessions/${retroSessionId}/cards`, { headers, credentials: 'include' })
       if (!res.ok) return
       const cards = (await res.json()) as Card[]
       this.cards = cards
     },
 
-    async createCard(sprintId: number, payload: CreateCardPayload): Promise<Card> {
+    async createCard(retroSessionId: number, payload: CreateCardPayload): Promise<Card> {
       const guestStore = useGuestStore()
-      const res = await fetch(`/api/sprints/${sprintId}/cards`, {
+      const res = await fetch(`/api/retro-sessions/${retroSessionId}/cards`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -78,9 +78,9 @@ export const useCardStore = defineStore('card', {
       return (await res.json()) as Card
     },
 
-    async editCard(sprintId: number, cardId: number, payload: EditCardPayload): Promise<Card> {
+    async editCard(retroSessionId: number, cardId: number, payload: EditCardPayload): Promise<Card> {
       const guestStore = useGuestStore()
-      const res = await fetch(`/api/sprints/${sprintId}/cards/${cardId}`, {
+      const res = await fetch(`/api/retro-sessions/${retroSessionId}/cards/${cardId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -96,9 +96,9 @@ export const useCardStore = defineStore('card', {
       return updated
     },
 
-    async deleteCard(sprintId: number, cardId: number): Promise<void> {
+    async deleteCard(retroSessionId: number, cardId: number): Promise<void> {
       const guestStore = useGuestStore()
-      const res = await fetch(`/api/sprints/${sprintId}/cards/${cardId}`, {
+      const res = await fetch(`/api/retro-sessions/${retroSessionId}/cards/${cardId}`, {
         method: 'DELETE',
         headers: guestStore.token ? { 'X-Guest-Token': guestStore.token } : {},
         credentials: 'include',
@@ -107,9 +107,9 @@ export const useCardStore = defineStore('card', {
       this.cards = this.cards.filter((c) => c.id !== cardId)
     },
 
-    async attachEvidenceLink(sprintId: number, cardId: number, url: string): Promise<EvidenceLink> {
+    async attachEvidenceLink(retroSessionId: number, cardId: number, url: string): Promise<EvidenceLink> {
       const guestStore = useGuestStore()
-      const res = await fetch(`/api/sprints/${sprintId}/cards/${cardId}/evidence-links`, {
+      const res = await fetch(`/api/retro-sessions/${retroSessionId}/cards/${cardId}/evidence-links`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -122,9 +122,9 @@ export const useCardStore = defineStore('card', {
       return (await res.json()) as EvidenceLink
     },
 
-    async detachEvidenceLink(sprintId: number, cardId: number, evidenceLinkId: number): Promise<void> {
+    async detachEvidenceLink(retroSessionId: number, cardId: number, evidenceLinkId: number): Promise<void> {
       const guestStore = useGuestStore()
-      const res = await fetch(`/api/sprints/${sprintId}/cards/${cardId}/evidence-links/${evidenceLinkId}`, {
+      const res = await fetch(`/api/retro-sessions/${retroSessionId}/cards/${cardId}/evidence-links/${evidenceLinkId}`, {
         method: 'DELETE',
         headers: guestStore.token ? { 'X-Guest-Token': guestStore.token } : {},
         credentials: 'include',

@@ -20,8 +20,8 @@
     <!-- Previous actions review panel (Writing phase only) -->
     <PreviousActionsPanel
       v-if="isWritingPhase && previousActionsStore.items.length > 0"
-      :sprint-id="sprintId"
-      :team-id="sprintStore.currentSummary?.teamId ?? 0"
+      :retro-session-id="retroSessionId"
+      :team-id="retroSessionStore.currentSummary?.teamId ?? 0"
       :is-scrum-master="isScrumMaster"
     />
 
@@ -191,7 +191,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { type Card } from '../../stores/card'
 import { useParticipantStore } from '../../stores/participant'
 import { usePolicyStore } from '../../stores/policy'
-import { useSprintStore } from '../../stores/sprint'
+import { useRetroSessionStore } from '../../stores/retroSession'
 import { useToast } from '../../composables/useToast'
 import { useTheme } from '../../composables/useTheme'
 import { useRetroBoardActions } from '../../composables/useRetroBoardActions'
@@ -206,7 +206,7 @@ import BaseModal from '../ui/BaseModal.vue'
 import { usePreviousActionsStore } from '../../stores/previousActions'
 
 const props = defineProps<{
-  sprintId: number
+  retroSessionId: number
   isReady?: boolean
   showReadinessButton?: boolean
 }>()
@@ -217,7 +217,7 @@ defineEmits<{
 
 const participantStore = useParticipantStore()
 const policyStore = usePolicyStore()
-const sprintStore = useSprintStore()
+const retroSessionStore = useRetroSessionStore()
 const previousActionsStore = usePreviousActionsStore()
 const { addToast } = useToast()
 const { isDark } = useTheme()
@@ -242,17 +242,17 @@ const {
   attachEvidenceLink, detachEvidenceLink,
   focusGroup, toggleDiscussed, dissolveGroup, updateGroupTitle, mergeGroups, removeCardFromGroup,
   updateColumnConfig,
-} = useRetroBoardActions(props.sprintId, (msg) => addToast(msg, 'error'))
+} = useRetroBoardActions(props.retroSessionId, (msg) => addToast(msg, 'error'))
 
 const currentParticipantId = computed(() => participantStore.currentParticipant?.id ?? 0)
 
-// Column config from sprint summary (reactive)
-const column1Name = computed(() => sprintStore.currentSummary?.column1Name ?? 'Went Well')
-const column1Color = computed(() => sprintStore.currentSummary?.column1Color ?? 'green')
-const column2Name = computed(() => sprintStore.currentSummary?.column2Name ?? "Didn't Go Well")
-const column2Color = computed(() => sprintStore.currentSummary?.column2Color ?? 'red')
-const column3Name = computed(() => sprintStore.currentSummary?.column3Name ?? 'Start Doing')
-const column3Color = computed(() => sprintStore.currentSummary?.column3Color ?? 'amber')
+// Column config from retro summary (reactive)
+const column1Name = computed(() => retroSessionStore.currentSummary?.column1Name ?? 'Went Well')
+const column1Color = computed(() => retroSessionStore.currentSummary?.column1Color ?? 'green')
+const column2Name = computed(() => retroSessionStore.currentSummary?.column2Name ?? "Didn't Go Well")
+const column2Color = computed(() => retroSessionStore.currentSummary?.column2Color ?? 'red')
+const column3Name = computed(() => retroSessionStore.currentSummary?.column3Name ?? 'Start Doing')
+const column3Color = computed(() => retroSessionStore.currentSummary?.column3Color ?? 'amber')
 
 watch(showActionItems, (visible) => { if (!visible && activeTab.value === 'ActionItems') activeTab.value = 'Column1' })
 

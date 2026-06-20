@@ -11,10 +11,10 @@ using AuthPolicies = Reflekt.API.Auth.Policies;
 
 namespace Reflekt.API.Features.CardGroups.CreateGroup;
 
-public sealed record CreateGroupRequest(int SprintId, List<int> CardIds, string? Title);
+public sealed record CreateGroupRequest(int RetroSessionId, List<int> CardIds, string? Title);
 
 [Authorize(Policy = AuthPolicies.ScrumMaster)]
-[HttpPost("/api/sprints/{sprintId}/card-groups")]
+[HttpPost("/api/retro-sessions/{retroSessionId}/card-groups")]
 [Tags("CardGroups")]
 public sealed class CreateGroupEndpoint(
     RetroSessionRepository retroSessionRepository,
@@ -22,34 +22,34 @@ public sealed class CreateGroupEndpoint(
     CardRepository cardRepository,
     CardGroupRepository cardGroupRepository,
     PhaseActionCache phaseActionCache,
-    IHubContext<SprintHub> hubContext)
+    IHubContext<RetroHub> hubContext)
     : Endpoint<CreateGroupRequest, CardGroupResponse>
 {
     public override async Task HandleAsync(CreateGroupRequest req, CancellationToken ct)
     {
         var userId = User.GetPersonId();
 
-        var sprint = await retroSessionRepository.GetByIdAsync(req.SprintId, ct);
-        if (sprint is null) { await Send.NotFoundAsync(ct); return; }
+        var session = await retroSessionRepository.GetByIdAsync(req.RetroSessionId, ct);
+        if (session is null) { await Send.NotFoundAsync(ct); return; }
 
-        var team = await teamRepository.GetByIdAsync(sprint.TeamId, ct);
+        var team = await teamRepository.GetByIdAsync(session.TeamId, ct);
         if (team is null || team.OwnerId != userId)
         {
             await Send.ForbiddenAsync(ct);
             return;
         }
 
-        if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, RetroAction.GroupCards))
-            ThrowError($"{RetroAction.GroupCards} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
+        if (!phaseActionCache.IsAllowed(session.CurrentPhase, RetroAction.GroupCards))
+            ThrowError($"{RetroAction.GroupCards} is not allowed in phase {session.CurrentPhase}.", StatusCodes.Status409Conflict);
 
         if (req.CardIds.Count < 2)
             ThrowError("At least 2 cards are required to create a group.", StatusCodes.Status400BadRequest);
 
-        var cards = await cardRepository.GetBySprintIdAsync(req.SprintId, ct);
+        var cards = await cardRepository.GetByRetroSessionIdAsync(req.RetroSessionId, ct);
         var selectedCards = cards.Where(c => req.CardIds.Contains(c.Id)).ToList();
 
         if (selectedCards.Count != req.CardIds.Count)
-            ThrowError("One or more cards not found in this sprint.", StatusCodes.Status400BadRequest);
+            ThrowError("One or more cards not found in this retro.", StatusCodes.Status400BadRequest);
 
         if (selectedCards.Any(c => c.CardType != CardType.Note))
             ThrowError("Only Note cards can be grouped.", StatusCodes.Status400BadRequest);
@@ -58,7 +58,7 @@ public sealed class CreateGroupEndpoint(
         if (columnTypes.Count > 1)
             ThrowError("All cards must be in the same column.", StatusCodes.Status400BadRequest);
 
-        var newGroup = CardGroup.Create(req.SprintId, columnTypes[0], req.Title);
+        var newGroup = CardGroup.Create(req.RetroSessionId, columnTypes[0], req.Title);
         newGroup.ClearDomainEvents();
         await cardGroupRepository.AddAsync(newGroup, ct);
         await cardGroupRepository.SaveChangesAsync(ct);
@@ -75,10 +75,10 @@ public sealed class CreateGroupEndpoint(
         var emptySourceGroups = new List<CardGroup>();
         if (sourceGroupIds.Count > 0)
         {
-            var allSprintCards = await cardRepository.GetBySprintIdAsync(req.SprintId, ct);
+            var allSessionCards = await cardRepository.GetByRetroSessionIdAsync(req.RetroSessionId, ct);
             foreach (var sourceId in sourceGroupIds)
             {
-                if (!allSprintCards.Any(c => c.GroupId == sourceId))
+                if (!allSessionCards.Any(c => c.GroupId == sourceId))
                 {
                     var sourceGroup = await cardGroupRepository.GetByIdAsync(sourceId, ct);
                     if (sourceGroup is not null)
@@ -92,13 +92,13 @@ public sealed class CreateGroupEndpoint(
 
         await cardGroupRepository.SaveChangesAsync(ct);
 
-        await hubContext.Clients.Group($"sprint:{req.SprintId}")
+        await hubContext.Clients.Group($"retro:{req.RetroSessionId}")
             .SendAsync("GroupCreated", new
             {
                 group = new
                 {
                     id = newGroup.Id,
-                    sprintId = newGroup.SprintId,
+                    retroSessionId = newGroup.RetroSessionId,
                     columnType = newGroup.ColumnType.ToString(),
                     title = newGroup.Title,
                     cardIds = selectedCards.Select(c => c.Id).ToList()
@@ -108,7 +108,7 @@ public sealed class CreateGroupEndpoint(
         await Send.ResponseAsync(newGroup.Adapt<CardGroupResponse>() with
         {
             Cards = selectedCards.Select(c => c.Adapt<CardGroupCardEntry>()).ToList(),
-            IsFocused = sprint.FocusedGroupId == newGroup.Id
+            IsFocused = session.FocusedGroupId == newGroup.Id
         }, 201, ct);
     }
 }

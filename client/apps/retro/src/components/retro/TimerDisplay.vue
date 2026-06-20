@@ -66,7 +66,7 @@
       <!-- SM controls popover -->
       <TimerControls
         v-if="isScrumMaster && showControls"
-        :sprint-id="sprintId"
+        :retro-session-id="retroSessionId"
         :timer-status="timerStatus"
         @close="showControls = false"
       />
@@ -80,7 +80,7 @@ import { useTimer } from '../../composables/useTimer'
 import TimerControls from './TimerControls.vue'
 
 const props = defineProps<{
-  sprintId: number
+  retroSessionId: number
   isScrumMaster: boolean
   currentPhase: string
   writingTimerDefault: number

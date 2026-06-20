@@ -5,12 +5,12 @@ using Reflekt.Domain.CardGroups.Events;
 namespace Reflekt.API.Features.CardGroups.UpdateGroupTitle;
 
 public sealed class BroadcastGroupTitleChangedHandler(
-    IHubContext<SprintHub> hubContext)
+    IHubContext<RetroHub> hubContext)
     : IEventHandler<CardGroupTitleChangedEvent>
 {
     public async Task HandleAsync(CardGroupTitleChangedEvent ev, CancellationToken ct)
     {
-        await hubContext.Clients.Group($"sprint:{ev.Group.SprintId}")
+        await hubContext.Clients.Group($"retro:{ev.Group.RetroSessionId}")
             .SendAsync("GroupTitleChanged", new
             {
                 groupId = ev.Group.Id,

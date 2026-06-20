@@ -1,14 +1,14 @@
 namespace Reflekt.API.Features.Reports;
 
 public sealed record ReportResponse(
-    ReportSprintInfo Sprint,
+    ReportRetroSessionInfo RetroSession,
     ReportTeamInfo Team,
     List<ReportParticipantInfo> Participants,
     List<ReportColumnSection> Columns,
     List<ReportActionItemEntry> ActionItems,
     ReportPreviousActionsSection? PreviousActionsReview = null);
 
-public sealed record ReportSprintInfo(int Id, string Name, DateTime CreatedAt, DateTime? ClosedAt);
+public sealed record ReportRetroSessionInfo(int Id, string Name, DateTime CreatedAt, DateTime? ClosedAt);
 
 public sealed record ReportTeamInfo(int Id, string Name);
 
@@ -24,6 +24,6 @@ public sealed record ReportActionItemEntry(string Text, string? AssigneeName, Li
 
 public sealed record ReportEvidenceLinkEntry(string Url, string Source, string? Title, string? ExternalKey);
 
-public sealed record ReportPreviousActionsSection(string PreviousSprintName, List<ReportPreviousActionEntry> Items);
+public sealed record ReportPreviousActionsSection(string PreviousRetroSessionName, List<ReportPreviousActionEntry> Items);
 
 public sealed record ReportPreviousActionEntry(string Text, string? AssigneeName, string ReviewStatus);

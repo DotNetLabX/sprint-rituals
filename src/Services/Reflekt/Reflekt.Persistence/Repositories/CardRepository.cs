@@ -10,30 +10,30 @@ public sealed class CardRepository(ReflektDbContext db) : Repository<Card>(db)
             .Include(c => c.EvidenceLinks)
             .FirstOrDefaultAsync(c => c.Id == id, ct);
 
-    public Task<List<Card>> GetBySprintIdAsync(int sprintId, CancellationToken ct)
+    public Task<List<Card>> GetByRetroSessionIdAsync(int retroSessionId, CancellationToken ct)
         => Db.Cards
             .Include(c => c.EvidenceLinks)
-            .Where(c => c.SprintId == sprintId)
+            .Where(c => c.RetroSessionId == retroSessionId)
             .OrderByDescending(c => c.CreatedAt)
             .ToListAsync(ct);
 
-    public Task<List<Card>> GetUnreviewedActionItemsBySprintIdAsync(int sprintId, CancellationToken ct)
+    public Task<List<Card>> GetUnreviewedActionItemsByRetroSessionIdAsync(int retroSessionId, CancellationToken ct)
         => Db.Cards
-            .Where(c => c.SprintId == sprintId
+            .Where(c => c.RetroSessionId == retroSessionId
                 && c.CardType == CardType.ActionItem
-                && c.ReviewedInSprintId == null)
+                && c.ReviewedInRetroSessionId == null)
             .OrderByDescending(c => c.CreatedAt)
             .ToListAsync(ct);
 
-    public Task<List<Card>> GetActionItemsReviewedInSprintAsync(int reviewingSprintId, CancellationToken ct)
+    public Task<List<Card>> GetActionItemsReviewedInRetroSessionAsync(int reviewingRetroSessionId, CancellationToken ct)
         => Db.Cards
-            .Where(c => c.ReviewedInSprintId == reviewingSprintId)
+            .Where(c => c.ReviewedInRetroSessionId == reviewingRetroSessionId)
             .OrderByDescending(c => c.CreatedAt)
             .ToListAsync(ct);
 
-    public Task<int> CountActionItemsBySprintIdAsync(int sprintId, CancellationToken ct)
+    public Task<int> CountActionItemsByRetroSessionIdAsync(int retroSessionId, CancellationToken ct)
         => Db.Cards
-            .CountAsync(c => c.SprintId == sprintId && c.CardType == CardType.ActionItem, ct);
+            .CountAsync(c => c.RetroSessionId == retroSessionId && c.CardType == CardType.ActionItem, ct);
 
     public void Remove(Card card) => Db.Cards.Remove(card);
 }

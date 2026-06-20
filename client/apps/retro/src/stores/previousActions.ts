@@ -6,16 +6,16 @@ export interface PreviousActionItem {
   text: string
   assigneeName: string | null
   reviewStatus: string
-  previousSprintId: number
-  previousSprintName: string
+  previousRetroSessionId: number
+  previousRetroSessionName: string
 }
 
 export const usePreviousActionsStore = defineStore('previousActions', {
   state: () => ({
     items: [] as PreviousActionItem[],
     loading: false,
-    previousSprintName: null as string | null,
-    previousSprintId: null as number | null,
+    previousRetroSessionName: null as string | null,
+    previousRetroSessionId: null as number | null,
   }),
   getters: {
     totalCount: (state): number => state.items.length,
@@ -32,13 +32,13 @@ export const usePreviousActionsStore = defineStore('previousActions', {
     }),
   },
   actions: {
-    async fetchPreviousActions(sprintId: number): Promise<void> {
+    async fetchPreviousActions(retroSessionId: number): Promise<void> {
       this.loading = true
       try {
         const guestStore = useGuestStore()
         const headers: Record<string, string> = {}
         if (guestStore.token) headers['X-Guest-Token'] = guestStore.token
-        const res = await fetch(`/api/sprints/${sprintId}/previous-actions`, {
+        const res = await fetch(`/api/retro-sessions/${retroSessionId}/previous-actions`, {
           headers,
           credentials: 'include',
         })
@@ -50,11 +50,11 @@ export const usePreviousActionsStore = defineStore('previousActions', {
         this.items = data
         const first = data[0]
         if (data.length > 0 && first !== undefined) {
-          this.previousSprintId = first.previousSprintId
-          this.previousSprintName = first.previousSprintName
+          this.previousRetroSessionId = first.previousRetroSessionId
+          this.previousRetroSessionName = first.previousRetroSessionName
         } else {
-          this.previousSprintId = null
-          this.previousSprintName = null
+          this.previousRetroSessionId = null
+          this.previousRetroSessionName = null
         }
       } finally {
         this.loading = false

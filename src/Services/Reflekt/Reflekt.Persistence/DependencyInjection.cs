@@ -35,7 +35,7 @@ public static class DependencyInjection
     }
 
     /// <summary>
-    /// Seeds Reflekt development data (phases, sample sprint, participants, cards).
+    /// Seeds Reflekt development data (phases, sample retro, participants, cards).
     /// Call after app.Migrate&lt;ReflektDbContext&gt;() in the Host Program.cs Init section.
     /// Only runs when Seed:Enabled == true in configuration.
     /// </summary>

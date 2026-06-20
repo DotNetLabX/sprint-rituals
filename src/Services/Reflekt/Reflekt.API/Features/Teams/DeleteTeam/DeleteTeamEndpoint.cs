@@ -33,12 +33,12 @@ public sealed class DeleteTeamEndpoint(TeamRepository teamRepository, RetroSessi
             return;
         }
 
-        var hasActiveSprint = await retroSessionRepository.Query()
+        var hasActiveRetroSession = await retroSessionRepository.Query()
             .AnyAsync(s => s.TeamId == command.TeamId && s.State == RetroSessionState.Active, ct);
 
-        if (hasActiveSprint)
+        if (hasActiveRetroSession)
         {
-            AddError("This team has an active sprint. Close or delete it before deleting the team.");
+            AddError("This team has an active session. Close or delete it before deleting the team.");
             await Send.ErrorsAsync(409, ct);
             return;
         }

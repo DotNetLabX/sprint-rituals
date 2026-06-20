@@ -7,12 +7,12 @@ using AuthPolicies = Reflekt.API.Auth.Policies;
 
 namespace Reflekt.API.Features.CardGroups.FocusGroup;
 
-public sealed record FocusGroupRequest(int SprintId, int GroupId);
+public sealed record FocusGroupRequest(int RetroSessionId, int GroupId);
 
 public sealed record FocusGroupResponse(int FocusedGroupId, int? PreviousGroupId, bool? PreviousGroupDiscussed);
 
 [Authorize(Policy = AuthPolicies.ScrumMaster)]
-[HttpPost("/api/sprints/{sprintId}/card-groups/{groupId}/focus")]
+[HttpPost("/api/retro-sessions/{retroSessionId}/card-groups/{groupId}/focus")]
 [Tags("CardGroups")]
 public sealed class FocusGroupEndpoint(
     RetroSessionRepository retroSessionRepository,
@@ -25,30 +25,30 @@ public sealed class FocusGroupEndpoint(
     {
         var userId = User.GetPersonId();
 
-        var sprint = await retroSessionRepository.GetByIdAsync(req.SprintId, ct);
-        if (sprint is null) { await Send.NotFoundAsync(ct); return; }
+        var session = await retroSessionRepository.GetByIdAsync(req.RetroSessionId, ct);
+        if (session is null) { await Send.NotFoundAsync(ct); return; }
 
-        var team = await teamRepository.GetByIdAsync(sprint.TeamId, ct);
+        var team = await teamRepository.GetByIdAsync(session.TeamId, ct);
         if (team is null || team.OwnerId != userId)
         {
             await Send.ForbiddenAsync(ct);
             return;
         }
 
-        if (sprint.State != RetroSessionState.Active)
+        if (session.State != RetroSessionState.Active)
         {
-            AddError("Sprint must be Active.");
+            AddError("Retro must be Active.");
             await Send.ErrorsAsync(409, ct);
             return;
         }
 
-        if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, RetroAction.FocusGroup))
-            ThrowError($"{RetroAction.FocusGroup} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
+        if (!phaseActionCache.IsAllowed(session.CurrentPhase, RetroAction.FocusGroup))
+            ThrowError($"{RetroAction.FocusGroup} is not allowed in phase {session.CurrentPhase}.", StatusCodes.Status409Conflict);
 
         var targetGroup = await cardGroupRepository.GetByIdAsync(req.GroupId, ct);
-        if (targetGroup is null || targetGroup.SprintId != req.SprintId) { await Send.NotFoundAsync(ct); return; }
+        if (targetGroup is null || targetGroup.RetroSessionId != req.RetroSessionId) { await Send.NotFoundAsync(ct); return; }
 
-        int? previousGroupId = sprint.FocusedGroupId;
+        int? previousGroupId = session.FocusedGroupId;
         bool? previousGroupDiscussed = null;
 
         if (previousGroupId.HasValue && previousGroupId.Value != req.GroupId)
@@ -61,7 +61,7 @@ public sealed class FocusGroupEndpoint(
             }
         }
 
-        sprint.SetFocus(req.GroupId);
+        session.SetFocus(req.GroupId);
         await retroSessionRepository.SaveChangesAsync(ct);
 
         await Send.OkAsync(new FocusGroupResponse(req.GroupId, previousGroupId, previousGroupDiscussed), ct);

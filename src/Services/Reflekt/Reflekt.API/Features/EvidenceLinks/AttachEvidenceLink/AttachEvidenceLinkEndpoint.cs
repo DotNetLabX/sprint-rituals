@@ -10,7 +10,7 @@ using AuthPolicies = Reflekt.API.Auth.Policies;
 namespace Reflekt.API.Features.EvidenceLinks.AttachEvidenceLink;
 
 [Authorize(Policy = AuthPolicies.OwnerOrScrumMaster)]
-[HttpPost("/api/sprints/{sprintId}/cards/{cardId}/evidence-links")]
+[HttpPost("/api/retro-sessions/{retroSessionId}/cards/{cardId}/evidence-links")]
 [Tags("EvidenceLinks")]
 public sealed class AttachEvidenceLinkEndpoint(
     RetroSessionRepository retroSessionRepository,
@@ -23,16 +23,16 @@ public sealed class AttachEvidenceLinkEndpoint(
     public override async Task HandleAsync(AttachEvidenceLinkCommand command, CancellationToken ct)
     {
         var card = await cardRepository.GetByIdAsync(command.CardId, ct);
-        if (card is null || card.SprintId != command.SprintId) { await Send.NotFoundAsync(ct); return; }
+        if (card is null || card.RetroSessionId != command.RetroSessionId) { await Send.NotFoundAsync(ct); return; }
 
-        var sprint = await retroSessionRepository.GetByIdAsync(command.SprintId, ct);
-        if (sprint is null) { await Send.NotFoundAsync(ct); return; }
+        var session = await retroSessionRepository.GetByIdAsync(command.RetroSessionId, ct);
+        if (session is null) { await Send.NotFoundAsync(ct); return; }
 
-        if (sprint.State == RetroSessionState.Closed)
-            ThrowError("Sprint is closed.", StatusCodes.Status409Conflict);
+        if (session.State == RetroSessionState.Closed)
+            ThrowError("Retro is closed.", StatusCodes.Status409Conflict);
 
-        if (!phaseActionCache.IsAllowed(sprint.CurrentPhase, RetroAction.AttachEvidenceLink))
-            ThrowError($"{RetroAction.AttachEvidenceLink} is not allowed in phase {sprint.CurrentPhase}.", StatusCodes.Status409Conflict);
+        if (!phaseActionCache.IsAllowed(session.CurrentPhase, RetroAction.AttachEvidenceLink))
+            ThrowError($"{RetroAction.AttachEvidenceLink} is not allowed in phase {session.CurrentPhase}.", StatusCodes.Status409Conflict);
 
         var participantIdClaim = User.FindFirstValue("participantId");
         if (participantIdClaim is not null)
@@ -46,7 +46,7 @@ public sealed class AttachEvidenceLinkEndpoint(
         else
         {
             var userId = User.GetPersonId();
-            var team = await teamRepository.GetByIdAsync(sprint.TeamId, ct);
+            var team = await teamRepository.GetByIdAsync(session.TeamId, ct);
             if (team is null || team.OwnerId != userId)
             {
                 await Send.ForbiddenAsync(ct);

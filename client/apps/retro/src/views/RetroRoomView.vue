@@ -11,8 +11,8 @@
 
     <RetroJoinForm
       v-else-if="!joined"
-      :sprint-name="sprintName || `Sprint #${sprintId}`"
-      :sprint-id="sprintId"
+      :retro-session-name="retroSessionName || `Retro #${retroSessionId}`"
+      :retro-session-id="retroSessionId"
       :participants="summaryParticipants"
       :error-message="errorMessage"
       :busy="busy"
@@ -22,8 +22,8 @@
 
     <div v-else class="w-full flex-1 min-h-0 px-4 sm:px-8 lg:px-12 py-6 flex flex-col gap-5">
       <RetroPhaseHeader
-        :sprint-id="sprintId"
-        :sprint-name="sprintName || `Sprint #${sprintId}`"
+        :retro-session-id="retroSessionId"
+        :retro-session-name="retroSessionName || `Retro #${retroSessionId}`"
         :current-phase="currentPhase"
         :is-scrum-master="isScrumMaster"
         :next-phase-name="nextPhaseName"
@@ -39,11 +39,11 @@
         :remaining-budget="voteStore.remainingBudget"
         :votes-per-participant="voteStore.votesPerParticipant"
         :show-votes-badge="showVotesBadge"
-        :writing-timer-default="sprintStore.currentSummary?.writingTimerDefault ?? 5"
-        :voting-timer-default="sprintStore.currentSummary?.votingTimerDefault ?? 3"
-        :discussing-timer-default="sprintStore.currentSummary?.discussingTimerDefault ?? 10"
+        :writing-timer-default="retroSessionStore.currentSummary?.writingTimerDefault ?? 5"
+        :voting-timer-default="retroSessionStore.currentSummary?.votingTimerDefault ?? 3"
+        :discussing-timer-default="retroSessionStore.currentSummary?.discussingTimerDefault ?? 10"
         @advance-phase="onAdvanceClick"
-        @close-sprint="onCloseClick"
+        @close-retro-session="onCloseClick"
         @toggle-ready="onToggleReady"
       />
 
@@ -59,7 +59,7 @@
       <RetroReportPanel v-if="isReportingPhase && reportingView === 'report'" @copy-markdown="handleCopyMarkdown" />
       <RetroBoardPanel
         v-if="!isReportingPhase || reportingView === 'board'"
-        :sprint-id="sprintId"
+        :retro-session-id="retroSessionId"
         :is-ready="isCurrentParticipantReady"
         :show-readiness-button="showReadiness"
         @toggle-ready="onToggleReady"
@@ -82,13 +82,13 @@
       </template>
     </BaseModal>
 
-    <!-- Close sprint confirmation dialog -->
-    <BaseModal :open="showCloseDialog" title="Close Sprint" @close="showCloseDialog = false">
-      <p class="text-sm text-text-secondary">Close this sprint? No more changes will be allowed.</p>
+    <!-- Close retro confirmation dialog -->
+    <BaseModal :open="showCloseDialog" title="Close Retro" @close="showCloseDialog = false">
+      <p class="text-sm text-text-secondary">Close this retro? No more changes will be allowed.</p>
       <template #footer>
         <div class="flex justify-end gap-3">
           <BaseButton variant="secondary" @click="showCloseDialog = false">Cancel</BaseButton>
-          <BaseButton variant="danger" @click="confirmClose">Close Sprint</BaseButton>
+          <BaseButton variant="danger" @click="confirmClose">Close Retro</BaseButton>
         </div>
       </template>
     </BaseModal>
@@ -100,7 +100,7 @@ import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useParticipantStore } from '../stores/participant'
 import { useVoteStore } from '../stores/vote'
-import { useSprintStore } from '../stores/sprint'
+import { useRetroSessionStore } from '../stores/retroSession'
 import { useToast } from '../composables/useToast'
 import { useRetroRoom } from '../composables/useRetroRoom'
 import { useReadiness } from '../composables/useReadiness'
@@ -115,18 +115,18 @@ import RetroBoardPanel from '../components/retro/RetroBoardPanel.vue'
 const route = useRoute()
 const participantStore = useParticipantStore()
 const voteStore = useVoteStore()
-const sprintStore = useSprintStore()
+const retroSessionStore = useRetroSessionStore()
 const { addToast } = useToast()
 
-const sprintId = Number(route.params.sprintId)
+const retroSessionId = Number(route.params.retroSessionId)
 const reportingView = ref<'report' | 'board'>('report')
 
 const {
   kicked, busy, errorMessage, joined, loading,
-  sprintName, currentPhase, summaryParticipants, isReportingPhase,
+  retroSessionName, currentPhase, summaryParticipants, isReportingPhase,
   handleJoin, reportStore, showGoogleOption,
   isClosed, teamId, isScrumMaster,
-} = useRetroRoom(sprintId)
+} = useRetroRoom(retroSessionId)
 
 const {
   toggleReady,
@@ -175,7 +175,7 @@ async function onAdvanceClick() {
   if (!teamId.value) return
 
   try {
-    const check = await sprintStore.advancePhaseCheck(teamId.value, sprintId)
+    const check = await retroSessionStore.advancePhaseCheck(teamId.value, retroSessionId)
 
     if (check.currentPhase === 'Writing') {
       const unreviewed = check.unreviewedActionCount ?? 0
@@ -231,7 +231,7 @@ async function confirmAdvance() {
   showAdvanceDialog.value = false
   if (!teamId.value) return
   try {
-    await sprintStore.advancePhase(teamId.value, sprintId)
+    await retroSessionStore.advancePhase(teamId.value, retroSessionId)
   } catch {
     addToast('Failed to advance phase.', 'error')
   }
@@ -241,18 +241,18 @@ async function confirmClose() {
   showCloseDialog.value = false
   if (!teamId.value) return
   try {
-    await sprintStore.closeSprint(teamId.value, sprintId)
+    await retroSessionStore.closeRetroSession(teamId.value, retroSessionId)
   } catch {
-    addToast('Failed to close sprint.', 'error')
+    addToast('Failed to close retro.', 'error')
   }
 }
 
 async function onToggleReady() {
-  await toggleReady(sprintId)
+  await toggleReady(retroSessionId)
 }
 
 watch(isReportingPhase, (reporting) => {
-  if (reporting && joined.value) { reportingView.value = 'report'; reportStore.fetchParticipantReport(sprintId) }
+  if (reporting && joined.value) { reportingView.value = 'report'; reportStore.fetchParticipantReport(retroSessionId) }
 })
 
 watch(isClosed, (closed) => {

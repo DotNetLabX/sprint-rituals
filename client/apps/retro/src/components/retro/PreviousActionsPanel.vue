@@ -7,7 +7,7 @@
       @click="toggleCollapsed"
     >
       <h2 class="text-sm font-semibold text-badge-warning-text">
-        Actions from last sprint ({{ totalCount }})
+        Actions from last retro ({{ totalCount }})
       </h2>
       <span class="text-badge-warning-text text-xs">{{ isCollapsed ? '▶ Expand' : '▼ Collapse' }}</span>
     </div>
@@ -71,7 +71,7 @@ import { usePreviousActionsStore, type PreviousActionItem } from '../../stores/p
 import { useGuestStore } from '../../stores/guest'
 
 const props = defineProps<{
-  sprintId: number
+  retroSessionId: number
   teamId: number
   isScrumMaster: boolean
 }>()
@@ -109,7 +109,7 @@ async function setStatus(item: PreviousActionItem, status: string) {
   if (guestStore.token) headers['X-Guest-Token'] = guestStore.token
 
   const res = await fetch(
-    `/api/teams/${props.teamId}/sprints/${props.sprintId}/previous-actions/${item.cardId}`,
+    `/api/teams/${props.teamId}/retro-sessions/${props.retroSessionId}/previous-actions/${item.cardId}`,
     {
       method: 'PATCH',
       headers,
