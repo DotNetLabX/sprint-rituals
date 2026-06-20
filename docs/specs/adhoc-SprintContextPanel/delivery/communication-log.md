@@ -46,6 +46,8 @@
 | 26 | developer → team-lead | developer:implement | All 4 fixes applied. 90/90 tests green, 0 build errors. Item 1 verified docs WRONG (DisruptionRag bands on combined rate per SprintSummaryAnalyzer.cs:257,497) → corrected in 4 places. | implementation.md owner-write FP (benign). |
 | 27 | team-lead → (self) | verify | Independent gate: dotnet build 0 errors; dotnet test 90/90 green; both code fixes present on disk; author check clean (no rogue commit). | — |
 | 28 | team-lead → (self) | close | summary.md written; backlog RA4 → Done (backend-only); RA5 row inherits panel + carry-overs. | — |
+| 29 | team-lead → (self) | commit | Implementation commit 291aaaa (21 files; .claude/settings.json excluded). 2-commit strategy complete: 66e4581 (plan) + 291aaaa (impl). | — |
+| 30 | user → team-lead | close | Lessons: SKIP (unprocessed, recorded). Pipeline closed. | — |
 
 ---
 
