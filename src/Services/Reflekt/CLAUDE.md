@@ -52,6 +52,7 @@ A retro hub pushes card / group / vote / participant / phase changes to the retr
 - **OpenGraph fetch** — `OpenGraphBackgroundService` fetches link previews for evidence links off the request path.
 - **Phase timer** — `TimerService` drives phase countdowns.
 - **Guest participation** — anonymous participants join via a localStorage guest token (`GuestTokenAuthenticationHandler`); retained per ADR-016.
+- **Report aggregation — domain service (ADR-005, RR-C):** `Reflekt.Domain/Reports/RetroReportBuilder` is a pure domain service (no DbContext, no repo, no HTTP). Both report endpoints (`GetRetroReportEndpoint`, `GetParticipantReportEndpoint`) pre-load aggregates, call `RetroReportBuilder.Build(...)`, and Mapster-map `RetroReportData → ReportResponse` at the boundary (ADR-010). The `RetroReportData` result-record tree lives in `Reflekt.Domain/Reports/RetroReportData.cs`. This pass also removed ~80 lines of duplicated aggregation logic that was previously copy-pasted between both endpoints (ADR-003 problem-class fix).
 
 ## Cross-module
 

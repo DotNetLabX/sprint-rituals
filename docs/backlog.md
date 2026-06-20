@@ -116,7 +116,7 @@ Mirror of the Fokus refactoring path (`refactor-triage.md` → ADRs → numbered
 |----|------|------|--------|-----------|-------|
 | RR0 | adhoc-ReflektRefactorTriage | architect doc work | ✓ **Done** (2026-06-20) | RA5 ✓ | Discovery sweep vs ADR-002…015 + event/cleanup arms. ADR-006 clean (no DTO-in-domain); 004/012/013/015 done; N2 naming closed by RA5. Emits RR-B/C/D + RR-E rider. Not a pipeline pass. |
 | RR-B | adhoc-ReflektValueObjects | adhoc | ✓ **Done** (2026-06-20) — Standard+Codex; critic caught C1 (read-site census, SignalR claim); reviewer APPROVED + Codex GO; 43/43 + 19/19 | RR0 | ADR-007 VO problem class (ADR-003) across **all** aggregates. Confirmed: `RetroSession` → `RetroColumn` (Name+Color) + `TimerDefaults`, EF `ComplexProperty`. Scans Card/Vote/Team/CardGroup/Participant in-pass. Folds RR-E N1 (delete dead `Sprints/` dirs). |
-| RR-C | adhoc-ReflektComputationToDomain | adhoc | Queued | RR0 (RR-B preferred) | ADR-005: lift `Reports/*` aggregation (132–133-line endpoint handlers) into a `Reflekt.Domain` report service returning domain types; Mapster-map to `ReportContracts` at the endpoint boundary. |
+| RR-C | adhoc-ReflektComputationToDomain | adhoc | ✓ **Done** (2026-06-20) — Standard+Codex; critic ACCEPT; reviewer APPROVED + Codex GO (dual-review converged); 59/59, 0 fix cycles | RR0 (RR-B preferred) | ADR-005: lift `Reports/*` aggregation (132–133-line endpoint handlers) into a `Reflekt.Domain` report service returning domain types; Mapster-map to `ReportContracts` at the endpoint boundary. |
 | RR-D | adhoc-ReflektEventCorrectness | adhoc | Queued | RR0 | Pass-5 arm: verify no post-save raises / declared-unraised events across all `Behaviors`; fix found instances (problem-class). |
 
 **Notes:**

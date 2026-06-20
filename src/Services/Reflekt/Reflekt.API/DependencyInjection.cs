@@ -49,6 +49,7 @@ public static class DependencyInjection
         services.AddSingleton<PhaseActionCache>();
         services.AddSingleton<TimerService>();
         services.AddScoped<Features.RetroSessions.GetSprintContext.GetSprintContextAssembler>();
+        services.AddScoped<Reflekt.Domain.Reports.RetroReportBuilder>();
 
         return services;
     }
