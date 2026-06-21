@@ -1,0 +1,136 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ */
+/* Raw vars — dark (default, on :root) and light (on .light)          */
+/* ------------------------------------------------------------------ */
+
+:root {
+  --surface-page: #0a0a0f;
+  --surface-card: #13131a;
+  --surface-elevated: #1c1c26;
+  --border-default: #2a2a38;
+  --border-subtle: #1e1e2a;
+  --text-primary: #f0f0f5;
+  --text-secondary: #a0a0b8;
+  --text-muted: #8585a0;
+  --scrollbar-thumb: #2a2a38;
+  --focus-offset: #0a0a0f;
+
+  /* Badge tokens — dark */
+  --badge-success-bg: color-mix(in srgb, #10b981 10%, #13131a);
+  --badge-success-text: #34d399;
+  --badge-danger-bg: color-mix(in srgb, #ef4444 10%, #13131a);
+  --badge-danger-text: #f87171;
+  --badge-warning-bg: color-mix(in srgb, #f59e0b 10%, #13131a);
+  --badge-warning-text: #fbbf24;
+  --badge-info-bg: color-mix(in srgb, #3b82f6 10%, #13131a);
+  --badge-info-text: #60a5fa;
+  --badge-default-bg: color-mix(in srgb, #64748b 10%, #13131a);
+  --badge-default-text: #94a3b8;
+  --badge-primary-bg: color-mix(in srgb, #6366f1 10%, #13131a);
+  --badge-primary-text: #818cf8;
+
+  --shadow-card: none;
+  --shadow-card-hover: none;
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.light {
+  --surface-page: #f4f4f8;
+  --surface-card: #ffffff;
+  --surface-elevated: #eaeaf0;
+  --border-default: #e2e2ea;
+  --border-subtle: #ededf3;
+  --text-primary: #1a1a2e;
+  --text-secondary: #6b6b80;
+  --text-muted: #9b9bab;
+  --focus-offset: #f4f4f8;
+
+  --badge-success-bg: #d1fae5;
+  --badge-success-text: #065f46;
+  --badge-danger-bg: #fee2e2;
+  --badge-danger-text: #991b1b;
+  --badge-warning-bg: #fef3c7;
+  --badge-warning-text: #92400e;
+  --badge-info-bg: #dbeafe;
+  --badge-info-text: #1e40af;
+  --badge-default-bg: #f1f5f9;
+  --badge-default-text: #475569;
+  --badge-primary-bg: #eef2ff;
+  --badge-primary-text: #4338ca;
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+@theme {
+  --color-primary-50: #eef2ff;
+  --color-primary-100: #e0e7ff;
+  --color-primary-200: #c7d2fe;
+  --color-primary-300: #a5b4fc;
+  --color-primary-400: #818cf8;
+  --color-primary-500: #6366f1;
+  --color-primary-600: #4f46e5;
+  --color-primary-700: #4338ca;
+  --color-primary-800: #3730a3;
+  --color-primary-900: #312e81;
+
+  --color-background: var(--surface-page);
+  --color-surface: var(--surface-card);
+  --color-surface-raised: var(--surface-elevated);
+
+  --color-border: var(--border-default);
+  --color-border-subtle: var(--border-subtle);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  --color-scrollbar-thumb: var(--scrollbar-thumb);
+  --color-focus-offset: var(--focus-offset);
+
+  --color-badge-success-bg: var(--badge-success-bg);
+  --color-badge-success-text: var(--badge-success-text);
+  --color-badge-danger-bg: var(--badge-danger-bg);
+  --color-badge-danger-text: var(--badge-danger-text);
+  --color-badge-warning-bg: var(--badge-warning-bg);
+  --color-badge-warning-text: var(--badge-warning-text);
+  --color-badge-info-bg: var(--badge-info-bg);
+  --color-badge-info-text: var(--badge-info-text);
+  --color-badge-default-bg: var(--badge-default-bg);
+  --color-badge-default-text: var(--badge-default-text);
+  --color-badge-primary-bg: var(--badge-primary-bg);
+  --color-badge-primary-text: var(--badge-primary-text);
+
+  --color-success: #10b981;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+  --color-info: #3b82f6;
+
+  --shadow-card: var(--shadow-card);
+  --shadow-card-hover: var(--shadow-card-hover);
+  --shadow-modal: var(--shadow-modal);
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+}
+
+body {
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: var(--color-background);
+}
+
+:root:not(.light) {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+:root:not(.light) ::-webkit-scrollbar { width: 6px; }
+:root:not(.light) ::-webkit-scrollbar-track { background: transparent; }
+:root:not(.light) ::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}

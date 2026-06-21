@@ -8,9 +8,10 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspace=apps/dashboard && npm run build --workspace=apps/retro",
+    "build": "npm run build --workspace=apps/dashboard && npm run build --workspace=apps/retro && npm run build --workspace=apps/poker",
     "dev:dashboard": "npm run dev --workspace=apps/dashboard",
-    "dev:retro": "npm run dev --workspace=apps/retro"
+    "dev:retro": "npm run dev --workspace=apps/retro",
+    "dev:poker": "npm run dev --workspace=apps/poker"
   },
   "dependencies": {
     "@microsoft/signalr": "^10.0.0",

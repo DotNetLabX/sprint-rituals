@@ -115,6 +115,7 @@ public static class DependencyInjection
         app.MapGrpcService<SprintAnalyticsGrpcService>();
         app.MapGrpcService<SprintCatalogGrpcService>();
         app.MapGrpcService<InvitationGrpcService>();
+        app.MapGrpcService<PokerFokusGrpcService>();
         return app;
     }
 }

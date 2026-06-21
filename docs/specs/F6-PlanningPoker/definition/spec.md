@@ -3,7 +3,7 @@
 **Traces to:** `docs/architecture/poker-v1.md` (product draft this spec graduates)
 **Source:** Scratch
 **Dependencies:** Fokus (sprint catalog + Jira ticket write-back), Identity (Google auth + suite Person), guest participation (session-scoped, no Person — same identity stance as Reflekt's ADR-022), unified frontend routing shell (RA5)
-**Status:** Ready
+**Status:** Implemented (2026-06-21)
 **Plan:** `docs/specs/F6-PlanningPoker/delivery/plan.md`
 
 ---

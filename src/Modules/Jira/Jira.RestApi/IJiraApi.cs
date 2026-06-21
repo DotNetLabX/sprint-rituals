@@ -34,4 +34,11 @@ public interface IJiraApi
 
     [Get("/rest/api/3/user")]
     Task<IApiResponse<JiraUser>> GetUserAsync([Query] string accountId, CancellationToken ct);
+
+    /// <summary>
+    /// Partial update of an issue's fields. Returns 204 No Content on success — use the
+    /// no-body RequestAsync overload; never the generic one (it would NPE on response.Content).
+    /// </summary>
+    [Put("/rest/api/3/issue/{issueIdOrKey}")]
+    Task<IApiResponse> UpdateIssueFieldsAsync(string issueIdOrKey, [Body] UpdateIssueFieldsCommand request, CancellationToken ct);
 }

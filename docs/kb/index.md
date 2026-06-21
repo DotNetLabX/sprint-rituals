@@ -17,6 +17,8 @@ under `docs/kb/` with sections defined in `docs/kb/_schema/entry-template.md`.
 |------|---------|--------|
 | [health-score.md](health-score.md) | HealthScore interpolation and RAG classification | mutation-gated |
 | [bug-ratio.md](bug-ratio.md) | Bug-ratio metrics, multi-sprint aggregation, alert streak | verified |
+| [jira-story-points-write-back.md](jira-story-points-write-back.md) | Jira issue-edit write path, customfield_10016, 204 guard, write-first sequencing | verified |
+| [poker-sprint-tickets-freshness.md](poker-sprint-tickets-freshness.md) | GetSprintTickets live pass-through contract, no-cache rule, Free-mode guard | verified |
 
 ## Conventions
 

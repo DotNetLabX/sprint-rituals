@@ -182,6 +182,48 @@ public class RestApiJiraClient(IJiraApi api) : IJiraClient
         throw new BadGatewayException("Jira rate limit exceeded after retries");
     }
 
+    public async Task SetStoryPointsAsync(string issueKey, decimal storyPoints, CancellationToken ct)
+    {
+        var command = new UpdateIssueFieldsCommand
+        {
+            Fields = new UpdateIssueFieldsCommand.IssueFields { StoryPoints = storyPoints }
+        };
+        await RequestAsync(() => Api.UpdateIssueFieldsAsync(issueKey, command, ct), ct);
+    }
+
+    /// <summary>
+    /// No-body variant of RequestAsync for endpoints that return 2xx with no response body (e.g. 204 No Content).
+    /// The generic overload would NPE on response.Content — do not use it for such endpoints.
+    /// </summary>
+    protected async Task RequestAsync(Func<Task<IApiResponse>> call, CancellationToken ct)
+    {
+        var delay = 1000;
+
+        for (var attempt = 0; attempt <= 3; attempt++)
+        {
+            var response = await call();
+
+            if (response.IsSuccessStatusCode)
+                return;
+
+            if (response.StatusCode == HttpStatusCode.TooManyRequests && attempt < 3)
+            {
+                await Task.Delay(delay, ct);
+                delay *= 2;
+                continue;
+            }
+
+            var message = ParseError((response.Error as ApiException)?.Content) ?? $"Jira API returned {(int)response.StatusCode}";
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+                throw new UnauthorizedException(message);
+
+            throw new BadGatewayException(message);
+        }
+
+        throw new BadGatewayException("Jira rate limit exceeded after retries");
+    }
+
     private static string? ParseError(string? body)
     {
         if (string.IsNullOrEmpty(body)) return null;

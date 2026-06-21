@@ -24,6 +24,7 @@
     <ProjectReference Include="..\Services\Identity\Identity.API\Identity.API.csproj" />
     <ProjectReference Include="..\Services\Fokus\Fokus.API\Fokus.API.csproj" />
     <ProjectReference Include="..\Services\Reflekt\Reflekt.API\Reflekt.API.csproj" />
+    <ProjectReference Include="..\Services\Poker\Poker.API\Poker.API.csproj" />
   </ItemGroup>
 
 </Project>

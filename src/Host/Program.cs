@@ -7,6 +7,8 @@ using Identity.API;
 using Identity.API.Auth;
 using Identity.Persistence;
 using MassTransit;
+using Poker.API;
+using Poker.Persistence;
 using Reflekt.API;
 using Reflekt.Persistence;
 using Scalar.AspNetCore;
@@ -17,6 +19,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddIdentityModule(builder.Configuration);
 builder.Services.AddFokusModule(builder.Configuration);
 builder.Services.AddReflektModule(builder.Configuration);
+builder.Services.AddPokerModule(builder.Configuration);
 
 // MassTransit — single in-memory bus shared across all modules (ADR-019, Step 4).
 // Each module exposes AddXxxMessaging(cfg) to register its consumers onto the shared bus.
@@ -34,6 +37,7 @@ builder.Services.AddFastEndpoints(o =>
         typeof(Identity.API.DependencyInjection).Assembly,
         typeof(Fokus.API.DependencyInjection).Assembly,
         typeof(Reflekt.API.DependencyInjection).Assembly,
+        typeof(Poker.API.DependencyInjection).Assembly,
     ];
 });
 
@@ -43,6 +47,7 @@ var app = builder.Build();
 app.Migrate<IdentityDbContext>();
 app.Migrate<FokusDbContext>();
 app.Migrate<ReflektDbContext>();
+app.Migrate<PokerDbContext>();
 await app.Services.SeedFokusDataAsync();
 await app.Services.SeedReflektDataAsync();
 
@@ -63,6 +68,12 @@ app.UseStaticFiles(new StaticFileOptions
     FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
         Path.Combine(builder.Environment.WebRootPath, "retro"))
 });
+app.UseStaticFiles(new StaticFileOptions
+{
+    RequestPath = "/poker",
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
+        Path.Combine(builder.Environment.WebRootPath, "poker"))
+});
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -82,6 +93,7 @@ app.UseFastEndpoints(c =>
 app.UseFokusMiddleware();
 app.MapFokusEndpoints();
 app.MapReflektEndpoints();
+app.MapPokerEndpoints();
 
 if (app.Environment.IsDevelopment())
 {
@@ -93,6 +105,7 @@ if (app.Environment.IsDevelopment())
 // Registered after all API/hub routes so /api/*, /auth/*, /hubs/* are never swallowed.
 app.MapFallbackToFile("/dashboard/{*path:nonfile}", "dashboard/index.html");
 app.MapFallbackToFile("/retro/{*path:nonfile}", "retro/index.html");
+app.MapFallbackToFile("/poker/{*path:nonfile}", "poker/index.html");
 
 // Thin routing shell at /: redirect signed-in users to /dashboard, unauthenticated to /dashboard/login.
 // Default is dashboard login — per plan Step 4 open question resolved to dashboard as the default module.

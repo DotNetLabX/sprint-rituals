@@ -6,7 +6,7 @@ namespace Identity.API.Tests.Auth;
 
 public class ActiveUserGateScopeTests
 {
-    // --- Slice 1: Reflekt endpoints are excluded from the global active-user gate (Q4-A) ---
+    // --- Slice 1: Reflekt endpoints are excluded from the global active-user gate (Q4-A / RA2) ---
 
     [Fact]
     public void Should_ExcludeFromGate_When_EndpointDeclaredInReflektApiAssembly()
@@ -15,7 +15,16 @@ public class ActiveUserGateScopeTests
             .Should().BeTrue();
     }
 
-    // --- Slice 2: the gate still applies to Identity/Fokus endpoints (Reflekt-exact, not global) ---
+    // --- Slice 1b: Poker endpoints are excluded (F6 — same RA2 pattern, second module) ---
+
+    [Fact]
+    public void Should_ExcludeFromGate_When_EndpointDeclaredInPokerApiAssembly()
+    {
+        ActiveUserGateScope.IsExcludedModule("Poker.API")
+            .Should().BeTrue();
+    }
+
+    // --- Slice 2: the gate still applies to Identity/Fokus endpoints ---
 
     [Theory]
     [InlineData("Fokus.API")]

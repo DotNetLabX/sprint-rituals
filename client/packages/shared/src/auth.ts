@@ -3,6 +3,8 @@
 // Guest auth (X-Guest-Token, per-sprint localStorage tokens) is NOT shared — stays in apps/retro.
 
 export interface AuthUser {
+  /** Person id from Identity — matches SessionResponse.createdByPersonId for SM check. */
+  id: number
   email: string
   displayName: string
   givenName?: string

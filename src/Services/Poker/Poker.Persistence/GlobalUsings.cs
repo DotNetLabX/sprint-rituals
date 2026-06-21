@@ -1,0 +1,11 @@
+global using Blocks.Domain.Entities;
+global using Blocks.Domain.Events;
+global using Blocks.EntityFrameworkCore.Repositories;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.DependencyInjection;
+global using Poker.Domain.Planning;
+global using Poker.Domain.Planning.Items;
+global using Poker.Domain.Planning.Participants;
+global using Poker.Domain.Planning.Votes;
+global using Poker.Persistence.Repositories;

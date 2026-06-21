@@ -44,4 +44,12 @@
     <Project Path="src/Services/Reflekt/Reflekt.Domain.Tests/Reflekt.Domain.Tests.csproj" />
     <Project Path="src/Services/Reflekt/Reflekt.Persistence.Tests/Reflekt.Persistence.Tests.csproj" />
   </Folder>
+  <Folder Name="/Services/Poker/">
+    <Project Path="src/Services/Poker/Poker.API/Poker.API.csproj" />
+    <Project Path="src/Services/Poker/Poker.Domain/Poker.Domain.csproj" />
+    <Project Path="src/Services/Poker/Poker.Persistence/Poker.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Poker/">
+    <Project Path="src/Services/Poker/Poker.Domain.Tests/Poker.Domain.Tests.csproj" />
+  </Folder>
 </Solution>

@@ -15,4 +15,10 @@ public interface IJiraClient
     /// EmailAddress on the returned JiraUser is null when Jira Cloud restricts visibility.
     /// </summary>
     Task<JiraUser?> GetUserAsync(string accountId, CancellationToken ct);
+
+    /// <summary>
+    /// Writes story points back to a Jira issue. Uses PUT /rest/api/3/issue/{issueIdOrKey}.
+    /// Jira returns 204 No Content on success.
+    /// </summary>
+    Task SetStoryPointsAsync(string issueKey, decimal storyPoints, CancellationToken ct);
 }
