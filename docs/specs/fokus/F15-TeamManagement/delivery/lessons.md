@@ -1,0 +1,31 @@
+# Team Management — Lessons
+
+## Developer Lessons
+
+- **subTeam null-vs-absent pattern**: When a JSON endpoint field can be either "not provided" (don't change) or `null` (clear the value), the cleanest backend approach is `JsonDocument` key presence detection + a `bool subTeamProvided` parameter threaded to the repository. This avoids sentinel values and keeps the domain clean.
+- **EF migration with running process**: `dotnet ef migrations add` fails silently with "file in use" errors when the API process is running and holding the compiled DLL. Kill the process first (`taskkill //PID {n} //F` on Windows) before running migrations.
+- **Cross-cutting optional parameter pattern**: Adding an optional `HashSet<string>? excludedDeveloperIds = null` to existing service methods is the least-invasive way to thread exclusion filtering through multiple analytics services without touching call sites that don't need it. All existing callers remain unchanged.
+- **Multi-sprint exclusion semantics**: "Exclude developer if excluded in any sprint" vs "exclude if excluded in all sprints" are both valid interpretations. The plan chose "all sprints" — a developer who contributed in at least one sprint stays visible in the multi-sprint view. Implement this with `GroupBy(id).Where(count == sprintCount).ToHashSet()`.
+- **allDevelopers vs activeDevelopers split**: The exclusion filter needs all developers for `DefaultCapacityPercent` fallback lookup, but analytics services should only receive active developers for display. Load both in endpoints: `GetAllAsync()` for the fallback/exclusion pass, then filter to active before passing to services.
+- **Pinia optimistic revert**: Store a shallow copy (`{ ...developers.value[index] }`) before applying the optimistic update. On API failure, restore the copy and re-throw so the view layer can surface the error.
+
+## Reviewer Lessons
+
+- **Store computed vs component sorting**: When the plan specifies "sorted" in a store computed, the reviewer should verify the sorting behavior is achieved even if it's delegated to a child component — the spec behavior may be met regardless of where the sort logic lives.
+- **Multi-sprint exclusion semantics need architect clarification**: "Excluded in ALL sprints" vs "per-sprint exclusion shown as zero row" is an architecture call, not a code bug. When a key decision in implementation.md contradicts a spec business rule, escalate to architect rather than flagging as HIGH.
+- **Plan-specified store updates are HIGH priority**: When the plan explicitly states a store action must update secondary state (e.g., `subTeams` list after sub-team change), absence of that update is a HIGH finding — it directly breaks stated UX behaviour. Check every explicit "on success" side effect in the plan's action specifications.
+- **JSON body re-reading pattern**: `HttpContext.Request.EnableBuffering()` + `Body.Position = 0` + `JsonDocument.ParseAsync` is the correct ASP.NET Core pattern for re-reading a request body that FastEndpoints has already consumed for model binding. This is a legitimate approach, not a code smell.
+- **Verify fix ordering in optimistic update stores**: When reviewing a fix that updates derived state (e.g., `subTeams`) after mutating an array entry, confirm the mutation (`developers.value[index] = updated`) happens before the derived-state check (`stillUsed`) — otherwise the check operates on stale data. The fix here got this right.
+
+## Architect Lessons
+
+- **Partial-update endpoints need null-vs-absent semantics called out in the plan.** The plan specified "all fields are optional -- omitted fields are not changed" and "subTeam nullable -- null clears" but did not explicitly address the JSON serialization challenge of distinguishing `null` from absent. The developer had to invent the `subTeamProvided` pattern. Future plans for partial-update PUT endpoints with nullable clearable fields should include a plan step or note about the null-vs-absent detection strategy.
+- **Multi-sprint exclusion aggregation strategy must be explicit in the plan.** The plan specified per-sprint exclusion logic but did not specify how to aggregate exclusions across sprints in multi-sprint mode ("excluded in ALL" vs "excluded in ANY"). This led to a reviewer escalation. When a cross-cutting filter applies per-entity-per-sprint but analytics have multi-sprint views, the plan must state the multi-sprint aggregation rule.
+- **Sidebar placement is a spec-binding contract, not a presentation preference.** The plan said "after Developers" matching the spec acceptance criterion. The developer deviated to "after Cycle Time" and documented it as a "presentation decision." The reviewer correctly flagged this as a spec violation. Named positions in acceptance criteria are binding -- the plan should have been stronger: "this position matches spec AC and must not be moved."
+- **Cross-cutting filter plans should enumerate the exact service method signatures that change.** Step 6 listed the 6 endpoints but did not specify that the analytics services themselves (SprintSummaryService, BugRatioService, etc.) would need their `FilterMemberships` and `Compute*` method signatures extended with `excludedDeveloperIds`. The developer figured this out correctly, but the plan should have been explicit about service-level changes vs endpoint-level changes to prevent ambiguity.
+- **Store side-effect specifications prevent review findings.** Step 8 explicitly specified "update the subTeams list" in the store action, which the developer initially missed and the reviewer caught as HIGH. Explicit side-effect specs in plan steps work -- the issue was implementation omission, not plan ambiguity. Keep specifying them.
+
+## Skill Gaps
+
+- **Missing skill**: `subteam-null-absent-detection` — no skill covers the "detect JSON key presence to distinguish null-clear from not-provided" pattern. Files to reference: `UpdateTeamConfigEndpoint.cs`, `DeveloperRepository.cs` (`UpdateTeamConfigAsync`).
+- **Missing skill**: `cross-cutting-exclusion-filter` — no skill covers threading an optional exclusion set through multiple analytics service methods. Reference files: `ExcludedDeveloperFilter.cs`, `SprintSummaryService.cs`, `BugRatioService.cs`, `CarryOverService.cs`, `ScopeChangeService.cs`, `CycleTimeService.cs`.

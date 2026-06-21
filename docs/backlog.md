@@ -138,3 +138,20 @@ The suite's third sprint ritual — real-time planning poker for sprint estimati
 - Spec passed critic Mode-1 review (REVISE → 11 findings folded; record in `delivery/spec-review-critic.md`).
 - **3 open questions are architect-feasibility, not product gaps** — must be cleared before the plan: (1) Jira story-points field (standard vs custom); (2) verify Fokus actually has a Jira *write* path today (draft §9.1 assumes it); (3) ticket-freshness mechanism (live pass-through vs cached); plus a 4th surfaced by the critic — Person minting for a not-yet-known Google participant (vs ADR-016/022).
 - New module → expect new ADRs (register currently stops at ADR-022).
+
+---
+
+# Documentation Structure Port (`docs/` per-product namespacing — ADR-023)
+
+Per **ADR-023** + `docs/proposals/per-product-doc-namespacing.md`: docs organized per product with an always-load backbone + on-demand subtrees. Reference repos (`<fokus-repo>`, `<reflekt-repo>`) remain the canonical read-only archive — nothing is ever lost there.
+
+| Item | Status | Notes |
+|------|--------|-------|
+| product/ | ✓ **Done** (2026-06-21) | `product/{fokus,reflekt}/` + `product/suite-strategy.md` backbone + thin `product/index.md` router |
+| specs/ history | ✓ **Done** (2026-06-21) | Full import, namespaced `specs/fokus/` (66 folders) + `specs/reflekt/` (5). This repo's own passes stay flat at `specs/` root |
+| kb/ | **Held** (owner) | Sprint-rituals' own flat KB kept; Fokus/Reflekt KB **not** imported (owner decision). Per-product KB split deferred until a 2nd product's KB matters |
+| architecture/ | ✓ **Done** (2026-06-21) | Namespaced `architecture/{fokus,reflekt,poker}/`; **imported Reflekt architecture** (`reflekt/v1.md`+`index.md` — was the real gap); `v1.md`→`fokus/`, `poker-v1.md`→`poker/v1.md`; index `@`-includes fixed. Open: `poker/v1.md` is a product spec (consider `product/poker/`); convert backbone `@`-includes → on-demand links (ADR-023) |
+| adhoc-ReflektLegacyDocsConvert | **Later — needs pipeline** | Convert Reflekt's pre-nexus `docs/features/` + `docs/plans/` (source: `<reflekt-repo>\docs\`) into nexus `docs/specs/{slug}/` format. Owner chose *convert* (not copy-as-is). Its own pipeline run |
+| Cross-ref cleanup | **Later** | Internal links in ported docs (e.g. product → suite-strategy) point at old paths — fix pass |
+
+**Nexus generalization:** `docs/proposals/per-product-doc-namespacing.md` (Draft, options across activation/resolution/loading axes) + `docs/plugin-feedback/nexus-1.16.1-2026-06-21.md` — to be discussed with the nexus architect; the plugin change ships from `<plugin-repo>`.

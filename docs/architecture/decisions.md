@@ -103,5 +103,24 @@ A `Person` is created **only for Google-authenticated participants** (Identity m
 
 ---
 
+## Documentation & context-loading ADRs
+
+## ADR-023 — Docs are microservice-shaped: central tree, per-product namespacing, backbone + on-demand loading
+**Premise.** The system is microservice-shaped; the single Host (ADR-001) is the only deviation and is reversible by a Host split. Documentation follows the **module/service split**, not the monolith. Docs stay **central under `docs/`** — *not* colocated in `src/Services/{module}/docs/` — so the cross-cutting backbone and per-product leaves stay together and nexus's "everything under `docs/`" assumption holds; a future repo split just lifts a namespaced subtree.
+
+**Layout.** For `product/`, `architecture/`, `kb/`: a **backbone** at the area root (cross-cutting, small, `index.md` as router) + a **per-product subtree** `{area}/{product}/` (the bulk).
+- `product/{fokus,reflekt}/` with `product/index.md` rewritten as a router; the suite strategy is backbone.
+- `architecture/`: backbone = this decision register + suite topology; `architecture/{product}/` = product domain detail (current `v1.md` = Fokus, `poker-v1.md` = Reflekt move under it).
+- `kb/{product}/` + backbone `kb/cross-cutting.md` + glossary + `kb/index.md` router.
+- `specs/` stays **flat** for going-forward work (the slug carries the product). **Exception:** imported multi-product *history* (the Fokus/Reflekt legacy spec trees) is namespaced `specs/{product}/` because both products reuse F-numbers (F29–F32 collide) — a flat merge is impossible. This repo's own passes stay flat at `specs/` root.
+
+**Loading — both, layered.** Backbone indexes are **always-load** (kept small); product subtrees are **load-on-demand**, triggered by the work area: **slug→product** (primary — the pipeline is slug-centric) + the area `index.md` router (secondary). Working in Reflekt loads only Reflekt's product+architecture+kb subtree + the backbone, skipping Fokus's. (The CLAUDE.md-cascade idea applied to docs.)
+
+**Portability (binding).** This convention must generalize to the **nexus plugin**, not be a one-off — captured in `docs/plugin-feedback/nexus-1.16.1-2026-06-21.md` for promotion into `create-architecture-doc`, the kb schema/index, the product-doc convention, and the agents-workflow path + context-loading rules.
+
+**Open → investigated 2026-06-21.** Nexus has **no** slug→product/area routing hook today (verified across agents, `agents-workflow.md`, hooks). KB loading is a global rule (`rules/kb-navigation.md`: "read `docs/kb/index.md` → follow link"), and all four doc skills (`create-architecture-doc`, `kb-entry-schema`, `create-feature-spec`, kb index) hardcode a single flat tree. So the routing is **net-new**; the one reusable seam is the existing one-level `docs/kb/{area}/` subfolder. Targets captured in the plugin-feedback file.
+
+---
+
 ## Supersession note
 `v1.md` remains valid for Fokus domain detail (entity classification, HealthScore formula, indexes). It is **superseded** on: standalone deployment, "no auth", "no gRPC/MassTransit/MediatR" scope lines, thin-domain-as-end-state, and compute-in-endpoints — all overridden by ADR-001/004/005/006/007 above.

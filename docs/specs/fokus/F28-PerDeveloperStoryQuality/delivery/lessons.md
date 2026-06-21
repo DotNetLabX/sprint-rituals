@@ -1,0 +1,34 @@
+# Per-Developer Story Quality — Lessons
+
+## Developer Lessons
+
+- **`git stash` drops unstaged changes**: When verifying pre-existing build errors by stashing, `git stash` only stashes tracked modified files. Newly created files that were not yet staged are left in the working tree unaffected. Stash with `git stash --include-untracked` (or stage first) to get a truly clean state.
+- **TypeScript implicit `any` in reduce callbacks**: When a `.map()` callback returns a typed value (e.g., `.map(b => b.coveragePercent)` producing `number[]`), the subsequent `.reduce((a, b) => a + b, 0)` correctly infers both parameters as `number`. Errors of the form "Parameter 'b' implicitly has an 'any' type" on reduce callbacks during a build run are usually caused by the types file being absent (e.g., stashed away), not by missing annotations in the reduce itself. Verify by restoring the types file before adding redundant annotations.
+- **Inline SVG sparklines over per-cell ApexCharts**: For sparklines inside table cells, inline `<svg><path>` computed from the sparkline data array avoids the overhead of mounting dozens of ApexCharts instances. The `sparklinePath()` function normalizes values to a fixed bounding box (width × height) using min/max scaling — sufficient for trend indication.
+- **Below-median streak algorithm**: The streak walks backward from the selected sprint through consecutive closed sprints that have QA data. A sprint where the developer has zero stories, or a sprint with no QA data, terminates the streak. The streak count is the length of the unbroken run ending at the selected sprint. Return `null` (not 0) when streak < 2 so the UI can distinguish "no flag" from "flag".
+- **Response DTO naming convention**: The codebase uses `{Concept}Response` suffix (e.g., `DeveloperQualitySprintBreakdownResponse`, not `DeveloperQualitySprintBreakdownResponseDTO`). The plan used `DeveloperQualityResponseEntry` — the correct form per convention is `DeveloperQualityEntryResponse`.
+
+- **Streak window must be loaded separately from sparkline window in the endpoint.** The sparkline window (4 sprints) and the streak window (up to 12 sprints) serve different purposes and must each be loaded independently with memberships and TEs. The streakWindow is pre-filtered to QA-bearing sprints via `GetSprintIdsWithQaDataAsync`, so the service's streak loop can treat an absent entry as a genuine boundary rather than a missing-data artifact. Reusing the sparkline TE load for overlapping sprint IDs avoids redundant DB round-trips.
+
+## Skill Gaps
+
+- **Missing skill:** Below-median streak computation (plan Step 4 — `None` disposition). Suggested name: `streak-computation`. Coverage: walk-backward streak algorithm for any metric, median computation (excluding zero-story entries), sub-team scoping of median. Reference files: `DeveloperQualityService.cs` (`ComputeBelowMedianStreak`, `ComputeMedian`).
+- **Missing skill:** Inline SVG sparklines in table cells. Suggested name: `inline-sparklines`. Coverage: normalizing a `SparklinePoint[]` array into an SVG `<path>` `d` attribute for a fixed bounding box, handling fewer-than-2-point edge case, rendering as `<svg>` + `<path>` in a Vue template. Reference files: `QualityDevTable.vue` (`sparklinePath` function).
+
+## Architect Lessons
+
+- **Response DTO naming in plans should follow codebase convention, not invent names.** The plan used `DeveloperQualityResponseEntry` but the codebase convention is `{Concept}Response` suffix (e.g., `DeveloperQualityEntryResponse`). The developer correctly deviated. Future plans should grep for the existing naming pattern before specifying DTO names — or explicitly state "follow existing naming convention" instead of hardcoding a name.
+- **Plan-specified record/class names are binding but convention trumps.** The agents-workflow says "Named identifiers in plans are binding contracts" and "renaming in implementation is a deviation requiring documentation." The developer documented the deviation properly. However, the plan should not have conflicted with the existing convention in the first place. When naming DTOs, check the established pattern in the codebase before committing to a name.
+- **QA-data sprint filtering is a reusable pattern worth extracting.** The `GetSprintIdsWithQaDataAsync` repository method will be needed by any future feature that renders per-sprint QA data selectively (e.g., F29 QA Workload). The plan correctly anticipated this as a separate step rather than inlining it in the endpoint. Good decomposition.
+- **The "follow existing tab pattern" instruction in Step 6 was highly effective.** Pointing to `fetchBugRatio()` and `fetchLeaderboard()` as exact patterns for the store extension eliminated ambiguity. The developer replicated the pattern with zero questions. Continue this approach: reference a specific existing function as the pattern, not just the skill.
+
+## Reviewer Lessons (Cycle 2)
+
+- **Check repository helper semantics against existing helpers in the same file.** `GetSprintIdsWithQaDataAsync` was added to filter sprints by QA data presence, but omitted the BR8 max-sprint-id tiebreaker that `GetTestExecutionsForSprintAsync` (in the same file) applies. When a new repository method is logically paired with an existing one (existence check vs full load), verify they share the same attribution semantics — otherwise the existence check will return sprints that the full loader returns empty for.
+- **Sub-task inheritance scope: check whether it applies to all metrics or only coverage.** BR10 (sub-task inheritance) is a coverage-specific rule in this spec. The implementation extended inheritance to pass rate and bugs found as well. When reviewing any feature that has per-ticket inheritance rules, explicitly check each downstream metric to confirm inheritance is scoped correctly.
+
+## Reviewer Lessons (Cycle 2)
+
+- [TRACKED] **When a developer claims a finding was "already correct," read the actual code — do not take it on faith.** Both HIGH 2 and the MEDIUM finding were claimed correct in the initial implementation. Reading the code confirmed both claims with hard line-number evidence. This is the right outcome — but the evidence must be collected, not assumed.
+- **Verify the fix does not introduce regressions at integration points.** For the streak fix, the key integration points were: (1) membership loading for streak sprints, (2) transition loading extension, (3) `allLoadedSprints` deduplication, and (4) TE reuse from the sparkline window. All four were checked explicitly — not just the algorithm change itself.
+- **On re-review cycles, confirm every changed call site compiles.** The developer noted in their lessons that a previous pass left a broken call site. On re-review, verify that all call sites of a changed method signature are updated — not just the primary one.

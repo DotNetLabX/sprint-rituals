@@ -1,0 +1,15 @@
+# SkillAlignment — Lessons
+
+## Developer Lessons
+
+- [APPLIED] **`ref` parameters are illegal in async C# methods.** The `GetAllCached`/`GetByIdCached` pattern in `ApplicationDbContext` uses `ref List<T>?` cache parameters — this will not compile. Strip these helpers or rewrite with instance fields when needed.
+- [APPLIED] **`HasDefaultValueSql` and `GetTableName()` are relational EF extensions.** They live in `Microsoft.EntityFrameworkCore.Relational`, not in the base `Microsoft.EntityFrameworkCore` package. A `Blocks.EntityFrameworkCore` package that only references the base EF package cannot use these. Either add the relational package reference, or defer SQL defaults to the service-level configuration (which has the SQLite package and thus the relational extensions).
+- [APPLIED] **`new` keyword is needed when a derived repo overrides a base method signature.** When domain repositories define `UpsertAsync` with entity-specific field-copy logic (instead of generic `CurrentValues.SetValues`), the compiler warns CS0108. Using `new` is correct and intentional.
+- [APPLIED] **Solution file is `.slnx` format, not `.sln`.** The Fokus repo uses the newer XML-based `.slnx` format (`src/Fokus.slnx`). Adding projects means adding `<Project Path="...">` entries under the appropriate `<Folder>` element. Relative paths are from the `.slnx` file location.
+- [APPLIED] **`dotnet ef migrations remove --force` works cleanly** when migration has not been applied to a DB. No need to delete files manually.
+
+## Skill Gaps
+
+- [APPLIED] **Missing skill: `create-building-blocks-package`** — Steps 1–6 each build a BuildingBlocks package from scratch. There is no skill covering this. Each package's structure (csproj dependencies, namespace conventions, which classes go where) had to be inferred from the skill descriptions. A skill covering this would document: package naming, namespace = package name without dots (e.g. `Blocks.Core` → namespace `Blocks.Core`), which packages may reference which others, and the standard set of files per package type.
+- [APPLIED] **Ill-fitting skill: `persistence-patterns` § ApplicationDbContext:** The skill mentions "in-memory cache helpers (`GetAllCached`, `GetByIdCached`)" as part of the base class. These use `ref` parameters, which are incompatible with async methods in C#. The skill description implies these are useful patterns but the implementation as described won't compile. The skill should either document a non-ref alternative (e.g., dictionary-keyed cache fields) or note that the helpers are opt-in and require non-async wrapper methods.
+- [APPLIED] **Ill-fitting skill: `persistence-patterns` § AuditedEntityConfiguration:** The skill shows `DefaultDateSql` virtual returning `"GETUTCDATE()"` by default, overridden for PostgreSQL. This requires `HasDefaultValueSql` from the relational EF package. Since `Blocks.EntityFrameworkCore` only references `Microsoft.EntityFrameworkCore` (base), this call fails at compile time. The skill should note the relational package dependency or suggest a different approach for the BuildingBlocks package.
