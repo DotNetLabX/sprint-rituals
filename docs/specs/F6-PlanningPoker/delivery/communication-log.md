@@ -9,6 +9,8 @@
 **Plan Steps Completed / Remaining:** [1..11] implemented (dev reports build green, 177 .NET tests, 3 client apps build) / none
 **Carry-fix:** customfield_10016 fix LANDED. Carry-Over: none. Awaiting architect done-check (with independent build verify — verify-gate skipped).
 **Plan commit:** c5ba969 feat(F6-PlanningPoker): add spec and implementation plan
+**Impl commit:** f01c1a7 feat(F6-PlanningPoker): implement planning poker module (F6-scoped; ADR-023 excluded)
+**Both commits authored by team-lead (ldumit) — author check passed.**
 **Questions Resolved:** [spec-corrections-1..5 applied by PO; §3.2.1=Option A ratified; #1=separate Poker query (not shared-filter relax)]
 
 ---
@@ -52,6 +54,9 @@
 | 33 | team-lead → reviewer | reviewer:review | Final re-review cycle 3/3. Confirm F7 fix + build/tests/client green + no regressions. If clean, APPROVE → review.md ##Step 2. | — |
 | 34 | reviewer → team-lead | reviewer:review | APPROVED. F7 fixed (sessions.ts:44 → /participants). Verified firsthand: .NET build 0 errors, 177 tests pass/0 fail, client build green (1812 modules). No regressions. All F1-F7 resolved. | — |
 | 35 | team-lead → (self) | done | Verdict validated (no open CRIT/HIGH). Close-out: spec Status→Implemented, summary.md written, backlog F6 bump deferred (backlog.md contaminated by concurrent ADR-023), final commit scoped to F6 only. | — |
+| 36 | team-lead → (self) | done | Impl commit f01c1a7 (130 files, F6-only; staged set verified vs ADR-023 exclusions). Both commits author=ldumit (team-lead). Pipeline COMPLETE. | — |
+| 37 | user → team-lead | post-close | Commit remaining uncommitted work, merge everything to main, push. | — |
+| 38 | team-lead → (self) | post-close | Committed F6 comm-log + ADR-023 in-flight snapshot (separate commit); merged feat/F6-planning-poker → main. settings.json nexus config BLOCKED by harness self-modification guard (user must add). Push BLOCKED by project deny `Bash(git push:*)` (user must push). | 2 blockers handed to user |
 
 ---
 
