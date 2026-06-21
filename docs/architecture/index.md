@@ -13,3 +13,4 @@
 Superseded where it conflicts with `decisions.md` (deployment model, auth, gRPC/MassTransit/MediatR scope, thin-domain-as-end-state). Still valid for domain-model classification, the HealthScore formula, and indexes.
 
 @v1.md
+@poker-v1.md

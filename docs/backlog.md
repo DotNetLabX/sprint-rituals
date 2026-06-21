@@ -122,3 +122,19 @@ Mirror of the Fokus refactoring path (`refactor-triage.md` → ADRs → numbered
 **Notes:**
 - Scope is deliberately short vs Fokus Pass0–6: the mechanical arm (ADR-008/009/011/013/014) and ADR-006 were already satisfied by RA1 / newer Reflekt code. Triage O1 holds the full-mirror-vs-targeted fork (targeted chosen).
 - RR-B/C/D have no hard inter-dependencies after RR0; RR-B runs first because VOs touch the `RetroSession` aggregate that RR-C/D also read.
+
+---
+
+# Planning Poker (new feature)
+
+The suite's third sprint ritual — real-time planning poker for sprint estimation, alongside Fokus (analytics) and Reflekt (retro). New module; graduates the product draft `docs/architecture/poker-v1.md`.
+
+| ID | Slug | Type | Status | Spec | Depends on |
+|----|------|------|--------|------|-----------|
+| F6 | F6-PlanningPoker | feature (spec + plan) | **Spec Ready** (2026-06-21) | `docs/specs/F6-PlanningPoker/definition/spec.md` | Fokus (sprint catalog + Jira write-back), Identity (auth + Person), RA5 routing shell |
+
+**Notes:**
+- Two modes in v1: **sprint-bound** (Fokus tickets → Jira story-point write-back) and **free** (manual items, no write-back).
+- Spec passed critic Mode-1 review (REVISE → 11 findings folded; record in `delivery/spec-review-critic.md`).
+- **3 open questions are architect-feasibility, not product gaps** — must be cleared before the plan: (1) Jira story-points field (standard vs custom); (2) verify Fokus actually has a Jira *write* path today (draft §9.1 assumes it); (3) ticket-freshness mechanism (live pass-through vs cached); plus a 4th surfaced by the critic — Person minting for a not-yet-known Google participant (vs ADR-016/022).
+- New module → expect new ADRs (register currently stops at ADR-022).
