@@ -8,9 +8,10 @@ namespace Fokus.Domain.Tests.Analytics;
 /// <summary>
 /// Mutation-gated example-based tests for <see cref="BugRatioAnalyzer"/>.
 ///
-/// One [Fact] per rule boundary from docs/kb/bug-ratio.md (BR1-BR13). Each test pins an exact
-/// threshold/equality/relational boundary so Stryker's mutants on >=, >, ==, !=, +/-, &amp;&amp;/||,
-/// and string/return literals are killed.
+/// One [Fact] per verified rule boundary from docs/kb/bug-ratio.md (BR-1 … BR-37). Each test pins an
+/// exact threshold / equality / relational boundary (epsilon on every &gt;=, &gt;, ==, !=) so Stryker's
+/// relational, equality, arithmetic, boolean-connector and string/return-literal mutants are killed —
+/// coverage is incidental, killing mutants is the goal.
 ///
 /// Construction model (verified against the SUT + supporting domain types):
 ///   - Completed-in-sprint is decided by TransitionAttributionChecker.IsCompletedInSprint via a
@@ -20,6 +21,10 @@ namespace Fokus.Domain.Tests.Analytics;
 ///     therefore marks completion.
 ///   - GetEffectiveSp: StoryPoints (when > 0) wins; else Bug + defaultSpPerBug>0 ⇒ defaultSpPerBug;
 ///     else null (treated as 0 in the sums).
+///
+/// NON-NEGOTIABLE: a test that fails on the CURRENT production code is KEPT and flagged with a
+/// `// CANDIDATE BUG:` comment — never deleted, and the production code is never edited to make it pass.
+/// (None of the tests below are currently red — all 59 pass against the shipped analyzer.)
 /// </summary>
 public class BugRatioAnalyzerTests
 {
@@ -75,6 +80,32 @@ public class BugRatioAnalyzerTests
         return t;
     }
 
+    // A ticket with a genuinely-null IssueType (records mark IssueType `required`, so we null it
+    // explicitly to exercise the `== "Bug"` null-propagation and the `?? "Unknown"` fallback).
+    private static Ticket TicketWithNullIssueType(string id, decimal? storyPoints = null) =>
+        new()
+        {
+            Id = id,
+            Summary = id,
+            IssueType = null!,
+            Priority = "Medium",
+            CurrentStatus = "Done",
+            StoryPoints = storyPoints
+        };
+
+    // A membership whose Ticket reference is null (Ticket is `= null!`); used to pin BR-1's
+    // null-Ticket-is-non-bug and BR-23's null-Ticket-groups-as-Unknown behavior.
+    private static SprintMembership MembershipWithNullTicket(
+        string ticketId, decimal? storyPoints, string finalStatus = "Done") =>
+        new()
+        {
+            TicketId = ticketId,
+            FinalStatus = finalStatus,
+            StoryPoints = storyPoints,
+            Ticket = null!,
+            AddedAt = new DateTime(2024, 1, 1)
+        };
+
     private static SprintMembership Membership(
         Ticket ticket,
         decimal? storyPoints,
@@ -113,7 +144,7 @@ public class BugRatioAnalyzerTests
     private static readonly BugRatioAnalyzer Analyzer = new();
 
     // =====================================================================
-    // BR3 / BR2: ratio = bugSp/completedSp*100 when completedSp > 0, else 0m
+    // BR-2 / BR-3: per-sprint ratio = bugSp/completedSp*100 when completedSp > 0, else 0m
     // Pin the boundary completedSp == 0 → 0m, and a known non-zero ratio.
     // =====================================================================
 
@@ -181,7 +212,7 @@ public class BugRatioAnalyzerTests
     }
 
     // =====================================================================
-    // BR1: IsBug iff Ticket.IssueType == "Bug" (case-SENSITIVE ordinal); null ticket → not a bug.
+    // BR-1: IsBug iff Ticket.IssueType == "Bug" (case-SENSITIVE ordinal); null Ticket → not a bug.
     // =====================================================================
 
     // "bug" (lowercase) must NOT classify as a bug — kills an ordinal→ignore-case mutant.
@@ -201,6 +232,22 @@ public class BugRatioAnalyzerTests
         result.TeamMetrics.BugRatioPercent.Should().Be(0m);
     }
 
+    // "Bug " (trailing space) must NOT match — pins the exact-string-equality boundary (kills
+    // an == → StartsWith/Contains-style mutant and confirms no trimming).
+    [Fact]
+    public void IssueType_TrailingSpace_IsNotABug()
+    {
+        var spaced = Membership(TicketOf("T-1", "Bug "), 5m);
+        var sprint = Sprint(1, S1Start, S1End, spaced);
+        var transitions = new List<StatusTransition> { Completed("T-1", S1Mid) };
+
+        var result = Analyzer.ComputeMultiSprint(
+            [sprint], [sprint], [], Settings(), transitions, subTeam: null);
+
+        result.TeamMetrics.TotalBugSp.Should().Be(0m);
+        result.TeamMetrics.TotalNonBugSp.Should().Be(5.0m);
+    }
+
     // Exact "Bug" classifies as bug — the positive half of the == "Bug" boundary.
     [Fact]
     public void IssueType_ExactBug_IsClassifiedAsBug()
@@ -216,8 +263,25 @@ public class BugRatioAnalyzerTests
         result.TeamMetrics.BugRatioPercent.Should().Be(100.0m);
     }
 
+    // BR-1 + BR-15: a completed membership whose Ticket is NULL is non-bug (null?.IssueType != "Bug")
+    // and lands in nonBugSp — pins the null-propagation half of IsBug.
+    [Fact]
+    public void NullTicketMembership_IsNonBug_AndCountsTowardNonBugSp()
+    {
+        var nullTicket = MembershipWithNullTicket("NT-1", 5m);
+        var sprint = Sprint(1, S1Start, S1End, nullTicket);
+        var transitions = new List<StatusTransition> { Completed("NT-1", S1Mid) };
+
+        var result = Analyzer.ComputeMultiSprint(
+            [sprint], [sprint], [], Settings(), transitions, subTeam: null);
+
+        result.TeamMetrics.TotalBugSp.Should().Be(0m);
+        result.TeamMetrics.TotalNonBugSp.Should().Be(5.0m);
+    }
+
     // =====================================================================
-    // BR10: bug / non-bug ticket counts are complementary Count(IsBug)/Count(!IsBug).
+    // BR-10 / BR-11: bug / non-bug ticket counts are complementary Count(IsBug)/Count(!IsBug),
+    // emitted as raw integers (unrounded).
     // =====================================================================
 
     [Fact]
@@ -242,7 +306,7 @@ public class BugRatioAnalyzerTests
     }
 
     // =====================================================================
-    // BR7: completed set EXCLUDES RemovedAt != null and FinalStatus in excludedStatuses
+    // BR-12 / BR-13: completed set EXCLUDES RemovedAt != null and FinalStatus in excludedStatuses
     //      (case-INSENSITIVE OrdinalIgnoreCase). Inclusion needs IsCompletedInSprint == true.
     // =====================================================================
 
@@ -311,7 +375,7 @@ public class BugRatioAnalyzerTests
         result.TeamMetrics.TotalCompletedSp.Should().Be(0m);
     }
 
-    // Boundary: a transition exactly AT sprintEnd is inside the inclusive [start, end] window.
+    // BR-28 boundary: a transition exactly AT sprintEnd is inside the inclusive [start, end] window.
     [Fact]
     public void Completion_ExactlyAtSprintEnd_IsCompleted()
     {
@@ -325,12 +389,22 @@ public class BugRatioAnalyzerTests
         result.TeamMetrics.TotalCompletedSp.Should().Be(5.0m);
     }
 
+    // BR-28 boundary: a transition exactly AT sprintStart is inside the inclusive window.
+    [Fact]
+    public void Completion_ExactlyAtSprintStart_IsCompleted()
+    {
+        var story = Membership(TicketOf("STORY-1", "Story"), 5m);
+        var sprint = Sprint(1, S1Start, S1End, story);
+        var transitions = new List<StatusTransition> { Completed("STORY-1", S1Start) };
+
+        var result = Analyzer.ComputeMultiSprint(
+            [sprint], [sprint], [], Settings(), transitions, subTeam: null);
+
+        result.TeamMetrics.TotalCompletedSp.Should().Be(5.0m);
+    }
+
     // =====================================================================
-    // BR4: aggregate ratio is ratio-of-totals (ΣbugSp / ΣcompletedSp × 100), NOT mean of per-sprint ratios.
-    // S1: bug 10, story 0-ish ⇒ 100%. S2: bug 0, story 10 ⇒ 0%.
-    // Mean-of-ratios would give 50%. Ratio-of-totals = 10/(10+10)*100 = 50% — collides; so make it asymmetric.
-    // S1: bug 30, non-bug 10 ⇒ ratio 75. S2: bug 10, non-bug 30 ⇒ ratio 25. Mean = 50.
-    // Ratio-of-totals = (30+10)/(40+40)*100 = 40/80*100 = 50. Still collides — choose unequal sprint sizes.
+    // BR-5: aggregate ratio is ratio-of-totals (ΣbugSp / ΣcompletedSp × 100), NOT mean of per-sprint ratios.
     // S1: bug 30, non 10 (total 40) ratio 75. S2: bug 5, non 45 (total 50) ratio 10.
     // mean = 42.5 ; ratio-of-totals = (30+5)/(40+50)*100 = 35/90*100 = 38.8889 → round 38.9.
     // =====================================================================
@@ -360,7 +434,7 @@ public class BugRatioAnalyzerTests
     }
 
     // =====================================================================
-    // BR5 / BR6: alert streak. Count most-recent-first while ratio >= threshold (INCLUSIVE);
+    // BR-21 / BR-22: alert streak. Count most-recent-first while ratio >= threshold (INCLUSIVE);
     // fire when streak >= consecutiveCount.
     // =====================================================================
 
@@ -447,7 +521,7 @@ public class BugRatioAnalyzerTests
     }
 
     // =====================================================================
-    // BR6: a sprint with completedSp == 0 BREAKS the streak (most-recent-first), not skipped.
+    // BR-20: a sprint with completedSp == 0 BREAKS the streak (most-recent-first), not skipped.
     // Most recent sprint has zero completed ⇒ streak stops at 0 even though older sprints are above threshold.
     // =====================================================================
 
@@ -504,12 +578,12 @@ public class BugRatioAnalyzerTests
     }
 
     // =====================================================================
-    // BR9: sub-team / assignee filters are case-SENSITIVE ordinal ==; blank subTeam disables the filter.
-    //      excludedDeveloperIds drops matching assignees but KEEPS null-assignee memberships,
-    //      and applies on the TEAM path only.
+    // BR-16 / BR-17 / BR-18: sub-team / assignee filters are case-SENSITIVE ordinal ==;
+    //      blank subTeam disables the filter. excludedDeveloperIds drops matching assignees but
+    //      KEEPS null-assignee memberships, and applies on the TEAM path only.
     // =====================================================================
 
-    // Blank subTeam ⇒ no filtering: a developer with a different sub-team is still included.
+    // BR-16: Blank subTeam ⇒ no developer filtering: a developer with a different sub-team is still included.
     [Fact]
     public void BlankSubTeam_DisablesDeveloperFilter()
     {
@@ -521,7 +595,19 @@ public class BugRatioAnalyzerTests
         result.Developers.Should().HaveCount(1);
     }
 
-    // Non-blank subTeam filters developers by case-SENSITIVE ordinal equality.
+    // BR-16: whitespace-only subTeam is also treated as blank (IsNullOrWhiteSpace) ⇒ no filtering.
+    [Fact]
+    public void WhitespaceSubTeam_DisablesDeveloperFilter()
+    {
+        var dev = Dev("d1", subTeam: "Alpha");
+        var result = Analyzer.ComputeMultiSprint(
+            [Sprint(1, S1Start, S1End)], [Sprint(1, S1Start, S1End)], [dev],
+            Settings(), statusTransitions: [], subTeam: "   ");
+
+        result.Developers.Should().HaveCount(1);
+    }
+
+    // BR-16: Non-blank subTeam filters developers by case-SENSITIVE ordinal equality.
     // "alpha" != "Alpha" ⇒ developer excluded.
     [Fact]
     public void SubTeamFilter_IsCaseSensitive_ForDevelopers()
@@ -534,7 +620,7 @@ public class BugRatioAnalyzerTests
         result.Developers.Should().BeEmpty();
     }
 
-    // Exact sub-team match keeps the developer (positive side of the == filter).
+    // BR-16: Exact sub-team match keeps the developer (positive side of the == filter).
     [Fact]
     public void SubTeamFilter_KeepsExactMatchDeveloper()
     {
@@ -546,7 +632,7 @@ public class BugRatioAnalyzerTests
         result.Developers.Should().HaveCount(1);
     }
 
-    // excludedDeveloperIds drops the matching assignee on the TEAM path …
+    // BR-17: excludedDeveloperIds drops the matching assignee on the TEAM path …
     [Fact]
     public void ExcludedDeveloperIds_DropMatchingAssignee_OnTeamPath()
     {
@@ -564,7 +650,7 @@ public class BugRatioAnalyzerTests
         result.TeamMetrics.TotalNonBugSp.Should().Be(5.0m);
     }
 
-    // … but KEEPS a null-assignee membership even when excludedDeveloperIds is non-empty.
+    // BR-17: … but KEEPS a null-assignee membership even when excludedDeveloperIds is non-empty.
     [Fact]
     public void ExcludedDeveloperIds_KeepNullAssigneeMembership_OnTeamPath()
     {
@@ -582,7 +668,8 @@ public class BugRatioAnalyzerTests
     }
 
     // =====================================================================
-    // BR11: issue-type breakdown groups by IssueType (null → "Unknown"), ordered by TicketCount desc.
+    // BR-23 / BR-24: issue-type breakdown groups by IssueType (null → "Unknown"), ordered by
+    //      TicketCount desc.
     // =====================================================================
 
     [Fact]
@@ -609,8 +696,25 @@ public class BugRatioAnalyzerTests
         result.IssueTypeBreakdown[1].TicketCount.Should().Be(1);
     }
 
+    // BR-23: GroupBy is case-SENSITIVE/ordinal — "Bug" and "bug" form SEPARATE groups.
+    [Fact]
+    public void IssueTypeBreakdown_IsCaseSensitive_DistinctGroupsForDifferentCase()
+    {
+        var sprint = Sprint(1, S1Start, S1End,
+            Membership(TicketOf("B1", "Bug"), 1m),
+            Membership(TicketOf("B2", "bug"), 1m));
+        var transitions = new List<StatusTransition> { Completed("B1", S1Mid), Completed("B2", S1Mid) };
+
+        var result = Analyzer.ComputeMultiSprint(
+            [sprint], [sprint], [], Settings(), transitions, subTeam: null);
+
+        // Two distinct case-sensitive groups, not one merged group.
+        result.IssueTypeBreakdown.Should().HaveCount(2);
+        result.IssueTypeBreakdown.Select(e => e.IssueType).Should().Contain(["Bug", "bug"]);
+    }
+
     // =====================================================================
-    // BR13: per-sprint emitted SP/ratio figures are rounded to 1 dp (Math.Round, banker's rounding).
+    // BR-4: per-sprint emitted SP/ratio figures are rounded to 1 dp (Math.Round, banker's rounding).
     // bug 1, non-bug 2 ⇒ ratio = 33.3333… → Round(.,1) = 33.3.
     // =====================================================================
 
@@ -634,7 +738,7 @@ public class BugRatioAnalyzerTests
     }
 
     // =====================================================================
-    // BR2 / GetEffectiveSp: defaultSpPerBug fallback — a Bug with null StoryPoints contributes
+    // BR-15 / GetEffectiveSp: defaultSpPerBug fallback — a Bug with null StoryPoints contributes
     // defaultSpPerBug when defaultSpPerBug > 0, and 0 when defaultSpPerBug == 0.
     // =====================================================================
 
@@ -667,7 +771,7 @@ public class BugRatioAnalyzerTests
     }
 
     // =====================================================================
-    // BR12 (single-sprint): prior-sprint deltas are emitted ONLY when a prior sprint exists.
+    // BR-30 / BR-34 (single-sprint): prior-sprint deltas are emitted ONLY when a prior sprint exists.
     // =====================================================================
 
     [Fact]
@@ -708,7 +812,7 @@ public class BugRatioAnalyzerTests
     }
 
     // =====================================================================
-    // BR12 polarity wiring on the single-sprint TEAM cards:
+    // BR-31 polarity wiring on the single-sprint TEAM cards:
     // Bug Ratio % and Bug SP = "positive-down"; Non-Bug SP = "positive-up".
     // A RISE in Bug SP (delta > 0) under positive-down ⇒ polarity "negative".
     // A RISE in Non-Bug SP under positive-up ⇒ polarity "positive".
@@ -741,12 +845,12 @@ public class BugRatioAnalyzerTests
     // =====================================================================
     // MUTANT-TARGETED SUPPLEMENT
     // Each [Fact] below pins a behavior that the boundary tests above leave
-    // ambiguous, killing a specific surviving (timed-out) mutant. Comments cite
-    // the production line + the mutation each test exists to kill.
+    // ambiguous, killing a specific surviving mutant. Comments cite the
+    // production line + the mutation each test exists to kill.
     // =====================================================================
 
     // ------------------------------------------------------------------
-    // L20: sortedTarget = targetSprints.OrderBy(s => s.StartDate)
+    // BR-7 / L20: sortedTarget = targetSprints.OrderBy(s => s.StartDate)
     //   Mutant: OrderBy → OrderByDescending. The per-sprint trend (and the
     //   pooled issue-type breakdown) follow sortedTarget order. Feed sprints
     //   reversed and pin that the trend comes back ASCENDING by StartDate.
@@ -782,7 +886,30 @@ public class BugRatioAnalyzerTests
     }
 
     // ------------------------------------------------------------------
-    // L92/93/96/97: dev aggregates are Sum over sprintBreakdowns
+    // BR-8 / L23-25: sprintInfos copy Id/Name/StartDate/EndDate verbatim from the
+    //   StartDate-ascending sorted target list. Pin field-by-field so a swapped
+    //   field or a wrong source mutant dies, and confirm ordering on Sprints too.
+    // ------------------------------------------------------------------
+    [Fact]
+    public void SprintInfos_CopyFieldsVerbatim_InAscendingStartDateOrder()
+    {
+        var s1 = Sprint(7, S1Start, S1End);
+        var s2 = Sprint(9, S2Start, S2End);
+
+        var result = Analyzer.ComputeMultiSprint(
+            [s2, s1], [s1, s2], [], Settings(), statusTransitions: [], subTeam: null);
+
+        result.Sprints.Should().HaveCount(2);
+        result.Sprints[0].Id.Should().Be(7);
+        result.Sprints[0].Name.Should().Be("S7");
+        result.Sprints[0].StartDate.Should().Be(S1Start);
+        result.Sprints[0].EndDate.Should().Be(S1End);
+        result.Sprints[1].Id.Should().Be(9);
+        result.Sprints[1].StartDate.Should().Be(S2Start);
+    }
+
+    // ------------------------------------------------------------------
+    // BR-9 / L92/93/96/97: dev aggregates are Sum over sprintBreakdowns
     //   devBugSp = Σ BugSp, devNonBugSp = Σ NonBugSp,
     //   devBugCount = Σ BugTicketCount, devNonBugCount = Σ NonBugTicketCount.
     //   Mutant: Sum → Max. With ONE breakdown Sum==Max; we need a developer
@@ -823,7 +950,7 @@ public class BugRatioAnalyzerTests
     }
 
     // ------------------------------------------------------------------
-    // L95: devRatio = devBugSp / devCompletedSp * 100 when devCompletedSp > 0.
+    // BR-9 / L95: devRatio = devBugSp / devCompletedSp * 100 when devCompletedSp > 0.
     //   Kills: '/'→'*', '*'→'/', the false-conditional (→ 0m), and the
     //   completedSp comparison mutants — by pinning an exact non-round ratio.
     //   8 / 18 * 100 = 44.4444… → Round(.,1) = 44.4.
@@ -845,7 +972,26 @@ public class BugRatioAnalyzerTests
     }
 
     // ------------------------------------------------------------------
-    // L144/145: single-sprint TEAM metrics.
+    // BR-37 / L104-113: developer output record carries identity fields verbatim
+    //   (Id/DisplayName/SubTeam/AvatarUrl). Pin so a swapped/blanked identity field dies.
+    // ------------------------------------------------------------------
+    [Fact]
+    public void MultiSprint_DeveloperRecord_CarriesIdentityFields()
+    {
+        var dev = new Developer { Id = "acc-1", DisplayName = "Ada", SubTeam = "Alpha", AvatarUrl = "http://a/x.png" };
+        var result = Analyzer.ComputeMultiSprint(
+            [Sprint(1, S1Start, S1End)], [Sprint(1, S1Start, S1End)], [dev],
+            Settings(), statusTransitions: [], subTeam: null);
+
+        var entry = result.Developers.Single();
+        entry.AccountId.Should().Be("acc-1");
+        entry.DisplayName.Should().Be("Ada");
+        entry.SubTeam.Should().Be("Alpha");
+        entry.AvatarUrl.Should().Be("http://a/x.png");
+    }
+
+    // ------------------------------------------------------------------
+    // BR-29 / L144/145: single-sprint TEAM metrics.
     //   completedSp = bugSp + nonBugSp (L144 '+'); ratio = bugSp/completedSp*100
     //   when completedSp > 0 (L145). The boundary suite only checked single-sprint
     //   POLARITY — here we pin the raw card .Value numbers so the arithmetic and
@@ -871,10 +1017,10 @@ public class BugRatioAnalyzerTests
     }
 
     // ------------------------------------------------------------------
-    // L165/167/169: the team card DisplayValue strings are interpolated
+    // BR-32 / L165/167/169: the team card DisplayValue strings are interpolated
     //   ($"{ratio:0.#}%", $"{bugSp:0.#}", $"{nonBugSp:0.#}").
     //   Mutant: replace the interpolated string with "" or $"". Pin the exact
-    //   rendered text so an emptied/blanked literal is caught.
+    //   rendered text so an emptied/blanked literal is caught, and the card Names.
     // ------------------------------------------------------------------
     [Fact]
     public void SingleSprint_TeamCard_DisplayValues_AreInterpolatedNotBlank()
@@ -897,9 +1043,31 @@ public class BugRatioAnalyzerTests
     }
 
     // ------------------------------------------------------------------
-    // L160/161: prior-sprint TEAM metrics (priorCompletedSp = pBugSp + pNonBugSp;
-    //   priorRatio = priorBugSp/priorCompletedSp*100 when > 0).
-    // L166/168/170: team-card deltas = current − prior (ratio/bugSp/nonBugSp).
+    // BR-32 fractional: the "0.#" format keeps ONE decimal and drops a trailing zero.
+    //   ratio 33.3333 → "33.3%" (one decimal kept); a whole 5 → "5" (zero dropped).
+    //   Kills a format-string literal mutant ("0.#" → "0" or "0.0").
+    // ------------------------------------------------------------------
+    [Fact]
+    public void SingleSprint_TeamCard_DisplayValue_UsesOneDecimalFormat()
+    {
+        var target = Sprint(1, S1Start, S1End,
+            Membership(TicketOf("B1", "Bug"), 1m),
+            Membership(TicketOf("S1", "Story"), 2m));   // ratio 1/3*100 = 33.333…
+        var transitions = new List<StatusTransition> { Completed("B1", S1Mid), Completed("S1", S1Mid) };
+
+        var result = Analyzer.ComputeSingleSprint(
+            target, priorSprint: null, [target], [], Settings(), transitions, subTeam: null);
+
+        // "0.#" ⇒ at most one decimal ⇒ "33.3%".
+        result.TeamMetrics.BugRatioPercent.DisplayValue.Should().Be("33.3%");
+        // bugSp 1 ⇒ no fractional part ⇒ "1" (trailing-zero decimal dropped).
+        result.TeamMetrics.BugSp.DisplayValue.Should().Be("1");
+    }
+
+    // ------------------------------------------------------------------
+    // BR-30 / BR-31 / L160/161/166/168/170: prior-sprint TEAM metrics
+    //   (priorCompletedSp = pBugSp + pNonBugSp; priorRatio = priorBugSp/priorCompletedSp*100 when > 0).
+    //   team-card deltas = current − prior (ratio/bugSp/nonBugSp).
     //   Mutant set: '+'→'-' / false-conditional / '−'→'+' on each delta, plus the
     //   prior-ratio conditional. Pin every team delta value explicitly.
     //   Prior: bug 2 / story 8 (ratio 20). Current: bug 6 / story 6 (ratio 50).
@@ -935,9 +1103,9 @@ public class BugRatioAnalyzerTests
     }
 
     // ------------------------------------------------------------------
-    // L185/186: single-sprint per-DEVELOPER SP + ratio.
+    // BR-33 / L185/186/191: single-sprint per-DEVELOPER SP + ratio.
     //   devCompletedSp = devBugSp + devNonBugSp (L185 '+'); devRatio (L186).
-    // L191: devNonBugCount = devCompleted.Count(m => !IsBug(m)).
+    //   devNonBugCount = devCompleted.Count(m => !IsBug(m)) (L191).
     //   Mutant: !IsBug → IsBug. Pin a mixed bug/non-bug developer so non-bug
     //   count ≠ bug count and the un-negated predicate is caught.
     //   bug 4 / story 12 ⇒ completed 16, ratio 25; 1 bug + 2 stories.
@@ -968,7 +1136,7 @@ public class BugRatioAnalyzerTests
     }
 
     // ------------------------------------------------------------------
-    // L200/201/206/208-219: single-sprint per-DEVELOPER delta bundle.
+    // BR-34 / BR-35 / L200/201/206/208-219: single-sprint per-DEVELOPER delta bundle.
     //   priorDevCompletedSp = priorDevBugSp + priorDevNonBugSp (L200);
     //   priorDevRatio (L201); priorDevNonBugCount = Count(!IsBug) (L206);
     //   the 5 deltas (L208-212) = current − prior; the 5 Direction calls and
@@ -1075,7 +1243,7 @@ public class BugRatioAnalyzerTests
     }
 
     // ------------------------------------------------------------------
-    // L278: the streak loop's else branch is `break;`.
+    // BR-21 / L278: the streak loop's else branch is `break;`.
     //   Mutant: break → ; (empty statement) — the loop would CONTINUE past a
     //   below-threshold sprint instead of stopping. Arrange most-recent-first:
     //   newest above, MIDDLE below threshold, oldest above. A correct break
@@ -1122,7 +1290,43 @@ public class BugRatioAnalyzerTests
     }
 
     // ------------------------------------------------------------------
-    // L352/353: FilterMemberships subTeam branch (team path).
+    // BR-19 / L256: alert walks allClosedSprints OrderByDescending(StartDate).
+    //   Mutant: OrderByDescending → OrderBy. With a newest zero-SP sprint and an
+    //   older above-threshold streak, descending hits the zero first (streak 0);
+    //   ascending would start at the oldest and count up. Distinguishes the order.
+    // ------------------------------------------------------------------
+    [Fact]
+    public void Alert_WalksMostRecentFirst_NotOldestFirst()
+    {
+        var dev = Dev("d1");
+        // Oldest two sprints are above threshold; the NEWEST has zero completed SP.
+        var sOld1 = Sprint(1, new(2024, 1, 1), new(2024, 1, 14),
+            Membership(TicketOf("OB1", "Bug", assigneeId: "d1"), 9m),
+            Membership(TicketOf("OS1", "Story", assigneeId: "d1"), 1m));
+        var sOld2 = Sprint(2, new(2024, 1, 15), new(2024, 1, 28),
+            Membership(TicketOf("OB2", "Bug", assigneeId: "d1"), 9m),
+            Membership(TicketOf("OS2", "Story", assigneeId: "d1"), 1m));
+        var sNew = Sprint(3, new(2024, 2, 1), new(2024, 2, 14),
+            Membership(TicketOf("NB", "Bug", assigneeId: "d1"), 9m)); // present, NOT completed ⇒ 0 SP
+        var transitions = new List<StatusTransition>
+        {
+            Completed("OB1", new(2024, 1, 7)), Completed("OS1", new(2024, 1, 7)),
+            Completed("OB2", new(2024, 1, 20)), Completed("OS2", new(2024, 1, 20))
+        };
+
+        var result = Analyzer.ComputeMultiSprint(
+            [sOld1], [sOld1, sOld2, sNew], [dev],
+            Settings(alertThreshold: 50, consecutiveSprintCount: 1), transitions, subTeam: null);
+
+        var alert = result.Developers.Single().Alert;
+        // Descending: newest (zero SP) breaks immediately ⇒ streak 0.
+        // Ascending mutant would start at sOld1 (above) ⇒ streak ≥ 1.
+        alert.ConsecutiveSprintCount.Should().Be(0);
+        alert.IsActive.Should().BeFalse();
+    }
+
+    // ------------------------------------------------------------------
+    // BR-17 / L352/353: FilterMemberships subTeam branch (team path).
     //   if (!string.IsNullOrWhiteSpace(subTeam))
     //       result = result.Where(m => m.Ticket?.Assignee?.SubTeam == subTeam);
     //   Mutants: un-negate the IsNullOrWhiteSpace (filter when blank), the
@@ -1164,11 +1368,10 @@ public class BugRatioAnalyzerTests
     }
 
     // ------------------------------------------------------------------
-    // L354/355: excludedDeveloperIds filter keeps null-assignee, drops matches.
+    // BR-17 / L354/355: excludedDeveloperIds filter keeps null-assignee, drops matches.
     //   `excludedDeveloperIds is { Count: > 0 }` then
     //   Where(m => m.Ticket?.AssigneeId == null || !excludedDeveloperIds.Contains(...))
-    //   L354 mutant: '> 0' → '>= 0' would activate even for an empty set (no row
-    //   has AssigneeId-null guard issue, but an empty set should be a no-op).
+    //   L354 mutant: '> 0' → '>= 0' would activate even for an empty set.
     //   Pin: an EMPTY excludedDeveloperIds set is a no-op (matching assignee kept).
     // ------------------------------------------------------------------
     [Fact]
@@ -1187,7 +1390,7 @@ public class BugRatioAnalyzerTests
     }
 
     // ------------------------------------------------------------------
-    // L365/366: GetDeveloperMemberships (per-developer + alert path).
+    // BR-18 / L365/366: GetDeveloperMemberships (per-developer + alert path).
     //   Where(m => m.Ticket?.AssigneeId == developerId &&
     //              (string.IsNullOrWhiteSpace(subTeam) || m.Ticket?.Assignee?.SubTeam == subTeam))
     //   Mutants: '&&'→'||' (L365), '||'→'&&' (L366), string-literal swaps,
@@ -1238,11 +1441,28 @@ public class BugRatioAnalyzerTests
         entry.NonBugTicketCount.Should().Be(1);
     }
 
+    // BR-18: GetDeveloperMemberships AssigneeId match is case-SENSITIVE ordinal ==.
+    //   A ticket assigned "D1" must NOT match developer id "d1".
+    [Fact]
+    public void DeveloperMemberships_AssigneeIdMatch_IsCaseSensitive()
+    {
+        var dev = Dev("d1");
+        var wrongCaseAssignee = Membership(TicketOf("S1", "Story", assigneeId: "D1"), 5m);
+        var sprint = Sprint(1, S1Start, S1End, wrongCaseAssignee);
+        var transitions = new List<StatusTransition> { Completed("S1", S1Mid) };
+
+        var result = Analyzer.ComputeMultiSprint(
+            [sprint], [sprint], [dev], Settings(), transitions, subTeam: null);
+
+        // "D1" != "d1" ordinal ⇒ no membership attributed to developer d1.
+        result.Developers.Single().CompletedSp.Should().Be(0m);
+    }
+
     // ------------------------------------------------------------------
-    // L377: BuildIssueTypeBreakdown groups by `m.Ticket?.IssueType ?? "Unknown"`.
+    // BR-23 / L377: BuildIssueTypeBreakdown groups by `m.Ticket?.IssueType ?? "Unknown"`.
     //   Mutant: replace "Unknown" with "". A null IssueType ticket must group
     //   under the literal "Unknown".
-    // L380: spTotal = g.Sum(m => m.GetEffectiveSp(defaultSpPerBug) ?? 0m).
+    // BR-23 / L380: spTotal = g.Sum(m => m.GetEffectiveSp(defaultSpPerBug) ?? 0m).
     //   Mutants: Sum→Max (need ≥2 in a group with unequal SP), and '?? 0m'→'0m'
     //   (left removed) — a null-effective-SP membership must contribute 0, not crash.
     // ------------------------------------------------------------------
@@ -1265,7 +1485,7 @@ public class BugRatioAnalyzerTests
         unknown.SpTotal.Should().Be(10.0m);            // L380: Sum (kills Sum→Max=6)
     }
 
-    // L380 '?? 0m' (left removed) — a completed membership whose GetEffectiveSp is
+    // BR-23 / L380 '?? 0m' (left removed) — a completed membership whose GetEffectiveSp is
     // null (non-bug, null StoryPoints) must contribute 0 to SpTotal without error,
     // and a sibling with real SP must still sum in.
     [Fact]
@@ -1282,19 +1502,60 @@ public class BugRatioAnalyzerTests
 
         var story = result.IssueTypeBreakdown.Single(e => e.IssueType == "Story");
         story.TicketCount.Should().Be(2);
-        story.SpTotal.Should().Be(5.0m);   // 5 + 0 (kills '?? 0m' removal / Sum→Max would be 5 too here)
+        story.SpTotal.Should().Be(5.0m);   // 5 + 0 (kills '?? 0m' removal)
     }
 
-    // Helper: a Ticket whose IssueType is null (the records mark IssueType `required`,
-    // so we set it to null explicitly to exercise the `?? "Unknown"` fallback).
-    private static Ticket TicketWithNullIssueType(string id, decimal? storyPoints) =>
-        new()
+    // ------------------------------------------------------------------
+    // BR-25 / L58-64: the multi-sprint issue-type breakdown is pooled across ALL
+    //   target sprints (SelectMany), each completed membership contributing once.
+    //   A Story completed in S1 and another Story completed in S2 ⇒ ONE "Story"
+    //   group with count 2 (kills a per-sprint-only / first-sprint-only mutant).
+    // ------------------------------------------------------------------
+    [Fact]
+    public void MultiSprint_IssueTypeBreakdown_IsPooledAcrossAllTargetSprints()
+    {
+        var s1 = Sprint(1, S1Start, S1End, Membership(TicketOf("S1", "Story"), 3m));
+        var s2 = Sprint(2, S2Start, S2End, Membership(TicketOf("S2", "Story"), 4m));
+        var transitions = new List<StatusTransition> { Completed("S1", S1Mid), Completed("S2", S2Mid) };
+
+        var result = Analyzer.ComputeMultiSprint(
+            [s1, s2], [s1, s2], [], Settings(), transitions, subTeam: null);
+
+        var story = result.IssueTypeBreakdown.Single();
+        story.IssueType.Should().Be("Story");
+        story.TicketCount.Should().Be(2);          // both sprints pooled
+        story.SpTotal.Should().Be(7.0m);           // 3 + 4
+    }
+
+    // ------------------------------------------------------------------
+    // BR-36: per-developer alert is evaluated against the FULL allClosedSprints
+    //   history, NOT just the target sprints. The target window is a single sprint
+    //   yet the alert streak counts an additional older closed sprint outside it.
+    // ------------------------------------------------------------------
+    [Fact]
+    public void Alert_UsesFullClosedSprintHistory_NotJustTargetWindow()
+    {
+        var dev = Dev("d1");
+        // Target window = S2 only, but BOTH S1 and S2 are above threshold and closed.
+        var s1 = Sprint(1, S1Start, S1End,
+            Membership(TicketOf("B1", "Bug", assigneeId: "d1"), 9m),
+            Membership(TicketOf("S1", "Story", assigneeId: "d1"), 1m)); // ratio 90
+        var s2 = Sprint(2, S2Start, S2End,
+            Membership(TicketOf("B2", "Bug", assigneeId: "d1"), 9m),
+            Membership(TicketOf("S2", "Story", assigneeId: "d1"), 1m)); // ratio 90
+        var transitions = new List<StatusTransition>
         {
-            Id = id,
-            Summary = id,
-            IssueType = null!,
-            Priority = "Medium",
-            CurrentStatus = "Done",
-            StoryPoints = storyPoints
+            Completed("B1", S1Mid), Completed("S1", S1Mid),
+            Completed("B2", S2Mid), Completed("S2", S2Mid)
         };
+
+        // targetSprints = [s2] only; allClosedSprints = [s1, s2].
+        var result = Analyzer.ComputeMultiSprint(
+            [s2], [s1, s2], [dev], Settings(alertThreshold: 50, consecutiveSprintCount: 2), transitions, subTeam: null);
+
+        var alert = result.Developers.Single().Alert;
+        // Streak counts BOTH closed sprints (2), even though the report window is one sprint.
+        alert.ConsecutiveSprintCount.Should().Be(2);
+        alert.IsActive.Should().BeTrue();
+    }
 }

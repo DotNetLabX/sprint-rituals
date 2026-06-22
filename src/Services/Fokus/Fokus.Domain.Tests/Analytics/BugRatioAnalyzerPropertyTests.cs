@@ -9,14 +9,18 @@ using Xunit;
 namespace Fokus.Domain.Tests.Analytics;
 
 /// <summary>
-/// Property-based invariants for <see cref="BugRatioAnalyzer"/> (FsCheck 3.x C# API, direct bool return).
+/// Property-based invariants for <see cref="BugRatioAnalyzer"/> (FsCheck 3.x C# API, direct bool return —
+/// no Prop.ForAll wrapper; FsCheck auto-generates the typed parameters, PositiveInt constrains without
+/// a rejection loop).
 ///
 /// These pin structural invariants that must hold for ALL generated inputs — Stryker confirms each by
 /// killing a mutant that violates the invariant:
-///   - ratio is always within [0, 100] and is never negative (BR3 guard + numerator ≤ denominator);
-///   - completedSp == bugSp + nonBugSp (BR2 partition is total);
-///   - bug + non-bug ticket counts are complementary and sum to the completed count (BR10);
-///   - aggregate ratio == 0 exactly when there is no completed SP (BR3 divide-by-zero guard).
+///   - ratio is always within [0, 100] (BR-3 guard + numerator ≤ denominator);
+///   - completedSp == bugSp + nonBugSp (BR-2 partition is total and disjoint);
+///   - aggregate ratio == 0 whenever there is no completed SP (BR-3 divide-by-zero guard);
+///   - dev SP / ticket-count aggregates are the SUM of per-sprint breakdowns, not Max (BR-9/BR-10);
+///   - the per-sprint trend is always ascending by StartDate (BR-7);
+///   - issue-type SpTotal is the SUM of the group (BR-23).
 ///
 /// Inputs are generated as small non-negative SP lists; we build a single sprint where every
 /// membership is completed (a transition To "Done" inside the window), so the analyzer's SP maths
@@ -99,7 +103,7 @@ public class BugRatioAnalyzerPropertyTests
     private static int[] Clamp(int[] values) =>
         values.Select(v => Math.Abs(v) % 21).ToArray();
 
-    // --- Invariant 1: ratio is always within [0, 100] ---
+    // --- Invariant 1: ratio is always within [0, 100] (BR-3 guard + numerator ≤ denominator) ---
 
     [Property]
     public bool TeamRatio_IsAlwaysWithinZeroToHundred(int[] rawBugs, int[] rawStories)
@@ -108,7 +112,7 @@ public class BugRatioAnalyzerPropertyTests
         return metrics.BugRatioPercent >= 0m && metrics.BugRatioPercent <= 100m;
     }
 
-    // --- Invariant 2: bugSp + nonBugSp == completedSp (the partition is total and disjoint) ---
+    // --- Invariant 2: bugSp + nonBugSp == completedSp (the partition is total and disjoint, BR-2) ---
 
     [Property]
     public bool TeamTotals_BugPlusNonBug_EqualsCompleted(int[] rawBugs, int[] rawStories)
@@ -117,11 +121,11 @@ public class BugRatioAnalyzerPropertyTests
         return metrics.TotalBugSp + metrics.TotalNonBugSp == metrics.TotalCompletedSp;
     }
 
-    // --- Invariant 3: ratio == 0 EXACTLY when there is no completed SP (BR3 guard) ---
+    // --- Invariant 3: ratio == 0 whenever there is no completed SP (BR-3 guard) ---
     // With defaultSpPerBug=0, completedSp is 0 iff all SP values are 0.
 
     [Property]
-    public bool TeamRatio_IsZero_IFF_NoCompletedSp(int[] rawBugs, int[] rawStories)
+    public bool TeamRatio_IsZero_When_NoCompletedSp(int[] rawBugs, int[] rawStories)
     {
         var metrics = TeamMetricsFor(Clamp(rawBugs), Clamp(rawStories));
         var noCompletedSp = metrics.TotalCompletedSp == 0m;
@@ -131,7 +135,18 @@ public class BugRatioAnalyzerPropertyTests
         return !noCompletedSp || ratioIsZero;
     }
 
-    // --- Invariant 4: an all-bug completed scope yields ratio 100; an all-story scope yields 0 ---
+    // --- Invariant 4: bugSp ≤ completedSp always (numerator never exceeds denominator) ---
+    // This is what guarantees ratio ≤ 100; pin it independently so a Sum→Max or '+'→'-' mutant
+    // that breaks the relationship is caught.
+
+    [Property]
+    public bool TeamBugSp_NeverExceedsCompletedSp(int[] rawBugs, int[] rawStories)
+    {
+        var metrics = TeamMetricsFor(Clamp(rawBugs), Clamp(rawStories));
+        return metrics.TotalBugSp <= metrics.TotalCompletedSp;
+    }
+
+    // --- Invariant 5: an all-bug completed scope yields ratio 100; an all-story scope yields 0 ---
     // Uses PositiveInt to guarantee at least one strictly-positive SP so completedSp > 0.
 
     [Property]
@@ -152,7 +167,7 @@ public class BugRatioAnalyzerPropertyTests
         return metrics.BugRatioPercent == 0m;
     }
 
-    // --- Invariant 5: bug SP and non-bug SP are each non-negative ---
+    // --- Invariant 6: bug SP and non-bug SP are each non-negative ---
 
     [Property]
     public bool TeamTotals_AreNonNegative(int[] rawBugs, int[] rawStories)
@@ -161,7 +176,7 @@ public class BugRatioAnalyzerPropertyTests
         return metrics.TotalBugSp >= 0m && metrics.TotalNonBugSp >= 0m && metrics.TotalCompletedSp >= 0m;
     }
 
-    // --- Invariant 6: per-sprint trend bug+nonBug sums equal the team totals (ratio-of-totals, BR4) ---
+    // --- Invariant 7: per-sprint trend bug+nonBug sums equal the team totals (ratio-of-totals, BR-5) ---
     // Single sprint ⇒ the one trend row's SP must equal the team totals exactly.
 
     [Property]
@@ -177,7 +192,7 @@ public class BugRatioAnalyzerPropertyTests
     // =====================================================================
     // MUTANT-TARGETED SUPPLEMENT (multi-sprint / multi-element invariants)
     // These need ≥2 sprints or ≥2 group members so that Σ ≠ Max and the
-    // Sum→Max / OrderBy→OrderByDescending timeouts are killed for ALL inputs.
+    // Sum→Max / OrderBy→OrderByDescending mutants are killed for ALL inputs.
     // =====================================================================
 
     /// <summary>
@@ -224,7 +239,7 @@ public class BugRatioAnalyzerPropertyTests
         return result.Developers.Single();
     }
 
-    // --- Invariant 7: dev SP aggregates are the SUM of per-sprint breakdowns (L92/93), not Max ---
+    // --- Invariant 8: dev SP aggregates are the SUM of per-sprint breakdowns (BR-9), not Max ---
     // For ≥2 sprints with strictly-positive SP, Σ strictly exceeds Max, so a Sum→Max mutant fails.
 
     [Property]
@@ -236,13 +251,13 @@ public class BugRatioAnalyzerPropertyTests
 
         var expectedBugSp = s1.Bug + s2.Bug;
         var expectedNonBugSp = s1.Story + s2.Story;
-        // Sum must equal element-wise total; Max (≤ either element-wise total, strictly < when both >0) cannot.
+        // Sum must equal element-wise total; Max (strictly < when both elements >0) cannot.
         return entry.BugSp == expectedBugSp
             && entry.NonBugSp == expectedNonBugSp
             && entry.CompletedSp == expectedBugSp + expectedNonBugSp;
     }
 
-    // --- Invariant 8: dev ticket counts are the SUM of per-sprint breakdown counts (L96/97), not Max ---
+    // --- Invariant 9: dev ticket counts are the SUM of per-sprint breakdown counts (BR-10), not Max ---
     // Each sprint contributes exactly 1 bug + 1 story, so across 2 sprints Σ = 2 each (Max would be 1).
 
     [Property]
@@ -270,7 +285,7 @@ public class BugRatioAnalyzerPropertyTests
             var end = start.AddDays(13);
             var mid = start.AddDays(3);
             var sprint = new Sprint { Id = i + 1, Name = $"S{i + 1}", BoardName = "B", StartDate = start, EndDate = end };
-            // Distinct ratio per sprint: i bug SP + 1 story SP (ratio rises with i).
+            // Distinct ratio per sprint: (i+1) bug SP + 1 story SP (ratio rises with i).
             var bugSp = i + 1;
             var bug = new Ticket { Id = $"B{i}", Summary = $"B{i}", IssueType = "Bug", Priority = "Medium", CurrentStatus = "Done" };
             var story = new Ticket { Id = $"S{i}", Summary = $"S{i}", IssueType = "Story", Priority = "Medium", CurrentStatus = "Done" };
@@ -292,7 +307,7 @@ public class BugRatioAnalyzerPropertyTests
             .ToList();
     }
 
-    // --- Invariant 9: the per-sprint trend is ALWAYS ascending by StartDate (L20) ---
+    // --- Invariant 10: the per-sprint trend is ALWAYS ascending by StartDate (BR-7) ---
     // OrderBy→OrderByDescending would reverse the rows; assert monotonic non-decreasing StartDate.
 
     [Property]
@@ -326,7 +341,7 @@ public class BugRatioAnalyzerPropertyTests
         return group.SpTotal;
     }
 
-    // --- Invariant 10: issue-type SpTotal is the SUM of the group's SPs (L380), not Max ---
+    // --- Invariant 11: issue-type SpTotal is the SUM of the group's SPs (BR-23), not Max ---
     // Use ≥2 strictly-positive SPs so Σ > Max and the Sum→Max mutant fails.
 
     [Property]
