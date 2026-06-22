@@ -50,6 +50,6 @@ Original Fokus `fokus-spec.md` §Bug Ratio; ported implementation in `BugRatioAn
 Rule verification: Mine→Verify pilot (Pass 2), 3 clean-room miners + Codex refutation, 2026-06-14.
 
 ---
-<!-- status: verified — per-rule mutation gating pending Step 3 (Cover) -->
-<!-- mutation-gated: false -->
-<!-- last-stryker-run: none — Cover not yet run -->
+<!-- status: mutation-gated — Cover ran 2026-06-22 (Mine→Verify→Cover Inc 2) -->
+<!-- mutation-gated: true -->
+<!-- last-stryker-run: 2026-06-22 — 88% reachable kill (132/150), floor 75 cleared, 0 candidate bugs -->
