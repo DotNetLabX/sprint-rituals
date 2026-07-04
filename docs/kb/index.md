@@ -21,6 +21,12 @@ under `docs/kb/` with sections defined in `docs/kb/_schema/entry-template.md`.
 | [poker-sprint-tickets-freshness.md](poker-sprint-tickets-freshness.md) | GetSprintTickets live pass-through contract, no-cache rule, Free-mode guard | verified |
 | [cycle-time.md](cycle-time.md) | Cycle-time analytics, per-sprint and aggregate breakdowns, CycleTimeAnalyzer | mutation-gated |
 
+## Canonical rule registries (SDD merge — spec arm + code arm)
+
+| File | Class | Contents |
+|------|-------|----------|
+| [golden/BugRatioAnalyzer.md](golden/BugRatioAnalyzer.md) | BugRatioAnalyzer | 58 canonical rules across both arms (five-bucket triage, 2 divergences pending verdict); crosswalk + run note alongside |
+
 ## Conventions
 
 - One file per concept. Split when an entry exceeds ~80 lines.

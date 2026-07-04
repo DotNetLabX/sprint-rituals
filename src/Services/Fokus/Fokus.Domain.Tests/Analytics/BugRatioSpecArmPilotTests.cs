@@ -6,21 +6,24 @@ using Xunit;
 namespace Fokus.Domain.Tests.Analytics;
 
 /// <summary>
-/// Spec-arm mini-pilot for <see cref="BugRatioAnalyzer"/> — Cover-from-spec probe (AC-6 evidence).
+/// Cover-from-spec probes for <see cref="BugRatioAnalyzer"/> — the Generate output of the F13 M1
+/// merge (registry: docs/kb/golden/BugRatioAnalyzer.md).
 ///
 /// Each test asserts what the F13-BugRatio SPEC commits to
-/// (docs/specs/fokus/F13-BugRatio/definition/spec-rules.md), NOT what the code does. The code-arm
-/// suite (BugRatioAnalyzerTests, mutation-gated 100% reachable kill) attests current behavior; where
-/// spec and code disagree, the test here goes RED and the red is the finding — a spec-code divergence
-/// demanding a triage verdict (code gap vs intentional drift vs stale spec). Production code is never
-/// edited to make these pass, and a red test is kept (parked with Skip + the observed result) rather
-/// than deleted, so the divergence stays on the record until triaged.
+/// (docs/specs/fokus/F13-BugRatio/definition/spec-rules.md); the code-arm suite
+/// (BugRatioAnalyzerTests, mutation-gated 100% reachable kill) attests current behavior. Production
+/// code is never edited to make these pass.
 ///
-/// Rules probed: SR-28 (alert streak boundary), SR-23 (no-SP tickets in SP vs ticket metrics),
-/// SR-42 (priority ignored). SR-31 (active developers) was resolved by inspection — implemented
-/// upstream in DeveloperRepository (.Where(d => d.IsActive)), out of the analyzer's surface.
-/// SR-30's threshold=0 edge is deliberately NOT tested: the spec is ambiguous there (reasoning covers
-/// only positive thresholds), and an ambiguous rule must not generate a test.
+/// History: the original pilot carried two parked reds (SR-28 alert boundary '>' vs '>=';
+/// SR-23 no-SP bug vs DefaultSpPerBug substitution). Both divergences were adjudicated on
+/// 2026-07-04 — owner verdict: KEEP CODE, spec repaired — so the obsolete red probes were removed;
+/// the durable divergence record lives in the registry's Divergence detail + Changelog, and the
+/// repaired behavior is pinned by the code-arm suite (Alert_Fires_When_RatioExactlyAtThreshold_...,
+/// the BR-15 DefaultSpPerBug tests).
+///
+/// Remaining probes cover generation-eligible spec-only rules (code-arm unattested): SR-23
+/// ticket-metrics half, SR-32 zero-ticket developer visibility, SR-42 priority neutrality.
+/// All green = implemented; fact tags per mine-verify-cover-dotnet.
 /// </summary>
 public class BugRatioSpecArmPilotTests
 {
@@ -96,65 +99,14 @@ public class BugRatioSpecArmPilotTests
     private static readonly BugRatioAnalyzer Analyzer = new();
 
     // =====================================================================
-    // SR-28 — spec: a sprint counts toward the alert streak only when the ratio
-    // EXCEEDS the threshold (strict >). A sprint exactly AT the threshold is not
-    // above it, so the streak must not count it and the alert must not fire.
-    // Code-arm attestation (BR-21): `ratio >= threshold` — inclusive, opposite verdict.
-    // =====================================================================
-
-    // OBSERVED RED 2026-07-03: ConsecutiveSprintCount was 1, IsActive true — code counts the
-    // at-threshold sprint (`ratio >= threshold`, BugRatioAnalyzer.cs:272), and the code-arm suite
-    // deliberately pins that inclusive boundary (Alert_Fires_When_RatioExactlyAtThreshold_...).
-    // Divergence, not proven bug: spec says "exceeds", code attests ">=". Pending triage verdict.
-    [Fact(Skip = "SPEC-CODE DIVERGENCE (SR-28 vs BR-21): spec 'exceeds' (>) vs code '>=' — pending triage")]
-    public void SpecSR28_SprintExactlyAtThreshold_DoesNotCountTowardStreak()
-    {
-        var dev = Dev("d1");
-        // bug 5 SP + story 5 SP completed ⇒ ratio = 50, threshold = 50 ⇒ spec: not "exceeds"
-        var sprint = Sprint(1,
-            Membership(TicketOf("B1", "Bug", assigneeId: "d1"), 5m),
-            Membership(TicketOf("S1", "Story", assigneeId: "d1"), 5m));
-        var transitions = new List<StatusTransition> { Completed("B1"), Completed("S1") };
-
-        var result = Analyzer.ComputeMultiSprint(
-            [sprint], [sprint], [dev], Settings(alertThreshold: 50, consecutiveSprintCount: 1),
-            transitions, subTeam: null);
-
-        var alert = result.Developers.Single().Alert;
-        alert.ConsecutiveSprintCount.Should().Be(0, "the spec counts only sprints whose ratio EXCEEDS the threshold");
-        alert.IsActive.Should().BeFalse();
-    }
-
-    // =====================================================================
-    // SR-23 — spec: tickets with no story points are excluded from SP metrics
-    // (bug SP, non-bug SP, bug ratio %). No default is ever substituted.
-    // Code-arm attestation (BR-15): GetEffectiveSp(defaultSpPerBug) gives a
-    // no-SP BUG ticket the settings-sourced default — a later-feature amendment.
-    // =====================================================================
-
-    // OBSERVED RED 2026-07-03: TotalBugSp was 5 — GetEffectiveSp substitutes DefaultSpPerBug for
-    // no-SP bugs (SprintMembership.cs:16). The default came from a later feature; the F13 spec is
-    // stale on this point. Divergence is almost certainly intentional drift — pending triage verdict.
-    [Fact(Skip = "SPEC-CODE DIVERGENCE (SR-23 vs BR-15): spec excludes no-SP tickets, code substitutes DefaultSpPerBug — pending triage")]
-    public void SpecSR23_NoSpBugTicket_ContributesNothingToBugSp()
-    {
-        // one completed bug with NO story points; DefaultSpPerBug configured to 5
-        var sprint = Sprint(1, Membership(TicketOf("B1", "Bug"), storyPoints: null));
-        var transitions = new List<StatusTransition> { Completed("B1") };
-
-        var result = Analyzer.ComputeMultiSprint(
-            [sprint], [sprint], [], Settings(defaultSpPerBug: 5), transitions, subTeam: null);
-
-        result.TeamMetrics.TotalBugSp.Should().Be(0m, "the spec excludes no-SP tickets from SP metrics entirely");
-        result.TeamMetrics.TotalCompletedSp.Should().Be(0m);
-    }
-
-    // =====================================================================
     // SR-23 (ticket-metrics half) — spec: no-SP tickets DO count in ticket-based
-    // metrics (bug ticket count, issue type breakdown counts). Both arms agree here.
+    // metrics (bug ticket count, issue type breakdown counts). Both arms agree.
     // =====================================================================
 
     [Fact]
+    [Trait("layer", "domain-calc")]
+    [Trait("criticality", "golden")]
+    [Trait("runtime-cost", "fast")]
     public void SpecSR23_NoSpBugTicket_StillCountsInTicketMetrics()
     {
         var dev = Dev("d1");
@@ -169,11 +121,42 @@ public class BugRatioSpecArmPilotTests
     }
 
     // =====================================================================
+    // SR-32 — spec: active developers with zero completed tickets in the selected
+    // sprints appear in the table with all-zero values; they are never hidden.
+    // Generate probe (spec-only rule, no code-arm BR attests it).
+    // =====================================================================
+
+    [Fact]
+    [Trait("layer", "domain-calc")]
+    [Trait("criticality", "core")]
+    [Trait("runtime-cost", "fast")]
+    public void SpecSR32_ActiveDeveloperWithZeroCompletedTickets_AppearsWithAllZeroValues()
+    {
+        var dev = Dev("d1");
+        // the sprint's only completed ticket belongs to someone else entirely
+        var sprint = Sprint(1, Membership(TicketOf("S1", "Story", assigneeId: "d2"), 5m));
+        var transitions = new List<StatusTransition> { Completed("S1") };
+
+        var result = Analyzer.ComputeMultiSprint(
+            [sprint], [sprint], [dev], Settings(), transitions, subTeam: null);
+
+        var d1 = result.Developers.Single(d => d.AccountId == "d1");
+        d1.CompletedSp.Should().Be(0m, "zero-ticket developers are shown zeroed, never hidden");
+        d1.BugRatioPercent.Should().Be(0m);
+        d1.BugTicketCount.Should().Be(0);
+        d1.NonBugTicketCount.Should().Be(0);
+        d1.Alert.IsActive.Should().BeFalse();
+    }
+
+    // =====================================================================
     // SR-42 — spec: the ratio treats all bugs equally regardless of priority.
     // Both arms agree (the analyzer never reads Priority).
     // =====================================================================
 
     [Fact]
+    [Trait("layer", "domain-calc")]
+    [Trait("criticality", "edge")]
+    [Trait("runtime-cost", "fast")]
     public void SpecSR42_BugPriority_HasNoEffectOnRatio()
     {
         var p1 = Sprint(1,

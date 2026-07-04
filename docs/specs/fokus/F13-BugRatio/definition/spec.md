@@ -17,7 +17,7 @@ Scrum Masters need to know how much developer capacity goes to bug fixing vs. pl
 This feature introduces two new settings and computes all other data from existing entities.
 
 **New: Bug ratio alert settings (Settings extension)**
-- Bug ratio alert threshold: a percentage (0–100, default 50). When a developer's completed-work bug ratio exceeds this threshold for consecutive sprints, an alert flag appears on the Developers page.
+- Bug ratio alert threshold: a percentage (0–100, default 50). When a developer's completed-work bug ratio is at or above this threshold (>=, inclusive) for consecutive sprints, an alert flag appears on the Developers page.
 - Bug ratio consecutive sprint count: an integer (1–10, default 2). How many consecutive sprints a developer must exceed the threshold before the alert activates.
 - Both properties are added to the app settings entity alongside existing health thresholds. Managed through the existing settings read/save endpoints — no new settings endpoints needed.
 
@@ -132,7 +132,7 @@ Per developer entry (single sprint):
 
 5. **Excluded-from-scope statuses apply.** Tickets whose final status matches an excluded-from-scope status are excluded from all bug ratio calculations, consistent with the cross-cutting behavior introduced by F10.
 
-6. **Tickets with no story points are excluded from SP metrics.** They count in ticket-based metrics (bug ticket count, non-bug ticket count, issue type breakdown counts) but are absent from SP calculations (bug SP, non-bug SP, bug ratio %).
+6. **Tickets with no story points are excluded from SP metrics.** They count in ticket-based metrics (bug ticket count, non-bug ticket count, issue type breakdown counts) but are absent from SP calculations (bug SP, non-bug SP, bug ratio %). Exception (amended 2026-07-04): when the Default SP per bug setting is configured (> 0), a completed **bug** ticket with no story points receives that default in SP calculations; at the setting's default of 0, the exclusion above applies unchanged. The setting itself is specified by the settings feature that introduced it, after F13 v1.
 
 7. **Zero completed SP produces zero bug ratio.** When a developer has no completed tickets with story points in a sprint, their bug ratio is 0% — not undefined or null.
 
@@ -140,7 +140,7 @@ Per developer entry (single sprint):
 
 9. **Alert uses full sprint history.** The consecutive sprint threshold is evaluated against all available sprint data, not just the sprints in the current view. If viewing "Last 3" and a developer has been above threshold for 4 consecutive sprints (including one outside the view), the alert still fires.
 
-10. **Alert evaluates from the most recent sprint backward.** Starting from the most recent closed sprint, count backward how many consecutive sprints the developer's bug ratio exceeds the threshold. If this count meets or exceeds the configured consecutive sprint count, the alert is active. A gap (one sprint below threshold) resets the count.
+10. **Alert evaluates from the most recent sprint backward.** Starting from the most recent closed sprint, count backward how many consecutive sprints the developer's bug ratio is at or above the threshold (>=, inclusive — a sprint exactly at the threshold counts toward the streak). If this count meets or exceeds the configured consecutive sprint count, the alert is active. A gap (one sprint strictly below the threshold) ends the streak.
 
 11. **Developers with zero completed SP in a sprint break the consecutive streak.** A sprint with no completed SP-bearing tickets results in 0% bug ratio, which is below any positive threshold, resetting the consecutive count.
 
@@ -174,7 +174,7 @@ Per developer entry (single sprint):
 - [ ] Issue type breakdown shows completed ticket counts by raw Jira issue type
 - [ ] Single-sprint view shows per-developer metrics with delta vs prior sprint
 - [ ] Delta polarity: lower bug ratio / bug SP is green; higher non-bug SP is green
-- [ ] Alert badge appears on developers whose bug ratio exceeds the configured threshold for the configured number of consecutive sprints
+- [ ] Alert badge appears on developers whose bug ratio is at or above the configured threshold for the configured number of consecutive sprints
 - [ ] Alert threshold is configurable in Settings (default 50%)
 - [ ] Consecutive sprint count threshold is configurable in Settings (default 2)
 - [ ] Alert evaluates against full sprint history, not just the viewed range
