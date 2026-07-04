@@ -55,7 +55,7 @@ public class SprintIssueSyncService(
             try
             {
                 var issues = await jiraClient.GetSprintIssuesAsync(jiraSprint.Id, ct);
-                logger.LogWarning("Sprint {SprintId} ({SprintName}): {IssueCount} issues returned by {ClientType}",
+                logger.LogDebug("Sprint {SprintId} ({SprintName}): {IssueCount} issues returned by {ClientType}",
                     jiraSprint.Id, jiraSprint.Name, issues.Count, jiraClient.GetType().Name);
 
                 var sprint = JiraDomainMapper.MapSprint(jiraSprint, boardName);
@@ -86,6 +86,7 @@ public class SprintIssueSyncService(
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "Sprint {SprintId} ({SprintName}) failed to sync", jiraSprint.Id, jiraSprint.Name);
                 failures.Add(new SprintSyncFailure(jiraSprint.Id, $"{ex.Message} | {ex.StackTrace}"));
             }
         }

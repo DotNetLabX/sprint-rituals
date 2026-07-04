@@ -57,10 +57,21 @@ public class PersonGrpcService(PersonRepository personRepository) : IPersonServi
         // Jira-sourced: match by ExternalId + Source (email may be null).
         // Google-sourced: match by email.
         if (request.Source == PersonSource.Jira.ToString() && request.ExternalId is not null)
-            return await personRepository.GetByExternalIdAndSourceAsync(request.ExternalId, request.Source, ct);
+        {
+            var person = await personRepository.GetByExternalIdAndSourceAsync(request.ExternalId, request.Source, ct);
+            if (person is not null)
+                return person;
+
+            // The same human may already exist from another source (e.g. Google login).
+            // The unique email index would reject an insert — link by email instead.
+            if (request.Email is not null)
+                return await personRepository.GetByEmailAsync(request.Email.ToLowerInvariant(), ct);
+
+            return null;
+        }
 
         if (request.Email is not null)
-            return await personRepository.GetByEmailAsync(request.Email, ct);
+            return await personRepository.GetByEmailAsync(request.Email.ToLowerInvariant(), ct);
 
         return null;
     }
@@ -88,7 +99,10 @@ public class PersonGrpcService(PersonRepository personRepository) : IPersonServi
     {
         if (request.Source == PersonSource.Jira.ToString())
         {
-            person.UpdateFromJira(request.FirstName, request.LastName, request.Email, request.PictureUrl);
+            // Cross-source email match (e.g. Google-sourced person seen as a Jira developer):
+            // the login profile is authoritative — don't overwrite it with Jira display data.
+            if (person.Source == PersonSource.Jira)
+                person.UpdateFromJira(request.FirstName, request.LastName, request.Email, request.PictureUrl);
         }
         else
         {
