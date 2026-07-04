@@ -1,6 +1,6 @@
 # F12-CycleTime — Spec Rules (mine-from-spec)
 
-Spec-stamp: docs/specs/fokus/F12-CycleTime/definition/spec.md @ sha256:9bab0e18211e (2026-07-03)
+Spec-stamp: docs/specs/fokus/F12-CycleTime/definition/spec.md @ sha256:25d4de4cf184 (2026-07-04 — restamped after owner-delegated spec repairs to rules 4 and 15; delta re-check: repair edits only, no other spec change. Prior stamp sha256:9bab0e18211e, 2026-07-03.)
 
 Product of the `mine-verify-cover` spec arm (`mine-from-spec` mode, Mine→Verify depth):
 3 clean-room miners read ONLY the stamped spec above; a fresh skeptic consolidated their
@@ -8,7 +8,7 @@ outputs with agreement counts and verified every rule against the spec text alon
 documents what the SPEC commits to — not what the code does. No production source, tests,
 or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 
-- consolidated rules: 78 — verified: 75 / ambiguous: 3
+- consolidated rules: 78 — verified: 77 / ambiguous: 1 (SR-53 and SR-66 repaired 2026-07-04 per owner-delegated verdicts; SR-9 stays open, presentational non-commitment)
 - agreement distribution: 3/3 × 55, 2/3 × 11, 1/3 × 12
 - layer/criticality facts: added 2026-07-04 per the v1.21.0 consolidate schema (operator pass, post-hoc — facts only, rule content untouched)
 
@@ -484,14 +484,13 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - verdict: verified
 
 ### SR-53: rework-count-re-entries
-- statement: A ticket's rework count is the total number of re-entries across all measured stages; the spec's examples count In Progress → Code Review → In Progress → Code Review → Testing as 1 re-entry and In Progress → Code Review → In Progress → Code Review → In Progress → Testing as 2.
-- boundary: per the AC, entering a stage 3 times yields 2 re-entries (N entries → N−1) — but see reason
-- citation: "When a ticket transitions back into a previously visited stage, the re-entry is counted as rework. Each ticket carries a rework count — the total number of re-entries across all measured stages. Example: a ticket that goes In Progress → Code Review → In Progress → Code Review → Testing has 1 rework re-entry (it re-entered In Progress once). A ticket that goes In Progress → Code Review → In Progress → Code Review → In Progress → Testing has 2 rework re-entries."
+- statement: A ticket's rework count is the total number of re-entries across all measured stages, counted per entry into an already-visited stage regardless of transition direction; the spec's examples count In Progress → Code Review → In Progress → Code Review → Testing as 2 re-entries and In Progress → Code Review → In Progress → Code Review → In Progress → Testing as 3.
+- boundary: every entry into a previously visited stage increments the count (repaired 2026-07-04 per owner-delegated verdict — the examples previously read 1 and 2 under an unstated backward-transitions-only reading; per-entry counting matches the general definition, the original Fokus KB "increments reworkCount per entry", and the mutation-gated code arm BR-13)
+- citation: "When a ticket transitions back into a previously visited stage, the re-entry is counted as rework — every entry into an already-visited stage increments the count, regardless of transition direction. ... Example: a ticket that goes In Progress → Code Review → In Progress → Code Review → Testing has 2 rework re-entries (it re-entered In Progress once and Code Review once). A ticket that goes In Progress → Code Review → In Progress → Code Review → In Progress → Testing has 3 rework re-entries."
 - agreement: 3/3
 - layer: domain-calc
 - criticality: core
-- verdict: ambiguous
-- reason: The general definition ("re-entry into a previously visited stage") counts the second Code Review entry in example 1 (total = 2), yet the spec states 1 — only a backward-transitions-only reading reconciles the definition, both examples, and the AC, and the spec never says that.
+- verdict: verified
 
 ### SR-54: never-entered-start-stage-excluded
 - statement: A ticket that never entered the configured start stage (e.g., went directly from a pre-start stage to done) has no measurable cycle time and is excluded from all calculations.
@@ -602,14 +601,13 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - verdict: verified
 
 ### SR-66: zero-completed-tickets-zero-or-null
-- statement: When no completed tickets exist for a sprint, all metrics are zero, percentiles are null, and the stage funnel and breakdowns are empty.
-- boundary: trigger = zero completed tickets
-- citation: "When no completed tickets exist for a sprint, all metrics are zero and percentiles are null. The stage funnel and breakdowns are empty."
+- statement: When no completed tickets exist for a sprint, all metrics are zero — including the Median and P85 metric cards, which show 0, not null; the stage funnel and breakdowns are empty and the scatter plot has no percentile reference lines.
+- boundary: zero completed tickets → all-zero metric cards (repaired 2026-07-04 per owner-delegated verdict — "percentiles are null" previously left the percentile-valued cards unassigned; 0 matches the mutation-gated code arm BR-29)
+- citation: "When no completed tickets exist for a sprint, all metrics are zero — including the Median and P85 metric cards, which show 0, not null ... The stage funnel and breakdowns are empty, and the scatter plot has no percentile reference lines to draw."
 - agreement: 3/3
 - layer: domain-calc
 - criticality: edge
-- verdict: ambiguous
-- reason: "all metrics are zero" and "percentiles are null" conflict for the Median and P85 metric cards, which are both metrics and percentiles — the spec never says which value (0 or null) those cards take.
+- verdict: verified
 
 ### SR-67: sprint-ordering-start-date
 - statement: Sprints are ordered by start date ascending; "most recent closed sprint" means the closed sprint with the latest start date.

@@ -21,8 +21,8 @@ this convention they would have flooded the generation-eligible bucket with out-
 - Independence: manifests disjoint; no golden set in this repo; crosswalk never a run input.
   Pass, zero violations.
 - Crosswalk (`HealthScoreCalculator.crosswalk.json`, 1 pair + 6 code-only self-maps, dash/no-dash
-  id forms defensively doubled): authored POST-HOC by the operator. **Owner confirmation pending**
-  (same flag as the CycleTimeAnalyzer run).
+  id forms defensively doubled): authored POST-HOC by the operator. **Ratified by owner
+  delegation, 2026-07-04** (same session message as the CycleTimeAnalyzer run).
 
 ## Run + operator triage
 
@@ -47,18 +47,20 @@ the KB's Edge Cases is outside the spec's domain and deliberately not generated 
 
 Suite after Generate: 224 passed, 0 skipped.
 
-## Spec-repair (owner attention)
+## Spec-repair — RESOLVED (owner-delegated verdicts, 2026-07-04)
 
-Six ambiguous rules excluded from generation, routed to spec-repair — **proposals only, not
-settled by this run**. The code resolves each gap one specific way (mutation-gated), so these are
-cheap spec pins, not behavior decisions:
+Six ambiguous rules were routed to spec-repair; the owner delegated the verdicts
+("I rely on your best judgment"). Five settled KEEP CODE on attested evidence, one left open:
 
-- SR-1: composite bands don't partition decimal scores — (74, 75) unassigned; code: amber (BR5).
-- SR-26/SR-27: exactly-amber sub-score unassigned in both directions; code: 50 (amber band inclusive).
-- SR-40: SP Completed/Committed delta polarity — spec contradicts itself (higher-is-better vs
-  neutral); code side lives in SprintSummaryAnalyzer, outside this merge.
-- SR-17: "flat" delta direction condition undefined (response-shape rule).
-- SR-19: display formats given only as illustrative examples.
+- **SR-1: amber band pinned [40, 75)** — "40-74" left decimal scores in (74, 75) unassigned;
+  BR5 (mutation-gated) is the half-open band. spec.md rule 3 + settings + AC repaired.
+- **SR-26/SR-27: exactly-amber pinned to 50 in both directions** — matches BR1–BR4. Rule 2 repaired.
+- **SR-40: SP Completed/Committed polarity pinned neutral** — SprintSummaryAnalyzer builds the
+  card with the unconditional "neutral" polarity; rule 12's self-contradiction removed.
+- **SR-17: flat pinned = delta exactly 0** — MetricCardBuilder.ComputeDelta; response-shape line pinned.
+- **SR-19 left open by decision** — display formats stay illustrative; no format contract pinned.
+
+spec-rules stamp recomputed (sha256:3a93fb5c7035, delta re-check: repair edits only).
 
 ## Harness findings
 

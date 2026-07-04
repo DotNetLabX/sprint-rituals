@@ -1,6 +1,6 @@
 # F8-SprintSummaryCard — Spec Rules (mine-from-spec)
 
-Spec-stamp: docs/specs/fokus/F8-SprintSummaryCard/definition/spec.md @ sha256:83ccaa4627b0 (2026-07-03)
+Spec-stamp: docs/specs/fokus/F8-SprintSummaryCard/definition/spec.md @ sha256:3a93fb5c7035 (2026-07-04 — restamped after owner-delegated spec repairs to rules 2, 3, 12, the settings thresholds, the response-shape delta-direction line, and the RAG acceptance criterion; delta re-check: repair edits only, no other spec change. Prior stamp sha256:83ccaa4627b0, 2026-07-03.)
 
 Product of the `mine-verify-cover` spec arm (`mine-from-spec` mode, Mine→Verify depth):
 3 clean-room miners read ONLY the stamped spec above; a fresh skeptic consolidated their
@@ -8,21 +8,20 @@ outputs with agreement counts and verified every rule against the spec text alon
 documents what the SPEC commits to — not what the code does. No production source, tests,
 or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 
-- consolidated rules: 58 — verified: 52 / ambiguous: 6
+- consolidated rules: 58 — verified: 57 / ambiguous: 1 (SR-1, SR-17, SR-26, SR-27, SR-40 repaired 2026-07-04 per owner-delegated verdicts; SR-19 stays open, display formats remain illustrative by decision)
 - agreement distribution: 3/3 × 49, 2/3 × 6, 1/3 × 3
 - layer/criticality facts: added 2026-07-04 per the v1.21.0 consolidate schema (operator pass, post-hoc — facts only, rule content untouched). `domain-summary` marks domain rules homed in SprintSummaryAnalyzer, outside this merge's target class (HealthScoreCalculator).
 
 ## Consolidated rules
 
 ### SR-1: composite-rag-thresholds
-- statement: The composite health score maps to a RAG status: green when the score is >= 75, amber when it is 40-74, red when it is < 40.
-- boundary: Green inclusive at 75 (>=); Red strictly below 40; Amber stated as "40-74" — the score is a decimal, so values in (74, 75) are unassigned by the literal text ([40, 75) for amber is inferred, not stated).
-- citation: "Green: composite score >= 75" / "Amber: composite score 40-74" / "Red: composite score < 40" / "**Composite RAG thresholds are fixed.** Green >= 75, Amber 40-74, Red < 40."
+- statement: The composite health score maps to a RAG status: green when the score is >= 75, amber when it is >= 40 and < 75, red when it is < 40.
+- boundary: Green inclusive at 75 (>=); Amber half-open [40, 75); Red strictly below 40 (repaired 2026-07-04 per owner-delegated verdict — "40-74" left decimal scores in (74, 75) unassigned; the half-open band matches the mutation-gated code arm BR5)
+- citation: "Green: composite score >= 75" / "Amber: composite score >= 40 and < 75" / "Red: composite score < 40" / "**Composite RAG thresholds are fixed.** Green >= 75, Amber >= 40 and < 75, Red < 40."
 - agreement: 3/3
 - layer: domain-calc
 - criticality: golden
-- verdict: ambiguous
-- reason: Composite score is "(0-100, decimal)" but the amber band "40-74" leaves decimal scores in (74, 75) unassigned; miners' inclusive-band reading is inferred precision.
+- verdict: verified
 
 ### SR-2: composite-rag-not-configurable
 - statement: The composite RAG thresholds (75/40) are fixed constants in v1 and not user-configurable, unlike the per-metric thresholds and weights that feed the composite, which are user-configurable in app settings.
@@ -160,14 +159,13 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - verdict: verified
 
 ### SR-17: delta-direction-domain
-- statement: Delta direction takes one of the values up, down, flat, or null.
-- boundary: value set enumerated; the condition distinguishing flat from up/down is not stated
-- citation: "Delta direction (up, down, flat, or null)"
+- statement: Delta direction takes one of the values up, down, flat, or null: flat when the delta is exactly 0, null when no prior sprint exists.
+- boundary: flat iff delta == 0 exactly, no tolerance (repaired 2026-07-04 per owner-delegated verdict — matches MetricCardBuilder.ComputeDelta)
+- citation: "Delta direction (up, down, flat, or null; flat when the delta is exactly 0, null when no prior sprint exists — pinned 2026-07-04)"
 - agreement: 1/3
 - layer: api
 - criticality: core
-- verdict: ambiguous
-- reason: The value set is committed, but the spec never defines when direction is "flat" (exactly delta == 0? tolerance?), so the mapping cannot be tested from the spec alone.
+- verdict: verified
 
 ### SR-18: sparkline-entry-shape
 - statement: Each metric's sparkline data is a list of up to 4 entries, each with a sprint name and the metric value for that sprint.
@@ -243,24 +241,22 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - verdict: verified
 
 ### SR-26: completion-subscore-interpolation
-- statement: For the completion sub-score (higher is better): at or above the green threshold the sub-score is 100; between amber and green it interpolates linearly from 50 to 99; below amber it interpolates linearly from 0 to 49.
-- boundary: >= green → 100 (spec's "at or above", inclusive); "between amber and green" → 50-99; "below amber" → 0-49; the value at exactly the amber threshold is not assigned by the spec (50 is inferable only from the band endpoint).
-- citation: "For completion (higher is better): at or above the green threshold scores 100; between amber and green interpolates linearly from 50 to 99; below amber interpolates linearly from 0 to 49."
+- statement: For the completion sub-score (higher is better): at or above the green threshold the sub-score is 100; from the amber threshold (inclusive) up to green it interpolates linearly from 50 to 99; below amber it interpolates linearly from 0 to 49; at exactly the amber threshold the sub-score is 50.
+- boundary: >= green → 100 (inclusive); [amber, green) → 50-99 with amber itself → exactly 50; below amber → 0-49 (repaired 2026-07-04 per owner-delegated verdict — the amber boundary was previously assigned to neither band; 50 matches the mutation-gated code arm BR1/BR2)
+- citation: "For completion (higher is better): at or above the green threshold scores 100; from the amber threshold (inclusive) up to green interpolates linearly from 50 to 99; below amber interpolates linearly from 0 to 49. ... At exactly the amber threshold the sub-score is 50 in both directions"
 - agreement: 3/3
 - layer: domain-calc
 - criticality: golden
-- verdict: ambiguous
-- reason: "Between amber and green" vs "below amber" leaves equality at the amber threshold unassigned; miners' amber→50 grouping is inferred, not stated.
+- verdict: verified
 
 ### SR-27: disruption-carryover-subscore-interpolation
-- statement: For the disruption and carry-over sub-scores (lower is better): at or below the green threshold the sub-score is 100; between green and amber it interpolates linearly from 99 to 50; above amber it interpolates linearly from 49 to 0, reaching 0 at twice the amber threshold.
-- boundary: <= green → 100 (spec's "at or below", inclusive); "between green and amber" → 99-50; "above amber" (strict >) → 49-0 with floor reached at 2 × amber ("bottoming out"); the value at exactly the amber threshold is not assigned by the spec.
-- citation: "For disruption and carry-over (lower is better): at or below the green threshold scores 100; between green and amber interpolates linearly from 99 to 50; above amber interpolates linearly from 49 to 0, bottoming out at twice the amber threshold."
+- statement: For the disruption and carry-over sub-scores (lower is better): at or below the green threshold the sub-score is 100; above green up to the amber threshold (inclusive) it interpolates linearly from 99 to 50; above amber it interpolates linearly from 49 to 0, reaching 0 at twice the amber threshold; at exactly the amber threshold the sub-score is 50.
+- boundary: <= green → 100 (inclusive); (green, amber] → 99-50 with amber itself → exactly 50; > amber → 49-0, floor at 2 × amber (repaired 2026-07-04 per owner-delegated verdict — the amber boundary was previously assigned to neither band; 50 matches the mutation-gated code arm BR3/BR4)
+- citation: "For disruption and carry-over (lower is better): at or below the green threshold scores 100; above green up to the amber threshold (inclusive) interpolates linearly from 99 to 50; above amber interpolates linearly from 49 to 0, bottoming out at twice the amber threshold. At exactly the amber threshold the sub-score is 50 in both directions"
 - agreement: 3/3
 - layer: domain-calc
 - criticality: golden
-- verdict: ambiguous
-- reason: Same exactly-amber gap as SR-26 — equality at the amber threshold falls in neither "between green and amber" nor "above amber" by the literal text.
+- verdict: verified
 
 ### SR-28: per-metric-rag-independent
 - statement: Each metric card's own RAG color is computed from the per-metric thresholds configured in app settings, independently of the composite RAG.
@@ -372,13 +368,12 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 
 ### SR-40: delta-polarity-sp-completed-committed-neutral
 - statement: The SP Completed/Committed card's delta is neutral (no color), because more committed SP is neither inherently good nor bad.
-- boundary: none
-- citation: "Completion % and SP completed/committed: higher is better (green up, red down)." / "SP completed/committed is neutral (no color) because more committed SP is neither inherently good nor bad." / "Delta polarity: completion % higher=green; disruption/carry-over lower=green; SP completed/committed neutral"
+- boundary: always neutral, regardless of delta sign (repaired 2026-07-04 per owner-delegated verdict — rule 12's first sentence previously also listed the card as higher-is-better, contradicting its own neutral clause and the AC; SprintSummaryAnalyzer builds the card with the unconditional "neutral" polarity)
+- citation: "Completion %: higher is better (green up, red down). Disruption rate and carry-over rate: lower is better (green down, red up). SP completed/committed is neutral (no color) because more committed SP is neither inherently good nor bad." / "Delta polarity: completion % higher=green; disruption/carry-over lower=green; SP completed/committed neutral"
 - agreement: 3/3
 - layer: domain-summary
 - criticality: core
-- verdict: ambiguous
-- reason: BR-12 contradicts itself — its first sentence assigns SP completed/committed higher-is-better (green up, red down) while its final clause and the Acceptance Criteria assign neutral; neutral is the likelier intent (2 of 3 statements plus a rationale) but the spec is internally inconsistent.
+- verdict: verified
 
 ### SR-41: sparkline-4-sprint-trailing-window
 - statement: The sparkline always shows the 4 most recent closed sprints ending at and including the selected sprint; the window shifts backward when an older sprint is selected, always ending at the selected sprint.

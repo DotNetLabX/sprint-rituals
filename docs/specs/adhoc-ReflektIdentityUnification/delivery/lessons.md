@@ -1,5 +1,8 @@
 # adhoc-ReflektIdentityUnification (RA2) — Lessons
 
+> **Learner consolidation — 2026-06-29**
+> - `[APPLIED]` (resolved upstream) APPROVED-verdict gate lexical `CRITICAL/HIGH` false-positive (the Improvement Proposal below). Plugin-bound; **2 occurrences** ([adhoc-ReflektLiftAndShift] RA1 + [adhoc-ReflektIdentityUnification] RA2). **Already fixed in the plugin:** `pipeline-gate.js` `approvedWithOpenHighSev` now anchors structurally on the `### [CRITICAL|HIGH]` finding-heading shape (so a `Confidence: HIGH` qualifier no longer false-blocks) — shipped via plugin-feedback **nexus-1.13.0 item 1**; both occurrences pre-date the fix. Not routed (would be a stale duplicate); verified against live nexus 1.18.6.
+
 ## Developer Lessons
 
 ### Phase-1 analyze (re-grounding against committed RA1, HEAD 4d93287)
@@ -97,7 +100,7 @@
 
 - **An `[AllowAnonymous]` endpoint that reads an owner-comparison claim is correct *only if* the absent-claim path defaults to the deny side.** `GetSprintSummaryEndpoint` is `[AllowAnonymous]` and reads `person_id`; the guest (no claim) path correctly leaves `isScrumMaster = false` because the `if (claim is not null …)` guards the comparison. Checked this explicitly rather than assuming the repoint was safe — an owner check behind an anonymous endpoint is exactly where a "default true / compare-to-null" slip would silently grant SM. Clean here.
 
-### Improvement Proposal (optional, for systemic issues)
+### Improvement Proposal (optional, for systemic issues) `[APPLIED]` (resolved upstream in nexus-1.13.0; see consolidation header)
 **Target:** the Nexus APPROVED-verdict pipeline gate (review.md write hook) — and, as a portable workaround, the `review-format` skill.
 **Change:** Make the gate's CRITICAL/HIGH detection structural, not lexical: match only the finding-header form `### [CRITICAL]` / `### [HIGH]` (the documented Findings format), so it stops false-positiving on `Confidence: HIGH` qualifiers and on resolved/descriptive severity-word prose. Until then, add one line to `review-format` under Anti-patterns: "In an APPROVED section, the literal uppercase tokens `CRITICAL`/`HIGH` may only appear on an open finding's `### [SEVERITY]` line; write confidence qualifiers as `high`/`medium`/`low` and describe resolved or hypothetical severities as 'top-tier'/'blocking-tier' so the verdict gate does not false-trip."
 **Evidence:** This review (adhoc-ReflektIdentityUnification RA2) — three consecutive Edit rejections of a genuinely all-LOW APPROVED section, cleared only by softening `**Confidence:** HIGH` → `Confidence: high` and rewording positive/predictive severity mentions. The gate's own message ("change the verdict, or only mark the finding resolved after the fix is verified") presumes an open finding that did not exist.

@@ -41,7 +41,8 @@
   reviewers: when a blanket pre-processor is flagged as a carry-over risk for a new auth scheme, always
   trace the first guard clause — a parse failure exit is the most common accidental pass-through.
 
-- **Gate pattern-matching on severity words inside prose can produce false blocks.** The nexus pipeline
+- `[APPLIED]` (resolved upstream, learner 2026-06-29) **Gate pattern-matching on severity words inside prose can produce false blocks.** Recurs with [adhoc-ReflektIdentityUnification] RA2 (2 occurrences) but **already fixed in the plugin**: `pipeline-gate.js` `approvedWithOpenHighSev` now anchors on the `### [CRITICAL|HIGH]` finding-heading shape, not a whole-file token scan, so a `Confidence: HIGH` qualifier no longer false-blocks — shipped via plugin-feedback nexus-1.13.0 item 1; this occurrence pre-dates it. Not re-routed.
+  The nexus pipeline
   gate blocked a write that contained no CRITICAL or HIGH findings because the word "HIGH" appeared as a
   confidence qualifier in a carry-over table. Rewriting findings to avoid confidence qualifiers in table
   cells (use "Certainty:" or "Confirmed" in prose instead of the keyword "Confidence: HIGH") avoids the

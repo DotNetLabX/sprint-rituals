@@ -240,7 +240,7 @@ Sprint summary entry:
 
 3. **Time is accumulated per stage, not wall-clock.** When a ticket enters a stage, the clock for that stage starts. When it transitions out, the clock stops. If the ticket re-enters that stage later (rework), the clock restarts and the additional time is added. Total cycle time is the sum of time across all measured stages.
 
-4. **Rework is counted, not hidden.** When a ticket transitions back into a previously visited stage, the re-entry is counted as rework. Each ticket carries a rework count — the total number of re-entries across all measured stages. Example: a ticket that goes In Progress → Code Review → In Progress → Code Review → Testing has 1 rework re-entry (it re-entered In Progress once). A ticket that goes In Progress → Code Review → In Progress → Code Review → In Progress → Testing has 2 rework re-entries. Tickets with rework are visually flagged in the scatter plot and ticket tables.
+4. **Rework is counted, not hidden.** When a ticket transitions back into a previously visited stage, the re-entry is counted as rework — every entry into an already-visited stage increments the count, regardless of transition direction. Each ticket carries a rework count — the total number of re-entries across all measured stages. Example: a ticket that goes In Progress → Code Review → In Progress → Code Review → Testing has 2 rework re-entries (it re-entered In Progress once and Code Review once). A ticket that goes In Progress → Code Review → In Progress → Code Review → In Progress → Testing has 3 rework re-entries. (Examples amended 2026-07-04 per owner-delegated verdict — previously scored 1 and 2 under an unstated backward-transitions-only reading; per-entry counting matches the general definition, the original Fokus KB "increments reworkCount per entry", and the shipped, mutation-gated behavior.) Tickets with rework are visually flagged in the scatter plot and ticket tables.
 
 5. **Tickets that never entered the start stage are excluded.** If a ticket's status transitions show it went directly from a pre-start stage (e.g., backlog) to done without ever entering the configured start stage, it has no measurable cycle time and is excluded from all calculations. This prevents tickets closed by administrative action from distorting metrics.
 
@@ -262,7 +262,7 @@ Sprint summary entry:
 
 14. **Time calculation uses calendar days.** Duration is measured in calendar days (including weekends and holidays), not business days. This matches how stakeholders think about delivery timelines and avoids the complexity of business calendar configuration.
 
-15. **Division by zero produces zero or null.** When no completed tickets exist for a sprint, all metrics are zero and percentiles are null. The stage funnel and breakdowns are empty.
+15. **Division by zero produces zero or null.** When no completed tickets exist for a sprint, all metrics are zero — including the Median and P85 metric cards, which show 0, not null (amended 2026-07-04 per owner-delegated verdict: the previous "percentiles are null" left the percentile-valued cards unassigned; 0 matches shipped behavior). The stage funnel and breakdowns are empty, and the scatter plot has no percentile reference lines to draw.
 
 16. **Sprint ordering follows start date.** Sprints are ordered by start date ascending. "Most recent closed sprint" means the closed sprint with the latest start date.
 

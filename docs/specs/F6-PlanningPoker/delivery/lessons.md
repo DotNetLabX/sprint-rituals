@@ -1,5 +1,8 @@
 # Lessons — F6-PlanningPoker
 
+> **Learner consolidation — 2026-06-29** (→ `docs/plugin-feedback/nexus-1.18.6-2026-06-29.md`)
+> - `[ROUTED-TO-PLUGIN]` verify-gate / boundary-detector custom-spawn-suffix mismatch (the Improvement Proposal below) — promoted at recurrence 5x (F6, ReflektFrontendMerge, ReflektComputationToDomain, ReflektValueObjects, SprintContextPanel). Routed as a deterministic hook fix; verified still-present in live nexus 1.18.6.
+
 ## Architect Lessons
 
 ### Plan acceptance cited a doc table that doesn't exist (stale-pointer trap)
@@ -11,7 +14,7 @@ The SubagentStop verify-gate recorded `verdict:"skipped", reason:"unrecognized a
 ### Verifying 27 discrete artifact claims is well-suited to a parallel Explore fan-out
 Dispositioning 11 steps against on-disk code meant confirming ~27 specific file/line claims (does `customfield_10016` actually appear? is the analytics filter actually unchanged? does write-back actually precede Decided?). Running build/tests in the background while an Explore agent verified the artifact claims in parallel kept the done-check fast without sacrificing firsthand confirmation of the high-stakes items.
 
-### Improvement Proposal (optional, for systemic issues)
+### Improvement Proposal (optional, for systemic issues) `[ROUTED-TO-PLUGIN]` (2026-06-29, nexus-1.18.6 feedback)
 **Target:** the verify-gate's agent_type recognition (plugin-bound — `subagentStop` hook / `verify-verdict.json` producer)
 **Change:** the verify-gate should strip a custom spawn suffix (e.g. `developer-f6` → `developer`) before matching `agent_type`, so a named spawn doesn't silently skip the gate and emit `blocking_failed:false` (which reads as "passed" but means "not run").
 **Evidence:** F6-PlanningPoker — gate skipped on *every* developer stop (`unrecognized agent_type: developer-f6`); same class as the boundary-detector false-positive on named agents already logged in this run's runtime issues. Done-check had to fully substitute for the missing automated verify.

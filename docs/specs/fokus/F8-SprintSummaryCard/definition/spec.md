@@ -20,7 +20,7 @@ It extends app settings with one new concept:
 
 **Composite health score RAG thresholds**
 - Green: composite score >= 75
-- Amber: composite score 40-74
+- Amber: composite score >= 40 and < 75
 - Red: composite score < 40
 - These are fixed in v1 (not user-configurable). The per-metric thresholds and weights that feed the composite are already user-configurable in app settings.
 
@@ -107,7 +107,7 @@ Metric card object (one per metric):
 - Value (decimal)
 - Display value (formatted string -- e.g., "24 / 30 SP", "80.0%", "16.7%")
 - Delta vs prior sprint (decimal, nullable -- null when no prior sprint exists)
-- Delta direction (up, down, flat, or null)
+- Delta direction (up, down, flat, or null; flat when the delta is exactly 0, null when no prior sprint exists — pinned 2026-07-04)
 - Delta polarity (positive, negative, neutral) -- determines color
 - Sparkline data points (list of up to 4 entries, each with sprint name and value)
 
@@ -144,9 +144,9 @@ Flags object:
 
 1. **Health score is a weighted composite of three sub-metrics.** Each sub-metric (completion rate, disruption rate, carry-over rate) maps to a 0-100 sub-score using the configurable threshold bands. The composite is their weighted average using the configurable weights (default: completion 40%, disruption 30%, carry-over 30%).
 
-2. **Sub-score interpolation uses threshold bands.** For completion (higher is better): at or above the green threshold scores 100; between amber and green interpolates linearly from 50 to 99; below amber interpolates linearly from 0 to 49. For disruption and carry-over (lower is better): at or below the green threshold scores 100; between green and amber interpolates linearly from 99 to 50; above amber interpolates linearly from 49 to 0, bottoming out at twice the amber threshold.
+2. **Sub-score interpolation uses threshold bands.** For completion (higher is better): at or above the green threshold scores 100; from the amber threshold (inclusive) up to green interpolates linearly from 50 to 99; below amber interpolates linearly from 0 to 49. For disruption and carry-over (lower is better): at or below the green threshold scores 100; above green up to the amber threshold (inclusive) interpolates linearly from 99 to 50; above amber interpolates linearly from 49 to 0, bottoming out at twice the amber threshold. At exactly the amber threshold the sub-score is 50 in both directions (amended 2026-07-04 per owner-delegated verdict — the amber boundary was previously assigned to neither band; 50 matches shipped, mutation-gated behavior).
 
-3. **Composite RAG thresholds are fixed.** Green >= 75, Amber 40-74, Red < 40. These are not user-configurable in v1.
+3. **Composite RAG thresholds are fixed.** Green >= 75, Amber >= 40 and < 75, Red < 40. (Amber band amended 2026-07-04 per owner-delegated verdict — "40-74" left decimal scores in (74, 75) unassigned; the half-open band matches shipped behavior.) These are not user-configurable in v1.
 
 4. **Per-metric RAG uses the configurable thresholds.** Each metric card shows its own RAG color based on the per-metric thresholds in app settings — independent of the composite RAG.
 
@@ -164,7 +164,7 @@ Flags object:
 
 11. **Delta compares to the prior closed sprint.** "Prior" is the closed sprint with the next-earlier start date relative to the selected sprint. When no prior sprint exists, delta is null (not zero).
 
-12. **Delta polarity is metric-specific.** Completion % and SP completed/committed: higher is better (green up, red down). Disruption rate and carry-over rate: lower is better (green down, red up). SP completed/committed is neutral (no color) because more committed SP is neither inherently good nor bad.
+12. **Delta polarity is metric-specific.** Completion %: higher is better (green up, red down). Disruption rate and carry-over rate: lower is better (green down, red up). SP completed/committed is neutral (no color) because more committed SP is neither inherently good nor bad. (Amended 2026-07-04 per owner-delegated verdict — the first sentence previously also listed SP completed/committed as higher-is-better, contradicting the neutral clause and the Acceptance Criteria; neutral is correct and matches shipped behavior.)
 
 13. **Sparkline is a fixed 4-sprint trailing window.** Always shows the 4 most recent closed sprints ending at and including the selected sprint — the window shifts backward when an older sprint is selected, always ending at the selected sprint. If fewer than 4 closed sprints exist, show what's available.
 
@@ -193,7 +193,7 @@ Flags object:
 - [ ] Selecting a different sprint updates all page content
 - [ ] Health score displays as a 0-100 number with green/amber/red color
 - [ ] Health score composite uses the weighted formula with configurable thresholds and weights
-- [ ] Health score composite RAG: green >= 75, amber 40-74, red < 40
+- [ ] Health score composite RAG: green >= 75, amber >= 40 and < 75, red < 40
 - [ ] Four metric cards display: SP Completed/Committed, Completion %, Disruption Rate, Carry-Over Rate
 - [ ] Each metric card shows a big number, delta indicator, and sparkline
 - [ ] Delta compares to the prior closed sprint (by start date)

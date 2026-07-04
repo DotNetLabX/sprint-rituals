@@ -26,8 +26,8 @@ under `docs/kb/` with sections defined in `docs/kb/_schema/entry-template.md`.
 | File | Class | Contents |
 |------|-------|----------|
 | [golden/BugRatioAnalyzer.md](golden/BugRatioAnalyzer.md) | BugRatioAnalyzer | 58 canonical rules across both arms (five-bucket triage, 2 divergences pending verdict); crosswalk + run note alongside |
-| [golden/CycleTimeAnalyzer.md](golden/CycleTimeAnalyzer.md) | CycleTimeAnalyzer | 110 canonical rules (29 overlap incl. 5 Generate closures, 46 other-layer, 35 code-only, 0 divergent; 3 spec-repair incl. SR-53 rework definition — owner verdict wanted); crosswalk + run note alongside |
-| [golden/HealthScoreCalculator.md](golden/HealthScoreCalculator.md) | HealthScoreCalculator | 58 canonical rules (2 overlap incl. SR-16 probe closure, 50 other-layer of which 29 domain-summary parked for a future SprintSummaryAnalyzer merge, 6 code-only, 0 divergent; 6 spec-repair); crosswalk + run note alongside |
+| [golden/CycleTimeAnalyzer.md](golden/CycleTimeAnalyzer.md) | CycleTimeAnalyzer | 110 canonical rules (29 overlap incl. 5 Generate closures, 46 other-layer, 35 code-only, 0 divergent; spec-repair resolved 2026-07-04 — SR-53/SR-66 repaired KEEP CODE, SR-9 open); crosswalk + run note alongside |
+| [golden/HealthScoreCalculator.md](golden/HealthScoreCalculator.md) | HealthScoreCalculator | 58 canonical rules (2 overlap incl. SR-16 probe closure, 50 other-layer of which 29 domain-summary parked for a future SprintSummaryAnalyzer merge, 6 code-only, 0 divergent; spec-repair resolved 2026-07-04 — 5 pins KEEP CODE, SR-19 open); crosswalk + run note alongside |
 
 ## Conventions
 

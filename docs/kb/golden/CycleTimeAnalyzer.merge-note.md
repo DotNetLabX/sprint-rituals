@@ -14,8 +14,8 @@ Operator: Solo session (autonomous, owner-directed "same as BugRatio" run).
   set (`docs/audit/golden-set.md` absent in this repo) or the crosswalk. Pass, zero violations.
 - Crosswalk (`CycleTimeAnalyzer.crosswalk.json`, 24 pairs + 35 code-only self-maps): authored
   POST-HOC by the operator from both arms' already-mined output — never a run input to either arm.
-  **Owner confirmation pending** (the BugRatio run had pre-run owner confirmation; this run was
-  autonomous — flagged for the owner to ratify or amend).
+  **Ratified by owner delegation, 2026-07-04** (session message: "I rely on your best judgment"
+  after the pending-confirmation flag was surfaced; the BugRatio run had pre-run confirmation).
 - Self-map workaround: unpaired code-arm ids are crosswalked to themselves so `updateRegistry`
   (1.21.0 feedback item 1 — drops rows without `ruleName`) persists them. Worked: 110/110 rows
   written, zero hand re-adds (the BugRatio run needed 17).
@@ -55,20 +55,22 @@ Eligible set was 5 rules; all resolved implemented — no parked reds, no owner 
 
 Suite after Generate: 224 passed, 0 skipped.
 
-## Spec-repair (owner attention)
+## Spec-repair — RESOLVED (owner-delegated verdicts, 2026-07-04)
 
-Three ambiguous rules excluded from generation, routed to spec-repair — **proposals only, not
-settled by this run**:
+Three ambiguous rules were routed to spec-repair; the owner delegated the verdicts
+("I rely on your best judgment"), and each was settled on attested evidence:
 
-- **SR-53 (rework counting) — the one item worth an owner verdict.** The spec's general definition
-  ("re-entry into a previously visited stage") scores its own example 1 as 2, but the spec says 1;
-  only an unstated backward-transitions-only reading reconciles it. The code (BR-13, mutation-gated)
-  counts any re-entry — i.e. it matches the general definition and contradicts the spec's example.
-  Owner should pin the intended definition; until then the code behavior stays pinned by the
-  code-arm suite.
-- SR-9 (funnel bottleneck "visually obvious" — presentational non-commitment).
-- SR-66 (zero-completed sprint: "metrics zero" vs "percentiles null" conflict for the Median/P85
-  cards).
+- **SR-53 (rework counting): KEEP CODE, spec examples repaired to 2 and 3.** The original Fokus KB
+  attests "increments reworkCount per entry" and its CycleTimeService logic is identical to the
+  ported BR-13 (mutation-gated). The spec's examples (1 and 2) encoded an unstated
+  backward-transitions-only reading; the general definition, both attestations, and the AC all
+  agree on per-entry counting. spec.md rule 4 + SR-53 repaired, verdict → verified.
+- **SR-66 (zero-completed sprint): KEEP CODE, spec repaired** — the Median/P85 metric cards show
+  0, not null (BR-29). spec.md rule 15 + SR-66 repaired, verdict → verified.
+- **SR-9 left open by decision** — presentational non-commitment ("visually obvious"), no factual
+  pin available.
+
+spec-rules stamp recomputed (sha256:25d4de4cf184, delta re-check: repair edits only).
 
 ## Harness findings
 
