@@ -13,9 +13,11 @@ export default defineConfig({
     },
   },
   server: {
+    port: 5171,
+    strictPort: true,
     proxy: {
-      '/api': 'http://localhost:5000',
-      '/auth': 'http://localhost:5000'
+      '/api': 'http://localhost:5100',
+      '/auth': 'http://localhost:5100'
     }
   },
   build: {

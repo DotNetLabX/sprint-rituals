@@ -21,12 +21,14 @@ export default defineConfig({
     },
   },
   server: {
+    port: 5172,
+    strictPort: true,
     proxy: {
-      '/api': 'http://localhost:5000',
-      '/auth': 'http://localhost:5000',
-      '/signin-google': 'http://localhost:5000',
+      '/api': 'http://localhost:5100',
+      '/auth': 'http://localhost:5100',
+      '/signin-google': 'http://localhost:5100',
       '/hubs': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:5100',
         ws: true,
       },
     },

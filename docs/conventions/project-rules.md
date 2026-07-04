@@ -81,6 +81,21 @@ API  ──▶  Domain
 - **Repositories** wrap `SaveChangesAsync` — endpoints never touch DbContext directly.
 - **EF migrations:** `dotnet ef migrations add Name -p Services/{Svc}/{Svc}.Persistence -s Services/{Svc}/{Svc}.API` — the startup project (`-s`) must carry `Microsoft.EntityFrameworkCore.Design`. If the API project is a class library that does not include it, use the Persistence project as startup instead (`-s Services/{Svc}/{Svc}.Persistence`), provided it has an `IDesignTimeDbContextFactory`.
 
+## Port Convention — `{AA}XY`
+
+`AA` = app prefix (**51** = SprintRituals), `X` = protocol digit (0 = HTTP, 4 = HTTPS, 5 = gRPC), `Y` = service index. The modular monolith has one deployable — the Host is service index **0**. Never bind default ports (5000/5001/5173-auto); allocate from this table.
+
+| Port | Protocol | Locked in | Status |
+|------|----------|-----------|--------|
+| **5100** | HTTP — API, SignalR, all SPAs | `src/Host/appsettings.json` `Kestrel:Endpoints:Http` | active |
+| **5150** | gRPC (h2c, module-to-module) | `src/Host/appsettings.json` `Kestrel:Endpoints:Grpc` + `Grpc:Services:*:Url` | active |
+| 5140 | HTTPS | — | reserved, opt-in |
+| 5171 | Vite dev — dashboard (Fokus) | `client/apps/dashboard/vite.config.ts` (`strictPort`) | active |
+| 5172 | Vite dev — retro (Reflekt) | `client/apps/retro/vite.config.ts` (`strictPort`) | active |
+| 5173 | Vite dev — poker | `client/apps/poker/vite.config.ts` (`strictPort`) | active |
+
+The explicit `Kestrel:Endpoints` block is authoritative — it overrides `ASPNETCORE_URLS` and `launchSettings.json`; keep `launchSettings.json` aligned to avoid the override warning. Vite `strictPort: true` fails fast instead of hopping ports. If a service is ever split out of the monolith, it takes the next service index (Y = 1, 2, …).
+
 ## Plan-to-Code Boundary
 
 - **Plan steps describe operations and acceptance criteria — not method body logic flows.** The developer decides internal code structure and decomposition.
