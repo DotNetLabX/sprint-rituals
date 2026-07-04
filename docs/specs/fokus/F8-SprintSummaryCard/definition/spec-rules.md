@@ -10,6 +10,7 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 
 - consolidated rules: 58 — verified: 52 / ambiguous: 6
 - agreement distribution: 3/3 × 49, 2/3 × 6, 1/3 × 3
+- layer/criticality facts: added 2026-07-04 per the v1.21.0 consolidate schema (operator pass, post-hoc — facts only, rule content untouched). `domain-summary` marks domain rules homed in SprintSummaryAnalyzer, outside this merge's target class (HealthScoreCalculator).
 
 ## Consolidated rules
 
@@ -18,6 +19,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: Green inclusive at 75 (>=); Red strictly below 40; Amber stated as "40-74" — the score is a decimal, so values in (74, 75) are unassigned by the literal text ([40, 75) for amber is inferred, not stated).
 - citation: "Green: composite score >= 75" / "Amber: composite score 40-74" / "Red: composite score < 40" / "**Composite RAG thresholds are fixed.** Green >= 75, Amber 40-74, Red < 40."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: golden
 - verdict: ambiguous
 - reason: Composite score is "(0-100, decimal)" but the amber band "40-74" leaves decimal scores in (74, 75) unassigned; miners' inclusive-band reading is inferred precision.
 
@@ -26,6 +29,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none
 - citation: "These are fixed in v1 (not user-configurable). The per-metric thresholds and weights that feed the composite are already user-configurable in app settings." / "These are not user-configurable in v1."
 - agreement: 3/3
+- layer: settings
+- criticality: core
 - verdict: verified
 
 ### SR-3: sprint-selector-defaults-most-recent
@@ -33,6 +38,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none
 - citation: "The sprint selector in the page toolbar populates with closed sprints, most recent selected by default" / "Opening the app navigates to Dashboard with the most recent closed sprint selected"
 - agreement: 2/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-4: four-metric-cards
@@ -40,6 +47,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none
 - citation: "Four metric cards in a row: SP Completed/Committed, Completion %, Disruption Rate, Carry-Over Rate" / "Four metric cards display: SP Completed/Committed, Completion %, Disruption Rate, Carry-Over Rate"
 - agreement: 1/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-5: empty-state-when-no-closed-sprints
@@ -47,6 +56,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: zero closed sprints → empty state
 - citation: "If no closed sprints exist, the page shows the empty state defined by F7"
 - agreement: 3/3
+- layer: ui
+- criticality: edge
 - verdict: verified
 
 ### SR-6: closed-sprints-ordered-descending
@@ -54,6 +65,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none
 - citation: "Dropdown shows all closed sprints, ordered by start date descending (most recent first)" / "List of (id, name, start date, end date, state) ordered by start date descending"
 - agreement: 3/3
+- layer: api
+- criticality: core
 - verdict: verified
 
 ### SR-7: sprint-switch-recomputes-all-content
@@ -61,6 +74,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none
 - citation: "All content on the page updates: health score, metric cards (including deltas and sparklines), epics, leaderboard, flags"
 - agreement: 2/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-8: url-updates-on-sprint-switch
@@ -68,6 +83,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none
 - citation: "The URL updates to reflect the selected sprint"
 - agreement: 3/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-9: sub-team-dropdown-options
@@ -75,6 +92,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none
 - citation: "Dropdown shows \"All\" (default) plus each distinct sub-team name from the developer roster"
 - agreement: 2/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-10: sub-team-all-removes-filter
@@ -82,6 +101,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none
 - citation: "Selecting \"All\" removes the filter"
 - agreement: 3/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-11: no-flags-message
@@ -89,6 +110,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: zero flags fired → message shown
 - citation: "If no flags fire, the section shows a positive message (\"No flags this sprint\")" / "Flags section shows \"No flags this sprint\" when no flags fire"
 - agreement: 3/3
+- layer: ui
+- criticality: edge
 - verdict: verified
 
 ### SR-12: sprintid-defaults-most-recent
@@ -96,6 +119,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: omission is the trigger
 - citation: "`sprintId` (int, optional) -- specific sprint. Defaults to the most recent closed sprint when omitted."
 - agreement: 3/3
+- layer: api
+- criticality: core
 - verdict: verified
 
 ### SR-13: subteam-param-omit-or-empty-means-all
@@ -103,6 +128,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: omitted or empty string both mean unfiltered
 - citation: "`subTeam` (string, optional) -- filter to developers in this sub-team. Omit or pass empty for all."
 - agreement: 3/3
+- layer: api
+- criticality: core
 - verdict: verified
 
 ### SR-14: no-closed-sprints-returns-200-null-sprint
@@ -110,6 +137,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: zero closed sprints → 200 + sprint = null
 - citation: "200 with null sprint: no closed sprints exist (not an error)" / "`sprint` -- sprint metadata (id, name, start date, end date, duration in days, synced-at timestamp). Null when no closed sprints exist."
 - agreement: 3/3
+- layer: api
+- criticality: edge
 - verdict: verified
 
 ### SR-15: healthscore-metrics-null-when-sprint-null
@@ -117,6 +146,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: sprint == null → healthScore == null and metrics == null
 - citation: "`healthScore` -- composite health score object (see below). Null when sprint is null." / "`metrics` -- four metric card objects (see below). Null when sprint is null."
 - agreement: 3/3
+- layer: api
+- criticality: edge
 - verdict: verified
 
 ### SR-16: health-score-value-ranges
@@ -124,6 +155,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: [0, 100] for composite and each sub-score
 - citation: "Composite score (0-100, decimal)" / "Per-metric sub-scores: completion sub-score, disruption sub-score, carry-over sub-score (each 0-100)"
 - agreement: 1/3
+- layer: domain-calc
+- criticality: core
 - verdict: verified
 
 ### SR-17: delta-direction-domain
@@ -131,6 +164,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: value set enumerated; the condition distinguishing flat from up/down is not stated
 - citation: "Delta direction (up, down, flat, or null)"
 - agreement: 1/3
+- layer: api
+- criticality: core
 - verdict: ambiguous
 - reason: The value set is committed, but the spec never defines when direction is "flat" (exactly delta == 0? tolerance?), so the mapping cannot be tested from the spec alone.
 
@@ -139,6 +174,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: max 4 entries
 - citation: "Sparkline data points (list of up to 4 entries, each with sprint name and value)"
 - agreement: 2/3
+- layer: api
+- criticality: core
 - verdict: verified
 
 ### SR-19: metric-display-value-format
@@ -146,6 +183,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none
 - citation: "Display value (formatted string -- e.g., \"24 / 30 SP\", \"80.0%\", \"16.7%\")"
 - agreement: 2/3
+- layer: ui
+- criticality: core
 - verdict: ambiguous
 - reason: Formats are given only as "e.g." illustrative examples; one-decimal percent rendering is miner-inferred, not a committed format contract.
 
@@ -154,6 +193,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: zero qualifying epics → empty list
 - citation: "`topEpics` -- list of epic progress objects, max 3. Empty list when no epics had progress." / "Top epics section is hidden when no epics had SP completed"
 - agreement: 3/3
+- layer: api
+- criticality: edge
 - verdict: verified
 
 ### SR-21: leaderboard-empty-when-no-developers
@@ -161,6 +202,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: zero developers → empty list
 - citation: "`leaderboard` -- list of developer summary objects, sorted by SP completed descending. Empty list when no developers."
 - agreement: 3/3
+- layer: api
+- criticality: edge
 - verdict: verified
 
 ### SR-22: mid-sprint-disruption-null-when-none
@@ -168,6 +211,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: zero additions after day 2 → null (not zero values)
 - citation: "Mid-sprint disruption: total SP added after day 2, ticket count. Null when no mid-sprint additions."
 - agreement: 3/3
+- layer: api
+- criticality: edge
 - verdict: verified
 
 ### SR-23: flags-has-any-flags-field
@@ -175,6 +220,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none
 - citation: "Has any flags (boolean convenience field)"
 - agreement: 2/3
+- layer: api
+- criticality: core
 - verdict: verified
 
 ### SR-24: invalid-sprintid-400
@@ -182,6 +229,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: sprintId present and unmatched → 400
 - citation: "400: `sprintId` provided but does not match any synced closed sprint"
 - agreement: 3/3
+- layer: api
+- criticality: core
 - verdict: verified
 
 ### SR-25: health-score-weighted-composite
@@ -189,6 +238,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none (weights configurable; 40/30/30 are defaults only)
 - citation: "**Health score is a weighted composite of three sub-metrics.** Each sub-metric (completion rate, disruption rate, carry-over rate) maps to a 0-100 sub-score using the configurable threshold bands. The composite is their weighted average using the configurable weights (default: completion 40%, disruption 30%, carry-over 30%)."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: golden
 - verdict: verified
 
 ### SR-26: completion-subscore-interpolation
@@ -196,6 +247,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: >= green → 100 (spec's "at or above", inclusive); "between amber and green" → 50-99; "below amber" → 0-49; the value at exactly the amber threshold is not assigned by the spec (50 is inferable only from the band endpoint).
 - citation: "For completion (higher is better): at or above the green threshold scores 100; between amber and green interpolates linearly from 50 to 99; below amber interpolates linearly from 0 to 49."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: golden
 - verdict: ambiguous
 - reason: "Between amber and green" vs "below amber" leaves equality at the amber threshold unassigned; miners' amber→50 grouping is inferred, not stated.
 
@@ -204,6 +257,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: <= green → 100 (spec's "at or below", inclusive); "between green and amber" → 99-50; "above amber" (strict >) → 49-0 with floor reached at 2 × amber ("bottoming out"); the value at exactly the amber threshold is not assigned by the spec.
 - citation: "For disruption and carry-over (lower is better): at or below the green threshold scores 100; between green and amber interpolates linearly from 99 to 50; above amber interpolates linearly from 49 to 0, bottoming out at twice the amber threshold."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: golden
 - verdict: ambiguous
 - reason: Same exactly-amber gap as SR-26 — equality at the amber threshold falls in neither "between green and amber" nor "above amber" by the literal text.
 
@@ -212,6 +267,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none
 - citation: "**Per-metric RAG uses the configurable thresholds.** Each metric card shows its own RAG color based on the per-metric thresholds in app settings — independent of the composite RAG."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: golden
 - verdict: verified
 
 ### SR-29: completed-uses-done-statuses
@@ -219,6 +276,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none (set-membership test against configurable list)
 - citation: "**\"Completed\" uses the done statuses list.** A ticket is completed if its final status in the sprint matches any value in the app settings done statuses list."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: golden
 - verdict: verified
 
 ### SR-30: committed-sp-definition
@@ -226,6 +285,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: "at or before" — inclusive of the start date
 - citation: "**\"Committed\" means present at sprint start.** Committed SP = sum of story points on memberships where the ticket was in the sprint at or before the sprint start date."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: golden
 - verdict: verified
 
 ### SR-31: added-sp-definition
@@ -233,6 +294,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: "after sprint start" — strictly after (the complement of committed's inclusive "at or before"); later-removed memberships excluded
 - citation: "**\"Added\" means mid-sprint, not removed.** Added SP = sum of story points on memberships added after sprint start where the ticket was not subsequently removed."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: golden
 - verdict: verified
 
 ### SR-32: disruption-rate-formula
@@ -240,6 +303,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none (zero denominator covered by SR-57)
 - citation: "Disruption rate = added SP / committed SP x 100."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: golden
 - verdict: verified
 
 ### SR-33: completion-rate-formula
@@ -247,6 +312,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none (zero denominator covered by SR-57)
 - citation: "**Completion rate measures commitment delivery.** Completion % = SP completed / SP committed x 100. The denominator is committed SP (not assigned SP) because the summary card measures how well the team delivered against its sprint commitment."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: golden
 - verdict: verified
 
 ### SR-34: carryover-sp-definition
@@ -254,6 +321,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: removed memberships excluded; done-status tickets excluded
 - citation: "**\"Carry-over\" is everything not done.** Carry-over SP = sum of story points on non-removed memberships whose final status is not in the done statuses list."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: golden
 - verdict: verified
 
 ### SR-35: carryover-rate-formula
@@ -261,6 +330,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none (zero denominator covered by SR-58)
 - citation: "**Carry-over rate denominator includes both committed and added.** Carry-over rate = carry-over SP / (committed SP + added SP) x 100. This reflects the total work the team was responsible for, not just what they started with."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: golden
 - verdict: verified
 
 ### SR-36: delta-prior-sprint-definition
@@ -268,6 +339,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none
 - citation: "**Delta compares to the prior closed sprint.** \"Prior\" is the closed sprint with the next-earlier start date relative to the selected sprint."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: core
 - verdict: verified
 
 ### SR-37: delta-null-when-no-prior-sprint
@@ -275,6 +348,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: absence of prior sprint → null (explicitly not 0)
 - citation: "When no prior sprint exists, delta is null (not zero)."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: core
 - verdict: verified
 
 ### SR-38: delta-polarity-completion-pct
@@ -282,6 +357,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none
 - citation: "Completion % and SP completed/committed: higher is better (green up, red down)." / "Delta polarity: completion % higher=green; disruption/carry-over lower=green; SP completed/committed neutral"
 - agreement: 3/3
+- layer: domain-summary
+- criticality: core
 - verdict: verified
 
 ### SR-39: delta-polarity-disruption-carryover
@@ -289,6 +366,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none
 - citation: "Disruption rate and carry-over rate: lower is better (green down, red up)."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: core
 - verdict: verified
 
 ### SR-40: delta-polarity-sp-completed-committed-neutral
@@ -296,6 +375,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none
 - citation: "Completion % and SP completed/committed: higher is better (green up, red down)." / "SP completed/committed is neutral (no color) because more committed SP is neither inherently good nor bad." / "Delta polarity: completion % higher=green; disruption/carry-over lower=green; SP completed/committed neutral"
 - agreement: 3/3
+- layer: domain-summary
+- criticality: core
 - verdict: ambiguous
 - reason: BR-12 contradicts itself — its first sentence assigns SP completed/committed higher-is-better (green up, red down) while its final clause and the Acceptance Criteria assign neutral; neutral is the likelier intent (2 of 3 statements plus a rationale) but the spec is internally inconsistent.
 
@@ -304,6 +385,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: window capped at 4; anchored with the selected sprint as the last point
 - citation: "**Sparkline is a fixed 4-sprint trailing window.** Always shows the 4 most recent closed sprints ending at and including the selected sprint — the window shifts backward when an older sprint is selected, always ending at the selected sprint."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: core
 - verdict: verified
 
 ### SR-42: sparkline-fewer-when-fewer-exist
@@ -311,6 +394,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: total closed sprints < 4 → show what's available
 - citation: "If fewer than 4 closed sprints exist, show what's available." / "Sparklines show fewer points when fewer than 4 sprints exist"
 - agreement: 3/3
+- layer: domain-summary
+- criticality: edge
 - verdict: verified
 
 ### SR-43: top-epics-eligibility-and-ranking
@@ -318,6 +403,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: eligibility >= 1 SP completed in the selected sprint (spec's "at least 1"); max 3 entries
 - citation: "**Top epics are ranked by SP completed in the selected sprint.** Only epics with at least 1 SP completed in the sprint appear. Take the top 3."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: core
 - verdict: verified
 
 ### SR-44: top-epics-overall-progress-scope
@@ -325,6 +412,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none
 - citation: "Overall progress (done/total SP) is computed across all sprints, not just the selected one."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: core
 - verdict: verified
 
 ### SR-45: leaderboard-active-developers-only
@@ -332,6 +421,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: inactive → excluded regardless of SP
 - citation: "**Developer leaderboard shows all active developers.** ... Inactive developers are excluded."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: core
 - verdict: verified
 
 ### SR-46: leaderboard-sorted-sp-desc
@@ -339,6 +430,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none
 - citation: "Sorted by SP completed descending."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: core
 - verdict: verified
 
 ### SR-47: leaderboard-zero-sp-still-appear
@@ -346,6 +439,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: SP completed = 0 → still listed, ranked last
 - citation: "Developers with 0 SP completed still appear (sorted to the bottom)."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: edge
 - verdict: verified
 
 ### SR-48: leaderboard-no-truncation
@@ -353,6 +448,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none (unbounded list)
 - citation: "No truncation or cap."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: core
 - verdict: verified
 
 ### SR-49: zombie-ticket-threshold
@@ -360,6 +457,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: >= 3 distinct sprints (inclusive at exactly 3)
 - citation: "**Zombie ticket threshold is 3 sprints.** A ticket that appears in sprint memberships for 3 or more distinct sprints is flagged as a zombie."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: golden
 - verdict: verified
 
 ### SR-50: zombie-count-scope
@@ -367,6 +466,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none
 - citation: "The count includes all sprints (including the selected one), not just consecutive sprints."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: core
 - verdict: verified
 
 ### SR-51: mid-sprint-disruption-grace-period
@@ -374,6 +475,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: strictly more than 2 days after start (day 3+); day 1-2 additions excluded
 - citation: "**Mid-sprint disruption uses a 2-day grace period.** Tickets added to the sprint more than 2 days after the sprint start date (and not removed) are flagged as mid-sprint disruption. Day 1-2 additions are considered planning overflow, not disruption. The flag reports total SP and ticket count." / "**Configurable disruption grace period** -- fixed at 2 days."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: golden
 - verdict: verified
 
 ### SR-52: zero-sp-developers-flag
@@ -381,6 +484,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: flag requires active AND assigned to the sprint (had tickets) AND exactly 0 SP completed
 - citation: "**Zero-SP developers are active developers only.** Any active developer assigned to the sprint with 0 SP completed is flagged. Developers not assigned to the sprint at all are not flagged — they would appear in the leaderboard at 0 but are not a \"flag\" unless they had tickets."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: core
 - verdict: verified
 
 ### SR-53: sub-team-filter-scopes-everything
@@ -388,6 +493,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none
 - citation: "**Sub-team filter scopes everything.** When a sub-team is selected, all computations (metrics, health score, leaderboard, epics, flags) are restricted to tickets assigned to developers in that sub-team."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: golden
 - verdict: verified
 
 ### SR-54: dashboard-single-sprint-only
@@ -395,6 +502,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none
 - citation: "**Dashboard is single-sprint only.** The sprint selector on Dashboard shows individual closed sprints. The sprint selector toolbar built by F7 includes visual stubs for aggregate options (Last 3, Last 5, All) — on Dashboard, these are suppressed."
 - agreement: 3/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-55: tickets-no-sp-excluded-from-sp-metrics
@@ -402,6 +511,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: story points absent → total exclusion from SP sums and rates (distinct from a 0 value)
 - citation: "**Tickets with no story points are excluded from SP metrics.** They do not count as 0 SP. They are simply absent from committed SP, completed SP, added SP, carry-over SP, and all rate calculations."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: golden
 - verdict: verified
 
 ### SR-56: tickets-no-sp-count-for-ticket-flags
@@ -409,6 +520,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: none
 - citation: "They still count toward ticket-based flags (zombie tickets count by membership, not SP)."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: core
 - verdict: verified
 
 ### SR-57: division-by-zero-committed
@@ -416,6 +529,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: committed SP == 0 triggers the rule for both rates
 - citation: "**Division by zero produces zero.** When committed SP is 0, completion % is 0 and disruption rate is 0."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: golden
 - verdict: verified
 
 ### SR-58: division-by-zero-carryover
@@ -423,6 +538,8 @@ or code-arm KB (`docs/kb/health-score.md`) were read by any stage.
 - boundary: (committed SP + added SP) == 0 triggers the rule
 - citation: "When committed + added SP is 0, carry-over rate is 0."
 - agreement: 3/3
+- layer: domain-summary
+- criticality: edge
 - verdict: verified
 
 ## Spec findings

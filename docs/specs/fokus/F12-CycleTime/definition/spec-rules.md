@@ -10,6 +10,7 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 
 - consolidated rules: 78 — verified: 75 / ambiguous: 3
 - agreement distribution: 3/3 × 55, 2/3 × 11, 1/3 × 12
+- layer/criticality facts: added 2026-07-04 per the v1.21.0 consolidate schema (operator pass, post-hoc — facts only, rule content untouched)
 
 ## Consolidated rules
 
@@ -18,6 +19,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "Cycle time start stage — which workflow stage begins the cycle time measurement. Defaults to the second configured workflow stage (first non-backlog stage)."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: core
 - verdict: verified
 
 ### SR-2: cycle-start-stage-must-reference-configured-stage
@@ -25,6 +28,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "Must reference a stage in the configured workflow stages list."
 - agreement: 3/3
+- layer: api
+- criticality: core
 - verdict: verified
 
 ### SR-3: cycle-end-stage-default
@@ -32,6 +37,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "Cycle time end stage — which workflow stage ends the cycle time measurement. Defaults to the first configured done status."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: core
 - verdict: verified
 
 ### SR-4: cycle-end-stage-must-reference-stage-or-done-status
@@ -39,6 +46,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "Must reference a stage in the configured workflow stages list or a done status."
 - agreement: 3/3
+- layer: api
+- criticality: core
 - verdict: verified
 
 ### SR-5: sprint-selector-defaults-most-recent-closed
@@ -46,6 +55,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "The sprint selector defaults to the most recent closed sprint"
 - agreement: 2/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-6: scatter-plot-reference-lines-p50-p85
@@ -53,6 +64,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "Horizontal reference lines at P50 (dashed) and P85 (solid)"
 - agreement: 2/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-7: scatter-plot-hover-content
@@ -60,6 +73,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "Hovering a dot shows: ticket key, summary, total cycle time, and per-stage breakdown"
 - agreement: 1/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-8: rework-badge-display
@@ -67,6 +82,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "Tickets with rework show a small rework badge (e.g., \"2 re-entries\")."
 - agreement: 2/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-9: stage-funnel-bottleneck-widest-segment
@@ -74,6 +91,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "The widest segment is the bottleneck — visually obvious"
 - agreement: 1/3
+- layer: ui
+- criticality: core
 - verdict: ambiguous
 - reason: The only commitment is presentational ("visually obvious" / AC "visually identifiable") with no concrete affordance defined; the testable content (segment width proportional to average time) is implied, never stated.
 
@@ -82,6 +101,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "Sorted alphabetically — not ranked"
 - agreement: 3/3
+- layer: domain-calc
+- criticality: core
 - verdict: verified
 
 ### SR-11: outlier-table-sorted-descending
@@ -89,6 +110,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "An outlier table lists tickets exceeding 2x the sprint median, sorted by cycle time descending."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: core
 - verdict: verified
 
 ### SR-12: p85-trend-one-point-per-sprint
@@ -96,6 +119,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "A P85 trend line chart appears: one point per sprint, showing P85 cycle time over time."
 - agreement: 2/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-13: sprint-summary-row-navigation
@@ -103,6 +128,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "Clicking a row navigates to the single-sprint view for that sprint"
 - agreement: 1/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-14: subteam-filter-scopes-everything
@@ -110,6 +137,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "When a sub-team is selected, all computations — metric cards, scatter plot, stage funnel, breakdowns, outlier detection — restrict to tickets assigned to developers in that sub-team. Percentile lines recalculate for the filtered set."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: core
 - verdict: verified
 
 ### SR-15: subteam-all-removes-filter
@@ -117,6 +146,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "Selecting \"All\" removes the filter"
 - agreement: 2/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-16: sprint-range-selection-view-switch
@@ -124,6 +155,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "Selecting a range shows the multi-sprint trend view (Flow 2)" / "Selecting a single sprint shows the single-sprint detail view (Flow 1)"
 - agreement: 2/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-17: url-reflects-sprint-selection
@@ -131,6 +164,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "The URL updates to reflect the selection" / "URL updates to reflect sprint selection and is linkable"
 - agreement: 2/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-18: cycle-starts-dropdown-population
@@ -138,6 +173,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "\"Cycle starts at\" — lists all configured workflow stages. Defaults to the second stage (first non-backlog stage)"
 - agreement: 1/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-19: cycle-ends-dropdown-population
@@ -145,6 +182,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "\"Cycle ends at\" — lists all configured workflow stages plus done statuses. Defaults to the first done status"
 - agreement: 1/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-20: boundaries-saved-via-dedicated-endpoint
@@ -152,6 +191,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "This is a dedicated endpoint following the same pattern as excluded-from-scope statuses — it does not go through the main settings save, avoiding full-replacement conflicts." / "200: Boundaries saved."
 - agreement: 3/3
+- layer: api
+- criticality: core
 - verdict: verified
 
 ### SR-21: boundaries-recalculate-on-next-visit
@@ -159,6 +200,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "The Cycle Time page recalculates using the new boundaries on next visit"
 - agreement: 2/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-22: percentile-toggle-options
@@ -166,6 +209,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "On the single-sprint scatter plot, a toggle control offers: P50, P75, P85, P90"
 - agreement: 2/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-23: percentile-toggle-default-p85
@@ -173,6 +218,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "The default is P85"
 - agreement: 3/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-24: percentile-toggle-updates-reference-line-and-card
@@ -180,6 +227,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "Switching the toggle changes the highlighted reference line on the scatter plot and updates the P85 metric card to show the selected percentile instead"
 - agreement: 2/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-25: p50-line-always-visible
@@ -187,6 +236,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "P50 line always remains visible (dashed) regardless of toggle selection"
 - agreement: 3/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-26: cycle-time-endpoints-no-auth
@@ -194,6 +245,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "| GET | /api/analytics/cycle-time | None | ... | 200, 400 |" / "| GET | /api/settings/cycle-time-boundaries | None | -- | Boundary settings | 200 |" / "| PUT | /api/settings/cycle-time-boundaries | None | { startStage, endStage } | Updated boundaries | 200, 400 |"
 - agreement: 1/3
+- layer: api
+- criticality: core
 - verdict: verified
 
 ### SR-27: get-boundaries-response-content
@@ -201,6 +254,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "Returns the configured start stage and end stage, plus the full list of available stages (from workflow stages + done statuses) for populating the dropdowns."
 - agreement: 1/3
+- layer: api
+- criticality: core
 - verdict: verified
 
 ### SR-28: get-boundaries-always-200
@@ -208,6 +263,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "200: Always succeeds."
 - agreement: 3/3
+- layer: api
+- criticality: core
 - verdict: verified
 
 ### SR-29: get-boundaries-defaults-when-unconfigured
@@ -215,6 +272,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "When no boundaries are configured, returns the defaults (second workflow stage, first done status)."
 - agreement: 3/3
+- layer: api
+- criticality: core
 - verdict: verified
 
 ### SR-30: get-boundaries-empty-when-no-stages
@@ -222,6 +281,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "When no workflow stages are configured, returns empty available stages."
 - agreement: 3/3
+- layer: api
+- criticality: edge
 - verdict: verified
 
 ### SR-31: put-boundaries-400-invalid-stage
@@ -229,6 +290,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: any unmatched stage name → 400
 - citation: "400: Start stage or end stage does not match a configured workflow stage or done status."
 - agreement: 3/3
+- layer: api
+- criticality: core
 - verdict: verified
 
 ### SR-32: put-boundaries-400-start-not-preceding-end
@@ -236,6 +299,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: spec word is "must precede" — an equal or later start stage does not precede, so → 400
 - citation: "Start stage must precede end stage in the configured order."
 - agreement: 3/3
+- layer: api
+- criticality: core
 - verdict: verified
 
 ### SR-33: sprintid-last-mutually-exclusive-400
@@ -243,6 +308,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: both present simultaneously → 400
 - citation: "`sprintId` (int, optional) — single sprint. Mutually exclusive with `last`." / "400: Both `sprintId` and `last` provided simultaneously"
 - agreement: 3/3
+- layer: api
+- criticality: core
 - verdict: verified
 
 ### SR-34: last-below-one-400
@@ -250,6 +317,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: last < 1 → 400 (spec states only the failure side; last ≥ 1 valid by implication)
 - citation: "400: `last` is less than 1"
 - agreement: 3/3
+- layer: api
+- criticality: core
 - verdict: verified
 
 ### SR-35: subteam-param-optional-empty-means-all
@@ -257,6 +326,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "`subTeam` (string, optional) — filter to developers in this sub-team. Omit or pass empty for all."
 - agreement: 2/3
+- layer: api
+- criticality: core
 - verdict: verified
 
 ### SR-36: no-params-defaults-all-closed-sprints
@@ -264,6 +335,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "When neither `sprintId` nor `last` is provided, returns data for all closed sprints (multi-sprint mode)."
 - agreement: 3/3
+- layer: api
+- criticality: core
 - verdict: verified
 
 ### SR-37: frontend-default-sends-sprintid
@@ -271,6 +344,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "The frontend controls the default experience — it pre-selects the most recent closed sprint on page load and sends `sprintId`."
 - agreement: 1/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-38: sprintid-returns-single-last-returns-multi
@@ -278,6 +353,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "GET /api/analytics/cycle-time with `sprintId` returns single-sprint data" / "GET /api/analytics/cycle-time with `last=N` returns multi-sprint data"
 - agreement: 1/3
+- layer: api
+- criticality: core
 - verdict: verified
 
 ### SR-39: sprintid-unmatched-400
@@ -285,6 +362,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: unmatched or non-closed sprintId → 400
 - citation: "400: `sprintId` does not match any synced closed sprint"
 - agreement: 3/3
+- layer: api
+- criticality: core
 - verdict: verified
 
 ### SR-40: sprint-null-when-no-closed-sprints
@@ -292,6 +371,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "`sprint` — sprint metadata (id, name, start date, end date). Null when no closed sprints exist."
 - agreement: 3/3
+- layer: api
+- criticality: edge
 - verdict: verified
 
 ### SR-41: null-sprint-is-200-not-error
@@ -299,6 +380,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "200 with null sprint: no closed sprints exist (not an error)"
 - agreement: 3/3
+- layer: api
+- criticality: edge
 - verdict: verified
 
 ### SR-42: metriccards-null-when-sprint-null
@@ -306,6 +389,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "`metricCards` — four metric card objects (see below). Null when sprint is null."
 - agreement: 3/3
+- layer: api
+- criticality: edge
 - verdict: verified
 
 ### SR-43: scatterplot-empty-when-no-completed-tickets
@@ -313,6 +398,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "`scatterPlot` — list of ticket data points (see below). Empty when no completed tickets."
 - agreement: 3/3
+- layer: api
+- criticality: edge
 - verdict: verified
 
 ### SR-44: stagefunnel-empty-when-no-completed-tickets
@@ -320,6 +407,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "`stageFunnel` — list of stage duration entries (see below). Empty when no completed tickets."
 - agreement: 3/3
+- layer: api
+- criticality: edge
 - verdict: verified
 
 ### SR-45: issuetypebreakdown-empty-when-no-completed-tickets
@@ -327,6 +416,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "`issueTypeBreakdown` — list of issue type summary entries. Empty when no completed tickets."
 - agreement: 3/3
+- layer: api
+- criticality: edge
 - verdict: verified
 
 ### SR-46: developerbreakdown-empty-when-no-completed-tickets
@@ -334,6 +425,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "`developerBreakdown` — list of developer summary entries. Empty when no completed tickets."
 - agreement: 3/3
+- layer: api
+- criticality: edge
 - verdict: verified
 
 ### SR-47: outliers-empty-when-none-exceed-threshold
@@ -341,6 +434,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "`outliers` — list of outlier ticket entries. Empty when none exceed the threshold."
 - agreement: 3/3
+- layer: api
+- criticality: edge
 - verdict: verified
 
 ### SR-48: rework-count-zero-when-no-rework
@@ -348,6 +443,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: 0 is the floor value
 - citation: "Rework count (number of times the ticket re-entered any measured stage; 0 if no rework)"
 - agreement: 3/3
+- layer: domain-calc
+- criticality: core
 - verdict: verified
 
 ### SR-49: stage-funnel-entry-includes-percentage
@@ -355,6 +452,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "Stage funnel entry: - Stage name - Average duration in days (decimal) - Percentage of total cycle time"
 - agreement: 1/3
+- layer: api
+- criticality: core
 - verdict: verified
 
 ### SR-50: completed-tickets-only
@@ -362,6 +461,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: inclusion requires final-status membership in the done statuses list
 - citation: "A ticket is included in cycle time calculations only if its final status in the sprint matches a value in the done statuses list. Tickets that carried over, were removed, or are still in progress are excluded entirely."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: golden
 - verdict: verified
 
 ### SR-51: cycle-time-between-boundaries-inclusive
@@ -369,6 +470,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: start and end stages are both inclusive (spec word: "(inclusive)"); stop trigger is first entry beyond end stage or done status
 - citation: "For each ticket, cycle time is the accumulated duration spent in workflow stages between the configured start stage and end stage (inclusive). The clock starts when the ticket first enters the start stage and stops when it first enters a stage beyond the end stage (or the done status)."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: golden
 - verdict: verified
 
 ### SR-52: per-stage-time-accumulation
@@ -376,6 +479,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "When a ticket enters a stage, the clock for that stage starts. When it transitions out, the clock stops. If the ticket re-enters that stage later (rework), the clock restarts and the additional time is added. Total cycle time is the sum of time across all measured stages."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: golden
 - verdict: verified
 
 ### SR-53: rework-count-re-entries
@@ -383,6 +488,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: per the AC, entering a stage 3 times yields 2 re-entries (N entries → N−1) — but see reason
 - citation: "When a ticket transitions back into a previously visited stage, the re-entry is counted as rework. Each ticket carries a rework count — the total number of re-entries across all measured stages. Example: a ticket that goes In Progress → Code Review → In Progress → Code Review → Testing has 1 rework re-entry (it re-entered In Progress once). A ticket that goes In Progress → Code Review → In Progress → Code Review → In Progress → Testing has 2 rework re-entries."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: core
 - verdict: ambiguous
 - reason: The general definition ("re-entry into a previously visited stage") counts the second Code Review entry in example 1 (total = 2), yet the spec states 1 — only a backward-transitions-only reading reconciles the definition, both examples, and the AC, and the spec never says that.
 
@@ -391,6 +498,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: entry into the start stage is a hard prerequisite for inclusion
 - citation: "If a ticket's status transitions show it went directly from a pre-start stage (e.g., backlog) to done without ever entering the configured start stage, it has no measurable cycle time and is excluded from all calculations."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: golden
 - verdict: verified
 
 ### SR-55: outlier-threshold-2x-median
@@ -398,6 +507,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: strict > per the spec's word "exceeds"; exactly 2x median does not exceed and is not an outlier
 - citation: "Any ticket whose cycle time exceeds twice the median cycle time of its sprint is classified as an outlier."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: golden
 - verdict: verified
 
 ### SR-56: percentiles-completed-tickets-only
@@ -405,6 +516,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "P50 (median), P75, P85, and P90 are computed from the set of completed tickets that have measurable cycle time. Excluded tickets (incomplete, never entered start stage) do not affect percentile calculations."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: core
 - verdict: verified
 
 ### SR-57: stage-funnel-within-boundaries
@@ -412,6 +525,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: only stages "before the start or after the end" are omitted — the start and end stages themselves are neither, so they are included (consistent with SR-51's "(inclusive)")
 - citation: "The funnel visualization includes only workflow stages between the configured start stage and end stage. Stages before the start or after the end are omitted. Each segment shows the average time tickets spent in that stage."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: core
 - verdict: verified
 
 ### SR-58: dominant-stage-highest-average
@@ -419,6 +534,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none (max selection; tie-break undefined — see findings)
 - citation: "The dominant stage is the stage with the highest average time for a developer's tickets."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: core
 - verdict: verified
 
 ### SR-59: delta-prior-sprint-null
@@ -426,6 +543,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: no prior closed sprint → delta = null
 - citation: "\"Prior\" is the closed sprint with the next-earlier start date. When no prior sprint exists, delta is null."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: core
 - verdict: verified
 
 ### SR-60: delta-polarity
@@ -433,6 +552,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "Delta polarity: median cycle time, P85 cycle time, and outlier count are positive-down (lower is better). Throughput is positive-up (more completed tickets is better)."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: core
 - verdict: verified
 
 ### SR-61: delta-polarity-color-green
@@ -440,6 +561,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "Metric cards show delta vs prior sprint with correct polarity (lower cycle time = green, higher throughput = green)"
 - agreement: 1/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-62: multi-sprint-per-sprint-averaging
@@ -447,6 +570,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "Median cycle time card shows the average of per-sprint medians. P85 card shows the average of per-sprint P85 values. Throughput shows the average tickets completed per sprint. Outliers shows the average outlier count per sprint. ... Per-sprint averaging gives equal weight to each sprint regardless of ticket volume, preventing large sprints from dominating the aggregate. This means the multi-sprint P85 card may differ from a pooled P85 computed across all tickets combined."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: golden
 - verdict: verified
 
 ### SR-63: multi-sprint-delta-most-recent-vs-previous
@@ -454,6 +579,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "Delta compares the most recent sprint to the one before it."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: core
 - verdict: verified
 
 ### SR-64: empty-state-when-no-workflow-stages
@@ -461,6 +588,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "If workflow stages are not configured at all, the cycle time page shows an empty state directing the user to Settings to configure stages."
 - agreement: 3/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-65: calendar-days-measurement
@@ -468,6 +597,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "Duration is measured in calendar days (including weekends and holidays), not business days."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: core
 - verdict: verified
 
 ### SR-66: zero-completed-tickets-zero-or-null
@@ -475,6 +606,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: trigger = zero completed tickets
 - citation: "When no completed tickets exist for a sprint, all metrics are zero and percentiles are null. The stage funnel and breakdowns are empty."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: edge
 - verdict: ambiguous
 - reason: "all metrics are zero" and "percentiles are null" conflict for the Median and P85 metric cards, which are both metrics and percentiles — the spec never says which value (0 or null) those cards take.
 
@@ -483,6 +616,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "Sprints are ordered by start date ascending. \"Most recent closed sprint\" means the closed sprint with the latest start date."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: core
 - verdict: verified
 
 ### SR-68: no-story-points-included
@@ -490,6 +625,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "Cycle time is measured by duration, not story points. Tickets without story points are included in all cycle time calculations — unlike SP-based metrics that exclude them."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: core
 - verdict: verified
 
 ### SR-69: sprint-start-clamping
@@ -497,6 +634,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: clamp lower bound = sprint start date
 - citation: "When a ticket is in a measured stage at the sprint start, time accumulation begins from the sprint start date (not from when the ticket originally entered that stage, which may have been before the sprint)."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: core
 - verdict: verified
 
 ### SR-70: sprint-end-clamping
@@ -504,6 +643,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: clamp upper bound = sprint end date
 - citation: "When a ticket is still in a measured stage at sprint end, time accumulation ends at the sprint end date. This bounds the measurement to the sprint window."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: core
 - verdict: verified
 
 ### SR-71: completion-date-earliest-done-in-window
@@ -511,6 +652,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: earliest qualifying transition, within the sprint window
 - citation: "A ticket's completion date is the timestamp of its earliest status transition to a done status within the sprint window. This is used for the scatter plot X-axis."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: core
 - verdict: verified
 
 ### SR-72: pre-sprint-done-excluded
@@ -518,6 +661,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: exclusion requires ALL done-status transitions to predate the window
 - citation: "If a ticket's done-status transitions all predate the sprint window (ticket was already done when added to the sprint), it is excluded — it has no in-sprint cycle to measure."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: edge
 - verdict: verified
 
 ### SR-73: excluded-from-scope-no-effect
@@ -525,6 +670,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "A ticket that completed the full workflow has a valid cycle time regardless of scope exclusion. Cycle time inclusion is governed solely by done status and start-stage entry (rules 1 and 5)."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: edge
 - verdict: verified
 
 ### SR-74: current-stage-config-at-query-time
@@ -532,6 +679,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "The stage funnel and per-stage breakdowns use the workflow stages configured at query time, not the stages that were configured when the sprint was active. If a user renames or reorders stages in Settings, historical sprints reflect the new configuration."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: core
 - verdict: verified
 
 ### SR-75: unrecognized-stages-grouped-as-other
@@ -539,6 +688,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "Stage names from status transitions are matched against current stage names — unrecognized stage names (from a removed or renamed stage) are grouped under an \"Other\" segment in the funnel."
 - agreement: 3/3
+- layer: domain-calc
+- criticality: edge
 - verdict: verified
 
 ### SR-76: percentile-toggle-single-sprint-only
@@ -546,6 +697,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "The percentile toggle on the scatter plot is a single-sprint feature — multi-sprint mode has no scatter plot."
 - agreement: 3/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-77: multi-sprint-trend-always-p85
@@ -553,6 +706,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "In multi-sprint mode, the trend line always shows P85 (and optionally median)."
 - agreement: 3/3
+- layer: ui
+- criticality: core
 - verdict: verified
 
 ### SR-78: shared-pipeline-all-issue-types
@@ -560,6 +715,8 @@ or code-arm KB (`docs/kb/cycle-time.md`) were read by any stage.
 - boundary: none
 - citation: "one shared pipeline for all issue types (established by F6). Different types may follow different paths, but cycle time measures all types against the same stage sequence."
 - agreement: 1/3
+- layer: domain-calc
+- criticality: core
 - verdict: verified
 
 ## Spec findings

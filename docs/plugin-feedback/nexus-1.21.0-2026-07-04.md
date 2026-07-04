@@ -127,11 +127,41 @@ directly, no operator pass needed.
 
 ---
 
+## Addendum — second/third live runs (F12-CycleTime + F8-HealthScore, same day)
+
+Two more `merge.workflow.js` runs (`wf_9dba7210-d9b` CycleTimeAnalyzer 78×59 rules,
+`wf_9544eb3e-820` HealthScoreCalculator 58×7), operator: Solo session. Corroboration and new
+evidence on the items above:
+
+- **Item 1 workaround validated:** crosswalking unpaired code-arm ids to themselves gives every
+  code-only rule a `ruleName`, and `updateRegistry` persists all of them (110/110 rows,
+  zero hand re-adds vs 17 for BugRatio). This is exactly the fix path item 1 proposes — evidence
+  it composes cleanly with real runs.
+- **Item 2, opposite flavor — false OVERLAP:** the CycleTime code-arm reader emitted no `boundary`
+  fields at all, so all 24 crosswalked pairs landed overlap-confirmed with the comparator vacuous.
+  BugRatio flooded false divergents; this run silently "confirmed" overlaps it never compared.
+  Both flavors are the same root cause: prose extraction noise drives the verdict, not agreement.
+- **NEW (reader over-extraction):** the code-arm reader returned health-score.md's `## Edge Cases`
+  bullets as 6 pseudo-rules (EC1–EC6) alongside the 7 ledger rules — the read prompt says "return
+  every rule" and the `kb-entry-schema` Edge Cases section reads rule-shaped. Suggested fix:
+  scope the code-arm read prompt to the `## Rules` section explicitly.
+- **NEW (write-agent artifact):** the registry-write agent appended a literal `</content>` line to
+  `CycleTimeAnalyzer.md` (the prompt's CONTENT framing leaked into the Write). Harmless but
+  corrupting; removed by operator. Suggested fix: delimit content with an explicit sentinel the
+  prompt tells the agent to strip, or have the orchestrator include a trailing-content checksum in
+  the write confirmation.
+- **Item 4 corroboration:** at 110 rows the degenerate one-line-per-rule distillate cannot fit the
+  2000-token default — the run had to be launched with `tokenCeiling: 4096` to avoid a
+  post-registry HALT. The layer-only clustering fallback would have made the default fit.
+
 ## Cross-reference
 
 - Run artifacts (this repo): `docs/kb/golden/BugRatioAnalyzer.md` (registry, 58 rows, corrected),
   `docs/kb/golden/BugRatioAnalyzer.crosswalk.json`, `docs/kb/golden/BugRatioAnalyzer.merge-note.md`
   (independence note + triage record), `docs/kb/index.md` (registry pointer).
+- Second/third run artifacts: `docs/kb/golden/CycleTimeAnalyzer.{md,crosswalk.json,merge-note.md}`,
+  `docs/kb/golden/HealthScoreCalculator.{md,crosswalk.json,merge-note.md}`,
+  `src/Services/Fokus/Fokus.Domain.Tests/Analytics/{CycleTimeSpecArmTests,HealthScoreSpecArmTests}.cs`.
 - Open triage in this repo (owner verdicts pending): AlertThresholdBoundary (SR-28 vs BR-21),
   NoSpTicketSpHandling (SR-23 vs BR-15) — parked reds in `BugRatioSpecArmPilotTests.cs`.
 - Prior feedback: `nexus-1.20.0-2026-07-03.md` (AC-6 GO evidence + proposals 1–7 — shipped as
