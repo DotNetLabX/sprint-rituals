@@ -85,6 +85,9 @@ defineEmits<{
 
 const displayName = ref('')
 
-const googleLoginUrl = computed(() => `/auth/login?returnUrl=/retro/retro/${props.retroSessionId}`)
+// Absolute returnUrl so login returns to this origin (the Vite dev server in dev) rather than the backend.
+const googleLoginUrl = computed(
+  () => `/auth/login?returnUrl=${encodeURIComponent(`${window.location.origin}/retro/retro/${props.retroSessionId}`)}`,
+)
 </script>
 

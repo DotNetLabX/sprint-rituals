@@ -304,7 +304,10 @@ public static class AuthConfiguration
             userPrincipal,
             new AuthenticationProperties { IsPersistent = true, ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30) });
 
-        context.Response.Redirect("/");
+        // Return to the app that started login (captured + validated at /auth/login). "/" is only the
+        // fallback when no return target was supplied.
+        var returnUrl = context.Properties?.Items.TryGetValue("returnUrl", out var url) == true ? url : null;
+        context.Response.Redirect(string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl);
         context.HandleResponse();
     }
 

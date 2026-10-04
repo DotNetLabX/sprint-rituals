@@ -18,7 +18,10 @@ export const useAuthStore = defineStore('auth', {
       this.loaded = true
     },
     signIn() {
-      window.location.href = '/auth/login'
+      // Come back to the exact page we left from (absolute URL keeps us on this origin —
+      // e.g. the Vite dev server on :5173 — instead of the backend's default module).
+      const returnUrl = encodeURIComponent(window.location.href)
+      window.location.href = `/auth/login?returnUrl=${returnUrl}`
     },
     async signOut() {
       await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' })

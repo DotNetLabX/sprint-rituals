@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
@@ -10,6 +11,12 @@ const errorMessages: Record<string, string> = {
 
 const error = route.query.error as string | undefined
 const errorMessage = error ? (errorMessages[error] ?? 'An error occurred. Please try again.') : null
+
+// Dedicated login page — after auth, land on the app root (never back on /login). Absolute URL
+// keeps us on this origin (e.g. the Vite dev server on :5171).
+const loginUrl = computed(
+  () => `/auth/login?returnUrl=${encodeURIComponent(`${window.location.origin}/dashboard/`)}`
+)
 </script>
 
 <template>
@@ -39,7 +46,7 @@ const errorMessage = error ? (errorMessages[error] ?? 'An error occurred. Please
 
       <!-- Sign in button -->
       <a
-        href="/auth/login"
+        :href="loginUrl"
         class="flex items-center justify-center gap-3 w-full px-4 py-2.5 rounded-md bg-accent-default hover:bg-accent-hover text-white font-medium text-sm transition-colors"
       >
         <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor">
