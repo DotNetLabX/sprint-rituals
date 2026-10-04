@@ -9,7 +9,9 @@ public class DomainEventPublisher : IDomainEventPublisher
     {
         foreach (var domainEvent in domainEvents)
         {
-            await domainEvent.PublishAsync(Mode.WaitForAll, ct);
+            // The generic PublishAsync<T> dispatches by compile-time T (IDomainEvent → no handlers);
+            // the non-generic IEvent overload dispatches by runtime type.
+            await ((IEvent)domainEvent).PublishAsync(Mode.WaitForAll, ct);
         }
     }
 }
