@@ -20,7 +20,7 @@
       </li>
     </ul>
 
-    <CreateRetroSessionForm @create="$emit('create-retro-session', $event)" />
+    <CreateRetroSessionForm :team-id="teamId" />
   </div>
 </template>
 
@@ -28,22 +28,13 @@
 import CreateRetroSessionForm from './CreateRetroSessionForm.vue'
 
 defineProps<{
+  teamId: number
   teamName: string
   retroSessions: { id: number; name: string; currentPhase: string; state: string }[]
 }>()
 
 defineEmits<{
   select: [retroSessionId: number]
-  'create-retro-session': [payload: {
-    name: string
-    votesPerParticipant: number | undefined
-    column1Name: string
-    column1Color: string
-    column2Name: string
-    column2Color: string
-    column3Name: string
-    column3Color: string
-  }]
 }>()
 
 function stateBadge(state: string) {

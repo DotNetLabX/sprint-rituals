@@ -14,10 +14,10 @@
     <!-- Signed in, has team -->
     <RetroSessionList
       v-else-if="teamsStore.hasTeams"
+      :team-id="teamsStore.teams[0]!.id"
       :team-name="teamsStore.teams[0]!.name"
       :retro-sessions="retroSessionStore.retroSessions"
       @select="(id) => router.push({ name: 'retro-session', params: { teamId: teamsStore.teams[0]!.id, retroSessionId: id } })"
-      @create-retro-session="handleCreateRetroSession"
     />
 
     <!-- Signed in, no team -->
@@ -55,7 +55,4 @@ async function handleCreateTeam(name: string) {
   await teamsStore.createTeam(name)
 }
 
-async function handleCreateRetroSession(payload: { name: string; votesPerParticipant: number | undefined }) {
-  await retroSessionStore.createRetroSession(teamsStore.teams[0]!.id, payload)
-}
 </script>

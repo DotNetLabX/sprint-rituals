@@ -8,7 +8,7 @@
     @dragstart="onDragStart"
     @dragend="dragging = false"
     @dragover="onDragOver"
-    @dragleave="dragOver = false"
+    @dragleave="onDragLeave"
     @drop="onDrop"
   >
     <div class="flex items-start gap-1">
@@ -43,7 +43,7 @@
     @dragstart="onDragStart"
     @dragend="dragging = false"
     @dragover="onDragOver"
-    @dragleave="dragOver = false"
+    @dragleave="onDragLeave"
     @drop="onDrop"
   >
     <div class="flex items-center gap-2">
@@ -122,7 +122,7 @@ const dragOver = ref(false)
 const isSolo = computed(() => props.group.cards.length === 1)
 
 const groupBgClass = computed(() => {
-  if (props.group.isFocused) return 'bg-primary-50 ring-2 ring-primary-500'
+  if (props.group.isFocused) return `bg-col-${props.columnColor}-light ring-2 ring-primary-500`
   if (props.group.isDiscussed) return `bg-col-${props.columnColor}-light opacity-75`
   return `bg-col-${props.columnColor}-light`
 })
@@ -156,6 +156,12 @@ function onDragOver(e: DragEvent) {
   e.preventDefault()
   e.dataTransfer!.dropEffect = 'move'
   dragOver.value = true
+}
+
+function onDragLeave(e: DragEvent) {
+  // Ignore leaves into child elements (text, grip icon) — they made the highlight flicker.
+  if ((e.currentTarget as Node).contains(e.relatedTarget as Node | null)) return
+  dragOver.value = false
 }
 
 function onDrop(e: DragEvent) {

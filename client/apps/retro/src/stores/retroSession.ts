@@ -59,8 +59,17 @@ interface ColumnConfigPayload {
   column3Color: string
 }
 
+export interface AvailableSprint {
+  sprintId: number
+  name: string
+  startDate: string
+  endDate: string
+  state: string
+}
+
 interface CreateRetroSessionPayload {
   name: string
+  fokusSprintIds: number[]
   votesPerParticipant?: number
   column1Name?: string
   column1Color?: string
@@ -97,6 +106,11 @@ export const useRetroSessionStore = defineStore('retroSession', {
       if (res.ok) {
         this.currentSummary = (await res.json()) as RetroSessionSummary
       }
+    },
+    async fetchAvailableSprints(teamId: number): Promise<AvailableSprint[]> {
+      const res = await fetch(`/api/teams/${teamId}/available-sprints`, { credentials: 'include' })
+      if (!res.ok) throw await res.json().catch(() => ({}))
+      return (await res.json()) as AvailableSprint[]
     },
     async createRetroSession(teamId: number, payload: CreateRetroSessionPayload): Promise<RetroSession> {
       const res = await fetch(`/api/teams/${teamId}/retro-sessions`, {

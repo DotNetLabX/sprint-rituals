@@ -54,7 +54,7 @@
       name="card-list"
       tag="div"
       class="flex-1 flex flex-col gap-2 p-3 overflow-y-auto min-h-0 relative"
-      :class="{ 'bg-primary-50/30': dragOver }"
+      :class="{ 'bg-primary-500/10': dragOver }"
       @dragover="onDragOver"
       @dragleave="onDragLeave"
       @drop="onDrop"
@@ -129,7 +129,9 @@ function onDragOver(e: DragEvent) {
   dragOver.value = true
 }
 
-function onDragLeave() {
+function onDragLeave(e: DragEvent) {
+  // dragleave also fires when moving onto a child element; only clear when the pointer exits the column.
+  if ((e.currentTarget as Node).contains(e.relatedTarget as Node | null)) return
   dragOver.value = false
 }
 

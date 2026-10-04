@@ -14,7 +14,7 @@ Reflekt is being ported into the monolith in sequenced passes (lift-and-shift fi
 
 - **Auth (ADR-016):** target is Identity-owned (Google + cookie via the Identity module); Reflekt keeps only guest-token auth. **Landed in RA2 (adhoc-ReflektIdentityUnification):** Reflekt's own `User` aggregate and parallel Google/cookie config removed; only the guest-token scheme remains (chained onto Identity's auth builder). RA5 carry-over: wire authenticated `Participant.PersonId` into the sprint-context panel.
 - **RetroSession (ADR-018):** `Sprint` → `RetroSession` rename and Fokus-sprint linkage (1..N `FokusSprintRef` child rows, `FokusSprintSnapshot` projection, `SprintSynced` consumer, `CreateRetroSession` route). **Landed in RA3 (adhoc-ReflektSprintOwnership).** Child FK columns kept `SprintId`-named (Q1=b). SignalR method/group/claim strings kept `sprint*`-named (Q2). HTTP lifecycle routes renamed to `/retro-sessions`. RA5 carry-overs: wire `FokusSprintIds` field into client UI and OpenAPI schema.
-- **Fokus linkage (ADR-017/019):** `SprintSynced` consumer and `FokusSprintSnapshot` projection **landed in RA3**. `ISprintAnalyticsService` gRPC client and `GET /api/retro-sessions/{id}/sprint-context` endpoint **landed in RA4 (adhoc-SprintContextPanel)**. RA5 carry-overs: Vue sprint-context panel component; wire `FokusSprintIds` into CreateRetroSession client UI.
+- **Fokus linkage (ADR-017/019):** `SprintSynced` consumer and `FokusSprintSnapshot` projection **landed in RA3**. `ISprintAnalyticsService` gRPC client and `GET /api/retro-sessions/{id}/sprint-context` endpoint **landed in RA4 (adhoc-SprintContextPanel)**. RA5 carry-over: Vue sprint-context panel component. **Create-retro sprint picker landed (adhoc-run-app, 2026-10-04):** `ISprintCatalogService` gRPC client + `GET /api/teams/{teamId}/available-sprints`; `CreateRetroSessionForm` picks 1–2 sprints (default: newest Closed) and suggests the name.
 
 ## Architecture
 
@@ -58,6 +58,7 @@ A retro hub pushes card / group / vote / participant / phase changes to the retr
 
 - **gRPC client — `IPersonService`** (Identity server, ADR-016): upsert/link `Participant` → `Person`. Best-effort.
 - **gRPC client — `ISprintAnalyticsService`** (Fokus server, ADR-019): anonymized sprint metrics for the sprint-context panel; cached per session.
+- **gRPC client — `ISprintCatalogService`** (Fokus server): Active + Closed sprints for the create-retro picker. Not team-filtered — Fokus tracks a single Jira project.
 - **Integration event consumed — `SprintSynced`** (Fokus, ADR-019): refresh the `FokusSprintSnapshot` projection.
 
 ## Frontend

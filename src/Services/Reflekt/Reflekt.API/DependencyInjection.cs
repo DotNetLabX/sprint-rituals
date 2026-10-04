@@ -30,6 +30,7 @@ public static class DependencyInjection
         // Mirror Fokus.API/DependencyInjection.cs:42-43 (ADR-019).
         var grpcOptions = configuration.GetSection("Grpc").Get<GrpcServicesOptions>() ?? new GrpcServicesOptions();
         services.AddCodeFirstGrpcClient<ISprintAnalyticsService>(grpcOptions, "SprintAnalytics");
+        services.AddCodeFirstGrpcClient<ISprintCatalogService>(grpcOptions, "SprintCatalog");
 
         // Mapster
         Mapster.TypeAdapterConfig.GlobalSettings.Scan(typeof(DependencyInjection).Assembly);

@@ -41,20 +41,20 @@
       </a>
     </div>
 
-    <!-- Add evidence link -->
-    <div v-if="!blurred && (canAttachLink ?? canEdit) && !editing" class="mt-1">
-      <button v-if="!addingLink" class="text-text-muted hover:text-blue-500 cursor-pointer" title="Add evidence link" @click="addingLink = true"><LinkIcon :size="14" /></button>
-      <div v-else class="flex gap-1 items-center">
-        <input v-model="linkUrl" type="text" placeholder="Paste URL..." class="flex-1 border border-border rounded-[--radius-sm] px-2 py-0.5 text-xs text-text-primary bg-surface focus:outline-none focus:ring-1 focus:ring-primary-500" @keydown.enter="submitLink" @keydown.escape="cancelLink" />
-        <BaseButton size="sm" variant="primary" :disabled="!linkUrl.trim()" @click="submitLink">Add</BaseButton>
-        <button class="text-text-muted hover:text-text-secondary cursor-pointer" @click="cancelLink"><XIcon :size="14" /></button>
+    <!-- Footer: add evidence link (left) + Edit/Delete (right) on one row -->
+    <div v-if="!blurred && !editing && ((canAttachLink ?? canEdit) || canEdit)" class="flex items-center gap-2 mt-1">
+      <template v-if="canAttachLink ?? canEdit">
+        <button v-if="!addingLink" class="text-text-muted hover:text-blue-500 cursor-pointer" title="Add evidence link" @click="addingLink = true"><LinkIcon :size="14" /></button>
+        <div v-else class="flex flex-1 gap-1 items-center">
+          <input v-model="linkUrl" type="text" placeholder="Paste URL..." class="flex-1 border border-border rounded-[--radius-sm] px-2 py-0.5 text-xs text-text-primary bg-surface focus:outline-none focus:ring-1 focus:ring-primary-500" @keydown.enter="submitLink" @keydown.escape="cancelLink" />
+          <BaseButton size="sm" variant="primary" :disabled="!linkUrl.trim()" @click="submitLink">Add</BaseButton>
+          <button class="text-text-muted hover:text-text-secondary cursor-pointer" @click="cancelLink"><XIcon :size="14" /></button>
+        </div>
+      </template>
+      <div v-if="canEdit && !addingLink" class="flex gap-2 ml-auto">
+        <BaseButton size="sm" variant="ghost" @click="startEdit">Edit</BaseButton>
+        <BaseButton size="sm" variant="ghost" @click="emit('delete', card)">Delete</BaseButton>
       </div>
-    </div>
-
-    <!-- Edit/Delete actions -->
-    <div v-if="!blurred && canEdit && !editing" class="flex gap-2 mt-1 justify-end">
-      <BaseButton size="sm" variant="ghost" @click="startEdit">Edit</BaseButton>
-      <BaseButton size="sm" variant="ghost" @click="emit('delete', card)">Delete</BaseButton>
     </div>
   </div>
 </template>

@@ -1,10 +1,10 @@
 <template>
   <div class="flex flex-col items-center p-8">
     <RetroSessionList
+      :team-id="teamId"
       :team-name="teamName"
       :retro-sessions="retroSessionStore.retroSessions"
       @select="(id) => router.push({ name: 'retro-session', params: { teamId, retroSessionId: id } })"
-      @create-retro-session="handleCreateRetroSession"
     />
   </div>
 </template>
@@ -32,16 +32,4 @@ watch(
   { immediate: true },
 );
 
-async function handleCreateRetroSession(payload: {
-  name: string
-  votesPerParticipant: number | undefined
-  column1Name: string
-  column1Color: string
-  column2Name: string
-  column2Color: string
-  column3Name: string
-  column3Color: string
-}) {
-  await retroSessionStore.createRetroSession(teamId.value, payload);
-}
 </script>

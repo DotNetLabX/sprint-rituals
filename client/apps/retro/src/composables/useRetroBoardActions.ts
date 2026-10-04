@@ -29,8 +29,8 @@ export function useRetroBoardActions(retroSessionId: number, onError: (msg: stri
   const isDiscussingPhase = computed(() => currentPhase.value === 'Discussing')
   const showGroups = computed(() => ['Grouping', 'Voting', 'Discussing', 'Reporting'].includes(currentPhase.value))
   const isScrumMaster = computed(() => retroSessionStore.currentSummary?.isScrumMaster ?? false)
-  const canGroup = computed(() => policyStore.isAllowed(currentPhase.value, 'GroupCards'))
-  const canUngroup = computed(() => policyStore.isAllowed(currentPhase.value, 'UngroupCards'))
+  const canGroup = computed(() => isScrumMaster.value && policyStore.isAllowed(currentPhase.value, 'GroupCards'))
+  const canUngroup = computed(() => isScrumMaster.value && policyStore.isAllowed(currentPhase.value, 'UngroupCards'))
   const column1Groups = computed(() => [...cardGroupStore.column1Groups].sort((a, b) => voteStore.voteCountForGroup(b.id) - voteStore.voteCountForGroup(a.id)))
   const column2Groups = computed(() => [...cardGroupStore.column2Groups].sort((a, b) => voteStore.voteCountForGroup(b.id) - voteStore.voteCountForGroup(a.id)))
   const column3Groups = computed(() => [...cardGroupStore.column3Groups].sort((a, b) => voteStore.voteCountForGroup(b.id) - voteStore.voteCountForGroup(a.id)))
@@ -168,11 +168,19 @@ export function useRetroBoardActions(retroSessionId: number, onError: (msg: stri
 
   async function mergeGroups(source: CardGroup, target: CardGroup) {
     try {
+      // The drop target names the merged group (its title, or its displayed card text when untitled).
+      const targetName = (target.title || target.cards[0]?.text || '').slice(0, 100) || null
       const sourceIsSolo = source.cards.length === 1
       const targetIsSolo = target.cards.length === 1
-      if (sourceIsSolo && !targetIsSolo) await cardGroupStore.addCardToGroup(retroSessionId, target.id, source.cards[0]!.id)
-      else if (!sourceIsSolo && targetIsSolo) await cardGroupStore.addCardToGroup(retroSessionId, source.id, target.cards[0]!.id)
-      else await cardGroupStore.createGroup(retroSessionId, [...source.cards.map((c) => c.id), ...target.cards.map((c) => c.id)])
+      if (sourceIsSolo && !targetIsSolo) {
+        await cardGroupStore.addCardToGroup(retroSessionId, target.id, source.cards[0]!.id)
+        if (!target.title && targetName) await cardGroupStore.updateGroupTitle(retroSessionId, target.id, targetName)
+      } else if (!sourceIsSolo && targetIsSolo) {
+        await cardGroupStore.addCardToGroup(retroSessionId, source.id, target.cards[0]!.id)
+        await cardGroupStore.updateGroupTitle(retroSessionId, source.id, targetName)
+      } else {
+        await cardGroupStore.createGroup(retroSessionId, [...source.cards.map((c) => c.id), ...target.cards.map((c) => c.id)], targetName ?? undefined)
+      }
     } catch { onError('Failed to merge groups.') }
   }
 
