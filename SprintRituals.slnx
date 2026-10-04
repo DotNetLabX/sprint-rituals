@@ -17,11 +17,12 @@
     <Project Path="src/Modules/Xray/Xray.Contracts/Xray.Contracts.csproj" />
     <Project Path="src/Modules/Xray/Xray.GraphQL/Xray.GraphQL.csproj" />
   </Folder>
-  <Folder Name="/Services/" />
   <Folder Name="/Services/Reflekt/">
     <Project Path="src/Services/Reflekt/Reflekt.API/Reflekt.API.csproj" />
     <Project Path="src/Services/Reflekt/Reflekt.Domain/Reflekt.Domain.csproj" />
     <Project Path="src/Services/Reflekt/Reflekt.Persistence/Reflekt.Persistence.csproj" />
+    <Project Path="src/Services/Reflekt/Reflekt.Domain.Tests/Reflekt.Domain.Tests.csproj" />
+    <Project Path="src/Services/Reflekt/Reflekt.Persistence.Tests/Reflekt.Persistence.Tests.csproj" />
   </Folder>
   <Folder Name="/Services/Fokus/">
     <Project Path="src/Services/Fokus/Fokus.API/Fokus.API.csproj" />
@@ -34,22 +35,12 @@
     <Project Path="src/Services/Identity/Identity.API/Identity.API.csproj" />
     <Project Path="src/Services/Identity/Identity.Domain/Identity.Domain.csproj" />
     <Project Path="src/Services/Identity/Identity.Persistence/Identity.Persistence.csproj" />
-  </Folder>
-  <Folder Name="/src/" />
-  <Folder Name="/src/Services/" />
-  <Folder Name="/src/Services/Identity/">
     <Project Path="src/Services/Identity/Identity.API.Tests/Identity.API.Tests.csproj" />
-  </Folder>
-  <Folder Name="/src/Services/Reflekt/">
-    <Project Path="src/Services/Reflekt/Reflekt.Domain.Tests/Reflekt.Domain.Tests.csproj" />
-    <Project Path="src/Services/Reflekt/Reflekt.Persistence.Tests/Reflekt.Persistence.Tests.csproj" />
   </Folder>
   <Folder Name="/Services/Poker/">
     <Project Path="src/Services/Poker/Poker.API/Poker.API.csproj" />
     <Project Path="src/Services/Poker/Poker.Domain/Poker.Domain.csproj" />
     <Project Path="src/Services/Poker/Poker.Persistence/Poker.Persistence.csproj" />
-  </Folder>
-  <Folder Name="/src/Services/Poker/">
     <Project Path="src/Services/Poker/Poker.Domain.Tests/Poker.Domain.Tests.csproj" />
   </Folder>
 </Solution>

@@ -56,24 +56,20 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 
 // Per-prefix static file serving — each SPA lives in its own wwwroot subfolder.
 // Registration order matters: static files before auth so assets are served without cookie checks.
-app.UseStaticFiles(new StaticFileOptions
+// WebRootPath is null until wwwroot exists (no FE built yet); fall back to the content root so a
+// clean checkout can run the API against the Vite dev server without a prior frontend build.
+var webRoot = builder.Environment.WebRootPath
+    ?? Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
+foreach (var spa in new[] { "dashboard", "retro", "poker" })
 {
-    RequestPath = "/dashboard",
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
-        Path.Combine(builder.Environment.WebRootPath, "dashboard"))
-});
-app.UseStaticFiles(new StaticFileOptions
-{
-    RequestPath = "/retro",
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
-        Path.Combine(builder.Environment.WebRootPath, "retro"))
-});
-app.UseStaticFiles(new StaticFileOptions
-{
-    RequestPath = "/poker",
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
-        Path.Combine(builder.Environment.WebRootPath, "poker"))
-});
+    var spaPath = Path.Combine(webRoot, spa);
+    Directory.CreateDirectory(spaPath); // PhysicalFileProvider throws if the folder is absent
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        RequestPath = $"/{spa}",
+        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(spaPath)
+    });
+}
 
 app.UseAuthentication();
 app.UseAuthorization();

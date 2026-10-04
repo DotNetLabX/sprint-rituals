@@ -17,7 +17,11 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api': 'http://localhost:5100',
-      '/auth': 'http://localhost:5100'
+      '/auth': 'http://localhost:5100',
+      '/hubs': {
+        target: 'http://localhost:5100',
+        ws: true
+      }
     }
   },
   build: {
