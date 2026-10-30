@@ -12,6 +12,8 @@
 
 SprintRituals (one Host: Identity + Fokus + Reflekt + Poker) has no deploy path. ADR-024 fixes the shape: replace standalone Fokus on the work-tenant Linux App Service `<old-fokus-app>` (RG `<resource-group>`) on the **free F1 plan** (zero cost is binding), one instance, SQLite on `/home` exactly as the live apps run it, one deploy script run by a manual GitHub workflow with OIDC sign-in. Everything is config-driven so the same scripts can target a personal free subscription later.
 
+**Target changed (owner, 2026-10-30, plan P4):** the suite goes to a **new** app `<app-name>` on its own F1 plan `<plan-name>` in `<resource-group>` (Poland Central), beside Fokus; `<old-fokus-app>` is stopped at go-live (`az webapp stop`, never deleted or changed) and kept as the backup until the new app is proven. Where older text below says "replace `<old-fokus-app>`", "old app" or "cutover", read it for the new app: no old app is backed up, quiesced or rolled back; rollback is stopping or deleting the new app and starting `<old-fokus-app>` again (`az webapp start`).
+
 **Owner goal (2026-10-30):** the whole suite deployed together, free, for a demo — the three products sharing one sign-in (Identity), connected to the team's Jira, and shown working *together* (Reflekt's sprint picker and Poker's tickets come from Fokus over gRPC), not as separate apps. Free now, extendable later (→ Step 5 § Growing beyond free). The old Reflekt app (`<old-reflekt-app>.azurewebsites.net`, RG `<old-resource-group>`) is on the owner's personal account and is not touched by F8 (its data comes over in F9).
 
 Prior artifacts (grep `deploy|azure` over `docs/proposals`, `docs/specs`, `docs/backlog.md`): historical Fokus/Reflekt deployment references under `docs/specs/{fokus,reflekt}/`, and the proposal above (now Ratified → this feature). No other plan implements this deployment.
@@ -157,10 +159,11 @@ Accept:
 - `grep -c "Demo days (owner, 2026-10-30)" docs/architecture/decisions.md` = 1 and `grep -c "F8 never changes the personal-account Reflekt app" docs/architecture/decisions.md` = 1.
 
 ### Step 6 — Prepare, with no change to the live app (Owner: operator)
-- Add the Google redirect URI `https://<old-fokus-app>.azurewebsites.net/auth/callback`, keeping any existing URI.
+- Create the free plan and the app (owner, 2026-10-30 — plan P4): `az appservice plan create --name <plan-name> --resource-group <resource-group> --location polandcentral --is-linux --sku F1`, then `az webapp create --name <app-name> --resource-group <resource-group> --plan <plan-name> --runtime "DOTNETCORE:10.0"` (check the runtime string with `az webapp list-runtimes --os linux`). If the plan create is refused for a second free Linux plan, use `--plan <old-plan-name>`. HTTPS-only stays a `-Cutover` setting.
+- Add the Google redirect URI `https://<app-name>.azurewebsites.net/auth/callback` on the existing OAuth client, keeping every existing URI.
 - Create the OIDC app registration in tenant *the work tenant*:
   - a federated credential for `repo:ldumit/sprint-rituals:environment:production`;
-  - the role **Website Contributor**, scoped to the `<old-fokus-app>` site only.
+  - the role **Website Contributor**, scoped to the `<app-name>` site only.
 - In GitHub:
   - create the `production` environment, with deployment branches limited to `main`;
   - add the five repository variables.
@@ -172,9 +175,9 @@ Accept:
 ### Step 7 — Cutover, in one sitting, from the laptop (Owner: operator)
 The downtime window runs from step 1 to step 9. The cutover deploy runs from the laptop, because the GitHub runner is outside the allowed IP. Later deploys use the workflow.
 1. Add an access restriction allowing only your own IP (`az webapp config access-restriction add`). Confirm from another network (for example a phone on mobile data) that the site answers 403. **If the restriction cannot be applied or confirmed, stop here** — never start the new app publicly with an empty user table.
-2. Wait about 5 minutes with no traffic, so the old app is idle.
-3. Download `/home/site/wwwroot` as a zip, and the old database at the path `-Prepare` printed, together with any `-wal`/`-shm` files beside it.
-4. Record SHA-256 checksums and store everything outside Azure.
+2. — (new app: no old app to quiesce.)
+3. — (new app: no old build or database to back up; `<old-fokus-app>` is never touched.)
+4. —
 5. Run `provision.ps1 -Cutover`, then set any secret `-Prepare` reported missing — Google and Jira included (portal, or `az … -o none`).
 6. Run `deploy.ps1` from the laptop. Its smoke check runs from your allowed IP.
 7. Sign in with Google first, then confirm that the Admin user and the company domain are yours.
@@ -187,12 +190,12 @@ If a foreign Admin or company domain appears, keep the restriction, delete every
 Record each result in `implementation.md` as an `OPERATOR ACTION` line:
 - `/` redirects to `/dashboard/login`.
 - The Google sign-in URL's `redirect_uri` starts with `https://`, and the auth cookie is marked Secure.
-- On the SSH console (Kudu), `ls -la /home/data/sprint-rituals/` shows `identity.db`, `fokus.db`, `reflekt.db` and `poker.db`. The old database's checksum still matches the one recorded in Step 7.
+- On the SSH console (Kudu), `ls -la /home/data/sprint-rituals/` shows `identity.db`, `fokus.db`, `reflekt.db` and `poker.db`. `<old-fokus-app>` is stopped, not deleted (`az webapp show … --query state` = `Stopped`).
 - Run a Fokus sprint sync against the team's Jira. Developers appear, and the log has no Person-upsert warning.
 - Create a retro. The sprint picker lists the synced sprints (sprint catalog over gRPC), and its sprint-context panel loads (sprint analytics over gRPC).
 - Create a Poker sprint session. Its tickets load (Poker to Fokus over gRPC).
 - Open a Poker room as a guest in a second browser. Votes appear live, and the browser network tab shows a WebSocket upgrade (101).
-- Create an invitation. The link starts with `https://<old-fokus-app>.azurewebsites.net/invite/`, and a second Google account can redeem it.
+- Create an invitation. The link starts with `https://<app-name>.azurewebsites.net/invite/`, and a second Google account can redeem it.
 - Restart the site. Data is still there.
 
 A failure here starts a fix round. It is not a done-check Fail of Steps 1–5.
@@ -275,6 +278,16 @@ None — no business rules, formulas or data flows change.
 - **Rests on:** ADR-024 (F1, single instance, SQLite on `/home`)
 - **Confidence:** high — owner's words
 - **Source:** owner message, 2026-10-30
+- **State:** replaced by plan P4 (target app only; the rest stands)
+
+### P4 — A new app beside Fokus instead of replacing it
+- **By:** owner
+- **Decided:** deploy to a new app `<app-name>` on its own free plan `<plan-name>` (fallback: `<old-plan-name>` if a second free Linux plan is refused), RG `<resource-group>`, Poland Central; `<old-fokus-app>` is stopped at go-live — not deleted, settings and files kept — as the backup until the owner sees the new app running; `az webapp start` brings it back.
+- **Why:** the owner: "the only problme is the name so I would create a new app service same free concept as fokus called: https://<app-name>.azurewebsites.net". Architect's reading: an own plan keeps old Fokus and the suite from sharing one free plan's memory and CPU, and makes a demo-day B1 affect only the suite.
+- **Turned down:** replacing `<old-fokus-app>` in place (the 2026-10-05 decision); putting the app on `<old-plan-name>` (kept as the fallback).
+- **Rests on:** Azure allowing a second free Linux plan in this subscription and region (unverified — the fallback covers it).
+- **Confidence:** high for the new app (owner's words); medium for its own plan — the free-plan limit is unverified.
+- **Source:** owner messages, 2026-10-30 ("we can pause <old-plan-name> for a while, not delete because i need it as backup untill I see this new one running")
 - **State:** current
 
 ## Plan Review
