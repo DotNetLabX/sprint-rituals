@@ -76,8 +76,16 @@ Auth lives entirely in **Identity**. The Host wires `AddIdentityAuth` (Google + 
 |----|----------------------|------------------------|
 | `identity.db` | `IdentityDatabase` | 1st |
 | `fokus.db` | `Database` | 2nd |
+| `reflekt.db` | `ReflektDatabase` | 3rd |
+| `poker.db` | `PokerDatabase` | 4th |
 
-Both databases are created under `data/` relative to the Host working directory.
+All four databases are created under `data/` relative to the Host working directory.
+
+In Production (`src/Host/appsettings.Production.json`) every database lives at `/home/data/sprint-rituals/*.db`.
+
+## Deployment
+
+One free (F1) Linux App Service, single instance, SQLite on `/home`, deployed by `deploy/deploy.ps1` (laptop, or the manual `.github/workflows/deploy.yml`) — decision **ADR-024** in `docs/architecture/decisions.md`; operator runbook `docs/deployment-azure.md`. No script or workflow ever changes the plan tier.
 
 ## Port Convention
 

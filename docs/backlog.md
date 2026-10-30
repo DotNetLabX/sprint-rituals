@@ -141,6 +141,21 @@ The suite's third sprint ritual — real-time planning poker for sprint estimati
 
 ---
 
+# Deployment (Azure)
+
+Graduates `docs/proposals/azure-deployment-handoff.md` (ratified 2026-10-05). Governing decision: **ADR-024**.
+
+| ID | Slug | Type | Status | Definition | Depends on |
+|----|------|------|--------|------|-----------|
+| F8 | F8-AzureDeployment | technical (ADR-collapsed) | **Built** (2026-10-30) — operator cutover (plan Steps 6–8) owed | ADR-024 + `docs/specs/F8-AzureDeployment/delivery/plan.md` | — |
+| F9 | F9-ReflektDataCarryOver | technical (needs plan) | **Later** | ADR-024 (Data carry-over) | F8 live; read access to the personal-account `reflekt` app's `/home/data/reflekt.db` |
+| F10 | F10-NightlyDbSnapshot | technical (needs plan) | **Later** (owner, 2026-10-05) | ADR-024 (Storage — Backups) | F8 live. Free-plan safety net: the app writes a consistent copy of each SQLite database nightly to `/home/data/sprint-rituals/backups/`, keeping the last 7 |
+
+**Notes:**
+- F9 must land **before** Reflekt users are pointed at `/retro/`. Scope to settle at its planning: old Reflekt schema → new `ReflektDbContext` mapping, and old Reflekt users → Identity Persons (guests get no Person — ADR-022).
+
+---
+
 # Documentation Structure Port (`docs/` per-product namespacing — ADR-023)
 
 Per **ADR-023** + `docs/proposals/per-product-doc-namespacing.md`: docs organized per product with an always-load backbone + on-demand subtrees. Reference repos (`<fokus-repo>`, `<reflekt-repo>`) remain the canonical read-only archive — nothing is ever lost there.

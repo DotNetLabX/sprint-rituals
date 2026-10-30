@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: '10.0.x'
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Build .NET
+        run: dotnet build SprintRituals.slnx -c Release
+
+      - name: Test .NET
+        run: dotnet test SprintRituals.slnx -c Release --no-build
+
+      - name: Build client
+        working-directory: client
+        run: |
+          npm ci
+          npm run build
+
+      - name: Start Host in the background
+        env:
+          Google__ClientId: ci-placeholder-client-id
+          Google__ClientSecret: ci-placeholder-client-secret
+        run: |
+          nohup dotnet run --project src/Host -c Release --no-build --launch-profile http > host.log 2>&1 &
+
+      - name: Smoke check against the running Host
+        run: pwsh deploy/deploy.ps1 -SmokeOnly -BaseUrl http://localhost:5100 -TimeoutSeconds 120
+
+      - name: Smoke check fails against an unused port
+        run: |
+          if pwsh deploy/deploy.ps1 -SmokeOnly -BaseUrl http://localhost:5999 -TimeoutSeconds 10; then
+            echo "Smoke check passed against an unused port - expected a failure."
+            exit 1
+          fi
+
+      - name: Host log
+        if: always()
+        run: cat host.log || true

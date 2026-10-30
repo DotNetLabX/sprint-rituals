@@ -48,3 +48,8 @@ docs/audit/tool-calls.log
 # OS
 .DS_Store
 Thumbs.db
+
+# Deploy: local target config, cutover rollback snapshot, build artifacts
+deploy/deploy-config.ps1
+deploy/.cutover/
+artifacts/
