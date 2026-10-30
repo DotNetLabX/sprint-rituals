@@ -82,7 +82,7 @@ function Invoke-AzWrite([string]$Command, [string[]]$Extra) {
 }
 
 function Get-PlanInfo {
-    $planId = @(Invoke-AzRead 'webapp show' @('--query', 'appServicePlanId', '-o', 'tsv'))
+    $planId = @(Invoke-AzRead 'webapp show' @('--query', 'serverFarmId', '-o', 'tsv'))
     if ($DryRun) {
         Invoke-AzRead 'appservice plan show' @('--ids', '{planId}', '--query', '[name,sku.name,sku.tier]', '-o', 'tsv') -NoTarget | Out-Null
         return $null
@@ -105,7 +105,7 @@ function Assert-FreeTier($Plan) {
 }
 
 function Get-AppsOnPlan($Plan) {
-    $rows = @(Invoke-AzRead 'webapp list' @('--query', '[].[name,appServicePlanId]', '-o', 'tsv') -NoTarget)
+    $rows = @(Invoke-AzRead 'webapp list' @('--query', '[].[name,serverFarmId]', '-o', 'tsv') -NoTarget)
     if ($DryRun) { return @() }
     $names = foreach ($row in $rows) {
         $cols = $row -split "`t"
