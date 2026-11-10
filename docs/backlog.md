@@ -132,6 +132,7 @@ The suite's third sprint ritual — real-time planning poker for sprint estimati
 | ID | Slug | Type | Status | Spec | Depends on |
 |----|------|------|--------|------|-----------|
 | F6 | F6-PlanningPoker | feature (spec + plan) | **Spec Ready** (2026-06-21) | `docs/specs/F6-PlanningPoker/definition/spec.md` | Fokus (sprint catalog + Jira write-back), Identity (auth + Person), RA5 routing shell |
+| F7 | F7-PokerTicketContext | feature (spec + plan) | **Spec Ready** (2026-10-05) | `docs/specs/F7-PokerTicketContext/definition/spec.md` | F6 (Poker room), Fokus (Jira ticket fields: type, labels, description, subtasks, AI-Estimate) |
 
 **Notes:**
 - Two modes in v1: **sprint-bound** (Fokus tickets → Jira story-point write-back) and **free** (manual items, no write-back).

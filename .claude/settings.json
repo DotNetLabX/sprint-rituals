@@ -10,7 +10,8 @@
   },
   "enabledPlugins": {
     "nexus@claude-nexus": true,
-    "nexus-dotnet@claude-nexus": true
+    "nexus-dotnet@claude-nexus": true,
+    "nexus-channels@claude-nexus": false
   },
   "permissions": {
     "defaultMode": "bypassPermissions",

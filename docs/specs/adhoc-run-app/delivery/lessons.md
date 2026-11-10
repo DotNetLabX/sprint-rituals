@@ -90,6 +90,28 @@
   `mergeGroups` sets the title to the target's title, or its displayed card text when untitled
   (≤100 chars). FE-only; server title rules unchanged. Deviation from the ported spec, by owner ruling.
 
+- **Poker had no start page — spec Flow 1 (create session) was never built.** F6's plan step 10 scoped
+  only the room (`/poker/:sessionId`); the server endpoints (`POST /api/poker/sessions`,
+  `GET /api/poker/sprints`) and client calls (`sessionsApi.create`, store `fetchSprints`) existed but
+  nothing called them, so `/poker/` rendered empty. Every F6 gate (done-check, reviewer, Codex) passed
+  it. Added `StartSessionView` at `/` (sign-in gate; Sprint/Free; default sprint from the server's
+  Rule 16 `defaultSprintId`). Takeaway: a done-check should walk each spec user flow to a reachable
+  screen, not just verify built steps against the plan.
+
+- **Poker room: four integration breaks no gate exercised (F6 was never run end to end).**
+  1. Create: client read `{ id }`, server returns `sessionId` → room never opened (sessions still created).
+  2. Get session / tickets: bodyless GETs sent `Content-Type: application/json` → FastEndpoints tried to
+     bind an empty JSON body → 400 "input does not contain any JSON tokens"; curl (no header) got 200.
+     Found via the browser's network log, not code reading.
+  3. Sprint-bound items: `PlanningSession.AddSprintBoundItem` (Rule 19, unit-tested) had **no caller**;
+     `GET .../tickets` only listed tickets. Added `POST /api/poker/sessions/{id}/tickets/sync` + SM
+     "Refresh from Jira" button; SM auto-syncs on entering a sprint-bound room.
+  4. Room decided SM/guest before `fetchMe` settled (App.vue fires it un-awaited); and `ItemSelected`
+     carries only an id, so clients that loaded before items existed never saw the active item —
+     store now reloads the session on an unknown item id.
+  - Takeaway: a domain method with only test callers is a red flag for an unwired flow; and every
+    client↔server call needs one real round-trip before a feature closes.
+
 ## Skill Gaps
 
 - None found this pass.

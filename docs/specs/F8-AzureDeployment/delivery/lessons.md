@@ -38,3 +38,7 @@
 
 - **Plan acceptances the developer seat cannot run must name their runner.** Step 2's `deploy.ps1` runs were refused by the test-entry gate on the developer seat; the coordinator ran them. A plan whose Accept lines run a build script should say "run by the main session" up front, so the developer doesn't spend attempts on them. [F8-AzureDeployment, 2026-10-30, architect]
 - **A laptop smoke pass hid a CI-only start-up failure.** The local Host had Google values from user secrets; a clean runner has none, and the Google handler's option check runs on every request. Only Codex's code-grounded read caught it. For any CI step that starts the app, list every setting validated at start-up and supply non-secret placeholders. [F8-AzureDeployment, 2026-10-30, architect]
+
+## Solo Lessons
+- A `403` page on App Service names its own cause: the status line `403 Ip Forbidden` and the `x-ms-forbidden-ip` header give the refused address, so compare that with the access rule before suspecting the deploy. The runbook's Cutover section does not say an address-locked window ends the moment the owner's home address changes.
+- When moving an address rule, add the new address before removing the old, so the rule list is never left without an allow entry during the swap.

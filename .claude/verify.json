@@ -1,0 +1,16 @@
+{
+  "roles": {
+    "build": "dotnet build SprintRituals.slnx",
+    "unit": "dotnet test --blame-hang-timeout 30s --blame-hang-dump-type none src/Services/Fokus/Fokus.Domain.Tests/Fokus.Domain.Tests.csproj --filter \"Speed!=Slow\" && dotnet test --blame-hang-timeout 30s --blame-hang-dump-type none src/Services/Poker/Poker.Domain.Tests/Poker.Domain.Tests.csproj --filter \"Speed!=Slow\" && dotnet test --blame-hang-timeout 30s --blame-hang-dump-type none src/Services/Reflekt/Reflekt.Domain.Tests/Reflekt.Domain.Tests.csproj --filter \"Speed!=Slow\"",
+    "full": "dotnet test --blame-hang-timeout 30s --blame-hang-dump-type none SprintRituals.slnx"
+  },
+  "slow": { "thresholdMs": 2000, "runner": "vstest", "targets": ["SprintRituals.slnx"] },
+  "stepLimitSeconds": 45,
+  "testStop": { "fastSeconds": 3, "slowSeconds": 30 },
+  "speedUpSeconds": 5,
+  "measured": {
+    "build": { "ms": 16942, "at": "2026-10-30" },
+    "unit": { "ms": 13284, "at": "2026-10-30" },
+    "full": { "ms": 15603, "at": "2026-10-30" }
+  }
+}

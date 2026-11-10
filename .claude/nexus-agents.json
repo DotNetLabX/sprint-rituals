@@ -1,0 +1,4 @@
+{
+  "gear": "off",
+  "features": { "planCutCandidates": true, "skillsPerStep": true }
+}
