@@ -2,7 +2,7 @@
 
 **Checked by:** Architect (independent done-check; I authored the plan, the developer wrote the skills — author≠reviewer holds).
 **Artifact under check:** `docs/specs/adhoc-Pass1-SkillRepair/delivery/implementation.md` vs `plan.md`.
-**Skill deliverables:** `<plugin-repo>\plugins\nexus-dotnet\skills\{name}\SKILL.md` (separate plugin repo — verified via `git -C "<plugin-repo>" diff/status` and direct file greps, NOT taken from the implementation.md narrative).
+**Skill deliverables:** `<plugin-repo>/plugins/nexus-dotnet/skills/{name}/SKILL.md` (separate plugin repo — verified via `git -C "<plugin-repo>" diff/status` and direct file greps, NOT taken from the implementation.md narrative).
 
 ## VERDICT: PASS
 
@@ -53,6 +53,6 @@ Plus mandated housekeeping (C-2): `skill-backlog.md` (new), two `CHANGELOG.md` (
 
 ## Note for the reviewer (Step 2)
 
-Done-check is a no-code-reading conformance gate; I verified *presence and accept-criteria* of the encoded rules via grep. The Step 2 reviewer should still read the 5 SKILL.md bodies for *quality* (example correctness, prose clarity, whether the C# examples truly compile against `Blocks.Domain`). The deliverables live in `<plugin-repo>` — review that diff, not sprint-rituals.
+Done-check is a no-code-reading conformance gate; I verified *presence and accept-criteria* of the encoded rules via grep. The Step 2 reviewer should still read the 5 SKILL.md bodies for *quality* (example correctness, prose clarity, whether the C# examples truly compile against `Blocks.Domain`). The deliverables live in the plugin source repo — review that diff, not sprint-rituals.
 
 Done check: PASS — proceed to Step 2 (reviewer).

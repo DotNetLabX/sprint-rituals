@@ -76,8 +76,8 @@ Every change is **additive and flag-gated by the registry's presence** — flat 
 
 ## Graduate-to-spec
 
-Technical branch (ADR-28): on ratification this graduates to a **tech-spec in the nexus plugin repo** with ADRs extracted per axis decision (A/B/C). It does **not** graduate here — sprint-rituals is the *consuming* project; the binding change ships from `<plugin-repo>`. This repo keeps ADR-023 (the local layout decision) + `docs/plugin-feedback/nexus-1.16.1-2026-06-21.md` (the maintainer hand-off).
+Technical branch (ADR-28): on ratification this graduates to a **tech-spec in the nexus plugin repo** with ADRs extracted per axis decision (A/B/C). It does **not** graduate here — sprint-rituals is the *consuming* project; the binding change ships from the plugin source repo. This repo keeps ADR-023 (the local layout decision) + `docs/plugin-feedback/nexus-1.16.1-2026-06-21.md` (the maintainer hand-off).
 
 ## Provenance
 
-Session "folder-structure", 2026-06-21 (architect). Fed by: ADR-023; the verified nexus-1.16.1 context-loading investigation (captured in the plugin-feedback file); structural maps of `<fokus-repo>\docs` and `<reflekt-repo>\docs`.
+Session "folder-structure", 2026-06-21 (architect). Fed by: ADR-023; the verified nexus-1.16.1 context-loading investigation (captured in the plugin-feedback file); structural maps of `<fokus-repo>/docs` and `<reflekt-repo>/docs`.

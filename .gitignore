@@ -53,3 +53,11 @@ Thumbs.db
 deploy/deploy-config.ps1
 deploy/.cutover/
 artifacts/
+
+# Build output and tool state kept out of the repo
+.omc/
+deploy.zip
+src/Services/*/*.API/wwwroot/
+.claude/.worktree-target
+.claude/approval-scope/
+.claude/pipeline-state/

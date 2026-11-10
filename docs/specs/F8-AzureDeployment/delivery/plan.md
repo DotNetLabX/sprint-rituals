@@ -75,7 +75,7 @@ Accept (PowerShell, `ConvertFrom-Json` on the file):
 
 ### Step 2 — Deploy script
 Effort points: 5
-Create `deploy/deploy.ps1`, `deploy/deploy-config.example.ps1`, and add `deploy/deploy-config.ps1`, `deploy/.cutover/` and `artifacts/` to `.gitignore`. The script runs unchanged under **Windows PowerShell 5.1 and PowerShell 7** (laptop has 5.1; the runner has 7). Pattern reference (feature surface, not a skill pattern): `<fokus-repo>\deploy.ps1` — read-only, never modified.
+Create `deploy/deploy.ps1`, `deploy/deploy-config.example.ps1`, and add `deploy/deploy-config.ps1`, `deploy/.cutover/` and `artifacts/` to `.gitignore`. The script runs unchanged under **Windows PowerShell 5.1 and PowerShell 7** (laptop has 5.1; the runner has 7). Pattern reference (feature surface, not a skill pattern): `<fokus-repo>/deploy.ps1` — read-only, never modified.
 - Inputs: `-AppName`, `-ResourceGroup`, optional `-Subscription`; when omitted, read from `deploy/deploy-config.ps1` if present; fail with a clear message if still missing.
 - Modes: default = build then deploy; `-BuildOnly` = build and zip, no Azure call; `-SkipBuild` = deploy an existing `artifacts/deploy.zip`, failing fast with a clear message if the zip is missing or has no `Host.dll` entry (checked inside the zip — the deploy job has no unpacked publish folder); `-SmokeOnly -BaseUrl {url}` = run only the smoke check.
 - Build: `client` → `npm ci` + `npm run build`; `dotnet publish src/Host -c Release -o artifacts/publish`; zip to `artifacts/deploy.zip` with **forward-slash entry paths** (via .NET `System.IO.Compression`, not `tar -a` or 5.1's `Compress-Archive`).
@@ -123,12 +123,12 @@ Accept:
 - `grep -c "id-token: write" .github/workflows/deploy.yml` = 1, and it sits under `jobs.deploy`. `grep -c "id-token" .github/workflows/ci.yml` = 0.
 - `grep -nE "npm |dotnet " .github/workflows/deploy.yml` hits only lines inside `jobs.build`.
 - `grep -rn "secrets\." .github/workflows/` = 0 hits; every `uses:` line ends in a 40-character SHA.
-- `grep -rnE "<old-resource-group>|reflekt\.azurewebsites" deploy .github` = 0 hits (the personal-account Reflekt app is never a target).
+- `grep -rnE "<old-resource-group>|<old-reflekt-app>\.azurewebsites" deploy .github` = 0 hits (the personal-account Reflekt app is never a target).
 - What a PASS here does **not** prove: the first green GitHub run is Step 8's (operator).
 
 ### Step 5 — Runbook, ADR-024 amendment and repo pointers
 Effort points: 3
-Create `docs/deployment-azure.md` (operator runbook, following the structure of `<fokus-repo>\docs\deployment-azure.md`). It covers, in order:
+Create `docs/deployment-azure.md` (operator runbook, following the structure of `<fokus-repo>/docs/deployment-azure.md`). It covers, in order:
 - **Prerequisites:** Azure CLI; Node 24 and the .NET 10 SDK for laptop deploys; PowerShell 7 is optional.
 - **Zero cost:** the app stays on F1. Its limits: one allowance of 60 CPU-minutes a day — when it is used up the site stops until the next day's reset; 5 WebSocket connections for all three products together — past that, browsers fall back to slower transports and keep working; the site sleeps after about 20 idle minutes, so the first request is slow. No built-in backup; the nightly snapshot is F10.
 - **Demo day** — for a demo with more than about 5 people live, or one longer than a short walkthrough:
@@ -161,7 +161,7 @@ Accept:
 ### Step 6 — Prepare, with no change to the live app (Owner: operator)
 - Create the free plan and the app (owner, 2026-10-30 — plan P4): `az appservice plan create --name <plan-name> --resource-group <resource-group> --location polandcentral --is-linux --sku F1`, then `az webapp create --name <app-name> --resource-group <resource-group> --plan <plan-name> --runtime "DOTNETCORE:10.0"` (check the runtime string with `az webapp list-runtimes --os linux`). If the plan create is refused for a second free Linux plan, use `--plan <old-plan-name>`. HTTPS-only stays a `-Cutover` setting.
 - Add the Google redirect URI `https://<app-name>.azurewebsites.net/auth/callback` on the existing OAuth client, keeping every existing URI.
-- Create the OIDC app registration in tenant *the work tenant*:
+- Create the OIDC app registration in the work tenant:
   - a federated credential for `repo:ldumit/sprint-rituals:environment:production`;
   - the role **Website Contributor**, scoped to the `<app-name>` site only.
 - In GitHub:

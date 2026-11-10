@@ -3,7 +3,7 @@
 ## Status: COMPLETE
 
 ## What Was Built
-- Scaffolded the SprintRituals suite repo at `this repo/` — a modular monolith Host with Identity service (auth, persons, users) and ported Fokus service (AppUser removed, Invitations kept). Includes BuildingBlocks, Jira/Xray modules, and frontend client.
+- Scaffolded the SprintRituals suite repo (this repo) — a modular monolith Host with Identity service (auth, persons, users) and ported Fokus service (AppUser removed, Invitations kept). Includes BuildingBlocks, Jira/Xray modules, and frontend client.
 
 ## Key Outcomes
 - 11 projects in SprintRituals.slnx, all building clean (0 errors)

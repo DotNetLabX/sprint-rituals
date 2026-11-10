@@ -13,7 +13,7 @@ The codebase is mid-migration from the Fokus-standalone era (`v1.md`) toward the
 
 This is a **refactoring** pass: behavior-preserving. The acceptance bar is a green build with the four debts removed — no functional change. Every defect is a **problem class** (ADR-003 / engineering-discipline): fix all instances, not the cited examples.
 
-**Decision order (ADR-003):** correct skill → reference project `<reference-repo>` → fix/create the skill. The reference project has been read; its patterns anchor every step below.
+**Decision order (ADR-003):** correct skill → the reference codebase → fix/create the skill. The reference project has been read; its patterns anchor every step below.
 
 ## Scope
 
@@ -34,7 +34,7 @@ This is a **refactoring** pass: behavior-preserving. The acceptance bar is a gre
 
 | Step | Skill | Disposition | Feature-Specific Inputs | Gap? |
 |------|-------|-------------|------------------------|------|
-| 1 | (none — CPM) | — | Reference props: `<reference-repo>\src\Directory.Packages.props`. All 18 csproj under `src/`. | Log `central-package-management` skill gap to lessons.md |
+| 1 | (none — CPM) | — | Reference props: `<reference-repo>/src/Directory.Packages.props`. All 18 csproj under `src/`. | Log `central-package-management` skill gap to lessons.md |
 | 2 | (none — framework currency) | — | Modern `Send.*` map; FastEndpoints bump; exclude one HttpClient `SendAsync`. Reference uses FastEndpoints 7.0.1. | Log `framework-currency` rule/skill gap to lessons.md |
 | 3 | service-registration | Build | `Migrate<TDbContext>(this IHost)` helper does not exist locally → build it in `Blocks.EntityFrameworkCore` (reference: `Blocks.EntityFrameworkCore/Extensions/DbContextExtensions.cs`), then follow the skill. | |
 | 4 | service-registration | Follow | Module DI: `AddFokusModule`/`AddIdentityModule` absorb MassTransit, gRPC server, SignalR, seeding; `Map{Module}Endpoints`; thin `Program.cs`. | |
@@ -59,7 +59,7 @@ Run `dotnet build SprintRituals.slnx` after **each** step (known-deviation: buil
 
 ### Step 1 — Central Package Management (ADR-013)
 
-Introduce CPM across all 18 projects. **Disposition: None** (no skill; pattern from reference `<reference-repo>\src\Directory.Packages.props`).
+Introduce CPM across all 18 projects. **Disposition: None** (no skill; pattern from reference `<reference-repo>/src/Directory.Packages.props`).
 
 - **Create** `src/Directory.Packages.props` with `<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>` and (recommended, matching reference) `<CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>`. Declare one `<PackageVersion Include="..." Version="..." />` per distinct package, using the versions currently pinned in the csproj files.
 - **Edit** every `.csproj` under `src/` (all 18): strip the `Version="..."` attribute from each `<PackageReference Include="..." />`. Preserve all other attributes/child elements (e.g. `Microsoft.EntityFrameworkCore.Design`'s `<PrivateAssets>`/`<IncludeAssets>` block stays).
@@ -83,7 +83,7 @@ Migrate the deprecated API and bump the framework. **Disposition: None** (no fra
 
 Build the migration helper the thin Program.cs depends on. **Disposition: Build then Follow `service-registration`.**
 
-- **Build** `Migrate<TDbContext>(this IHost app) where TDbContext : DbContext` in `src/BuildingBlocks/Blocks.EntityFrameworkCore/Extensions/DbContextExtensions.cs` (create the file/folder; reference shape: `<reference-repo>\src\BuildingBlocks\Blocks.EntityFrameworkCore\Extensions\DbContextExtensions.cs`). Creates a scope, resolves the context, calls `Database.Migrate()`, returns the host.
+- **Build** `Migrate<TDbContext>(this IHost app) where TDbContext : DbContext` in `src/BuildingBlocks/Blocks.EntityFrameworkCore/Extensions/DbContextExtensions.cs` (create the file/folder; reference shape: `<reference-repo>/src/BuildingBlocks/Blocks.EntityFrameworkCore/Extensions/DbContextExtensions.cs`). Creates a scope, resolves the context, calls `Database.Migrate()`, returns the host.
 - **Preserve the SQLite directory-creation side effect.** Today `Program.cs:44–72` ensures the SQLite data directory exists before `MigrateAsync` (SQLite does not create the parent dir). The helper must reproduce this: derive the `DataSource` path from the connection string and `Directory.CreateDirectory(...)` before migrating. Do **not** drop this — losing it breaks first-run startup. (If you prefer the dir-creation to live in the module's `Add{Module}Persistence`/migrate step instead of the generic helper, that is acceptable as long as the behavior is preserved; the generic helper is the reference default.)
 - **Accept:** build green; `app.Migrate<IdentityDbContext>()` and `app.Migrate<FokusDbContext>()` compile and, on a clean machine with no `data/` dir, create both databases exactly as before.
 - **Confidence: high** — direct reference port.

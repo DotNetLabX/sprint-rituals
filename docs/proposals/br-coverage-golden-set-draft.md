@@ -2,7 +2,7 @@
 
 **Status:** Draft — awaiting user confirm/reject per rule
 **Date:** 2026-06-11
-**Method (source laddering):** original Fokus KB/specs (`<fokus-repo>\docs\`) attest *intent*; current code (`sprint-rituals` Fokus.Domain) attests *implementation*. A rule is a golden candidate only when **both layers attest it independently** (dual attestation = high confidence). Raw mining output: `docs/audit/research-raw/golden-docs-mining.md` + `golden-code-mining.md`.
+**Method (source laddering):** original Fokus KB/specs (`<fokus-repo>/docs/`) attest *intent*; current code (`sprint-rituals` Fokus.Domain) attests *implementation*. A rule is a golden candidate only when **both layers attest it independently** (dual attestation = high confidence). Raw mining output: `docs/audit/research-raw/golden-docs-mining.md` + `golden-code-mining.md`.
 
 **Purpose:** held-out benchmark for the harness's precision/recall. **The harness must never see this file** — once confirmed, it moves to `docs/audit/golden-set.md` (NOT `docs/kb/`), excluded from harness inputs by rule.
 

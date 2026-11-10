@@ -36,7 +36,7 @@ Which spec section, domain rule, or external system defines this concept.
 
 - Section order must match the schema above. Agents scan by heading name.
 - `## Rules` captures business invariants. `## Edge Cases` captures boundary conditions. Don't mix them.
-- `## Key Files` paths must be relative to the repo root (e.g., `src/Services/Fokus/Fokus.Domain/Aggregates/Sprint.cs`).
+- `## Key Files` paths must be relative to the repo root (e.g., `src/Services/Fokus/Fokus.Domain/Sprint/Sprint.cs`).
 - Keep entries to ~60 lines total. If an entry grows beyond 80 lines, split into sub-entries.
 - When deprecating: add `## Status: Deprecated` at the top, keep all other sections intact.
 

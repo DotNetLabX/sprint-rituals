@@ -1,9 +1,9 @@
 # Reflekt Lift and Shift (RA1) — Implementation
 
 ## Files Created
-- `src/Services/Reflekt/Reflekt.API/` — copied from <reflekt-repo>; converted Sdk.Web → Sdk + FrameworkReference; removed Program.cs, Properties/, appsettings*.json, wwwroot/, deploy.zip, publish/, data/, bin/, obj/
-- `src/Services/Reflekt/Reflekt.Domain/` — copied from <reflekt-repo>; removed bin/, obj/
-- `src/Services/Reflekt/Reflekt.Persistence/` — copied from <reflekt-repo>; removed bin/, obj/
+- `src/Services/Reflekt/Reflekt.API/` — copied from the original Reflekt project; converted Sdk.Web → Sdk + FrameworkReference; removed Program.cs, Properties/, appsettings*.json, wwwroot/, deploy.zip, publish/, data/, bin/, obj/
+- `src/Services/Reflekt/Reflekt.Domain/` — copied from the original Reflekt project; removed bin/, obj/
+- `src/Services/Reflekt/Reflekt.Persistence/` — copied from the original Reflekt project; removed bin/, obj/
 - `src/Services/Reflekt/Reflekt.Persistence/DesignTimeDbContextFactory.cs` — design-time factory for `dotnet ef` (Persistence-as-startup; no Program.cs)
 - `src/Services/Reflekt/Reflekt.Persistence/Migrations/20260614100328_InitialReflektSchema.cs` — EF delta: adds audit props (CreatedById, CreatedOn, LastModifiedById, LastModifiedOn) to all aggregate tables (Votes, Users, Teams, Sprints, Participants, Cards, CardGroups); non-zero because target AggregateRoot exposes these as public properties that EF picks up
 

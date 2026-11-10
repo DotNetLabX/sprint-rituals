@@ -1,6 +1,6 @@
 # F8-AzureDeployment — Communication log
 
-**Lane:** architect-led, light (owner pick 2026-10-30) · **Tree:** this repo (branch F8-AzureDeployment) · **Session:** b1593ba1-a310-4ac9-897f-6db5c9a10fb8
+**Lane:** architect-led, light (owner pick 2026-10-30) · **Tree:** the worktree (branch F8-AzureDeployment) · **Session:** b1593ba1-a310-4ac9-897f-6db5c9a10fb8
 **Agents:** dev-s1 (nexus:developer, steps 1–5) — a791f3286bc6e3522 · done-check (nexus:architect, medium) — a661bb592314b1bca · reviewer-second (nexus:reviewer, sonnet, medium) — afb5b49d601b4625f · Codex code review — job task-mvuqcl53-n4k81h (no --effort: repo sets no codex.effort, so not lowered) · dev-fix-c1 (nexus:developer, fix round 1) — aba2d078900e4d0fc
 
 | time (UTC) | from → to | message |

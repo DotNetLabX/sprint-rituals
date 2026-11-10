@@ -84,7 +84,7 @@ ADR-006 (the input side of the domain boundary) — which the prior in-context c
 
 | Plan claim | Verified against | Result |
 |---|---|---|
-| Plugin source repo at `<plugin-repo>`, 5 skills under `plugins/nexus-dotnet/skills/`, remote `DotNetLabX/claude-nexus` | `git -C ... remote -v`; `ls skills/` | CONFIRMED (remote `https://.../DotNetLabX/claude-nexus`) |
+| Plugin source repo, 5 skills under `plugins/nexus-dotnet/skills/`, remote `DotNetLabX/claude-nexus` | `git -C ... remote -v`; `ls skills/` | CONFIRMED (remote `https://.../DotNetLabX/claude-nexus`) |
 | `domain-service`, `central-package-management`, `framework-currency` do NOT yet exist (creates) | `ls skills/{name}` → not found | CONFIRMED |
 | No local `.claude/skills/` or `SKILL.md` in sprint-rituals (plugin-canonical, Q1) | `find` → none | CONFIRMED |
 | `scripts/` holds only `gen-commands.mjs` + `gen-omni.mjs` (neither writes install cache) | `ls scripts/` (+ `skill-classification.md`, see LOW-5) | CONFIRMED |
@@ -120,8 +120,8 @@ ADR-006 (the input side of the domain boundary) — which the prior in-context c
 | # | Severity | Location | Issue | Recommendation |
 |---|---|---|---|---|
 | 1 | MEDIUM | Step 5 point 3 & point 6; per-skill bar (c) (plan line 83) | **FastEndpoints version mismatch / unstated target.** The live solution declares **FastEndpoints 8.1.0** (`src/Directory.Packages.props:18`), but Step 5 point 6's only currency anchor is "reference project uses FastEndpoints **7.x** `Send.*`," and Step 5 point 3 says "verify exact modern names against the installed FastEndpoints package … (names shifted across 6→7)" without naming which package/version the developer must check. The `Send.*` surface can shift again 7→8. A developer anchoring on the 7.x reference may encode a name that is stale for the 8.1.0 target. | In Step 5, state that the **target solution is on FastEndpoints 8.1.0** and the migration-map names must be verified against the **8.x** package API (the reference's 7.x is illustrative only). Add "8 names may differ from 7" to the version caution. |
-| 2 | MEDIUM | Steps 1–5 disposition ("Follow `improve-skills`"); not addressed anywhere | **`improve-skills` housekeeping artifacts are unrouted in the two-repo model.** `improve-skills` mandates: log every create/fix to `docs/skill-backlog.md`, append a `CHANGELOG.md` entry per modified skill, and update `.claude/README.md` skill count. The plan invokes `improve-skills` but never says (a) whether these housekeeping steps apply, or (b) which repo they target. Under Q1 they belong in the **plugin repo** (`<plugin-repo>`), not sprint-rituals — but the plan is silent, so the developer may skip them or write them into the wrong repo. | Add one line to the Steps 1–5 disposition notes: the `improve-skills` backlog/CHANGELOG/README housekeeping targets the **plugin repo**, or is explicitly waived for this pass (state which). If not waived, name the plugin-repo paths. |
-| 3 | MEDIUM | Step 6 point 1 (sync command) | **`--plugin-dir` points at `nexus-dotnet` only; the `nexus` core dependency may not load.** The plan's command is `claude --plugin-dir <plugin-repo>\plugins\nexus-dotnet`. Per the plugin README ADR-3, `nexus-dotnet` declares `dependencies: ["nexus"]`; the README's own dev-loop example (ADR-1) uses `--plugin-dir <repo>/plugins/nexus` (the core). In cache-bypass mode a single `--plugin-dir` at the extension may not auto-load the core dependency, which can break the discoverability dry-run that Step 6 is the gate for. | Verify the exact dev-loop invocation against ADR-1/ADR-3 (likely both plugins, or the core, must be on the `--plugin-dir` path). Record the working command in implementation.md as the Step 6 deliverable already requires. |
+| 2 | MEDIUM | Steps 1–5 disposition ("Follow `improve-skills`"); not addressed anywhere | **`improve-skills` housekeeping artifacts are unrouted in the two-repo model.** `improve-skills` mandates: log every create/fix to `docs/skill-backlog.md`, append a `CHANGELOG.md` entry per modified skill, and update `.claude/README.md` skill count. The plan invokes `improve-skills` but never says (a) whether these housekeeping steps apply, or (b) which repo they target. Under Q1 they belong in the **plugin repo** (the plugin source repo), not sprint-rituals — but the plan is silent, so the developer may skip them or write them into the wrong repo. | Add one line to the Steps 1–5 disposition notes: the `improve-skills` backlog/CHANGELOG/README housekeeping targets the **plugin repo**, or is explicitly waived for this pass (state which). If not waived, name the plugin-repo paths. |
+| 3 | MEDIUM | Step 6 point 1 (sync command) | **`--plugin-dir` points at `nexus-dotnet` only; the `nexus` core dependency may not load.** The plan's command is `claude --plugin-dir <plugin-repo>/plugins/nexus-dotnet`. Per the plugin README ADR-3, `nexus-dotnet` declares `dependencies: ["nexus"]`; the README's own dev-loop example (ADR-1) uses `--plugin-dir <repo>/plugins/nexus` (the core). In cache-bypass mode a single `--plugin-dir` at the extension may not auto-load the core dependency, which can break the discoverability dry-run that Step 6 is the gate for. | Verify the exact dev-loop invocation against ADR-1/ADR-3 (likely both plugins, or the core, must be on the `--plugin-dir` path). Record the working command in implementation.md as the Step 6 deliverable already requires. |
 | 4 | LOW | Step 3 point 3 (contrast with `extract-feature-service`) | **Latent cross-skill naming inconsistency.** `extract-feature-service` lists `SprintIssueSyncService` (with `Service` suffix) as a *good* example (its line 21) right alongside `HealthScoreCalculator`. Step 3 cross-references this skill for contrast while simultaneously banning the `Service` suffix for domain services. A reader comparing the two skills sees a mixed signal. `extract-feature-service` is out of Pass 1 scope, so this is not a fix here. | When writing the Step 3 contrast, scope the no-suffix rule explicitly to *domain* services and note that API-layer operation services (`extract-feature-service`) follow their own naming — so the two don't read as contradictory. (Plan already gestures at this; make it explicit.) Optionally flag the `extract-feature-service` example to the team-lead as a future cleanup. |
 | 5 | LOW | Step 6 point 1 ("Re-confirm `scripts/` contents if it changed") | **`scripts/` has a third entry the plan doesn't name.** `scripts/` also contains `skill-classification.md` (alongside `gen-commands.mjs` + `gen-omni.mjs`). It is a doc, not a build/sync script, so the plan's conclusion ("no cache-build script to run") is unaffected — but the plan's enumeration is presented as exhaustive ("`scripts/` holds only…") and is not. | Update the enumeration to "two `.mjs` scripts (`gen-commands`, `gen-omni`) plus `skill-classification.md` (a doc)" so the re-confirm step has the true baseline. |
 | 6 | LOW | Step 1 SMELL description (plan line 105) | **Minor line-number drift.** Plan cites "Service class — primary constructor with repository dependencies" at "line ~34"; it is actually `analytics-computation-service/SKILL.md:32`. The `~` hedges it and the grep-based accept criterion (Step 1 "Grep the edited file for `response record` / `sealed record.*return`") does not depend on the number. Cosmetic. | No action required; optionally correct to line 32. |
@@ -155,19 +155,19 @@ ADR-006 (the input side of the domain boundary) — which the prior in-context c
 
 | Item | Path |
 |---|---|
-| Plan under review | `docs\specs\adhoc-Pass1-SkillRepair\delivery\plan.md` |
-| Resolved design answers | `docs\specs\adhoc-Pass1-SkillRepair\delivery\questions.md` |
-| ADRs | `docs\architecture\decisions.md` |
-| SMELL skill (input) | `<plugin-repo>\plugins\nexus-dotnet\skills\analytics-computation-service\SKILL.md` (lines 31, 73) |
-| Gap skill | `<plugin-repo>\plugins\nexus-dotnet\skills\domain-patterns\SKILL.md` (lines 27–49) |
+| Plan under review | `docs/specs/adhoc-Pass1-SkillRepair/delivery/plan.md` |
+| Resolved design answers | `docs/specs/adhoc-Pass1-SkillRepair/delivery/questions.md` |
+| ADRs | `docs/architecture/decisions.md` |
+| SMELL skill (input) | `<plugin-repo>/plugins/nexus-dotnet/skills/analytics-computation-service/SKILL.md` (lines 31, 73) |
+| Gap skill | `<plugin-repo>/plugins/nexus-dotnet/skills/domain-patterns/SKILL.md` (lines 27–49) |
 | Already-fixed (verified) | `...\skills\persistence-patterns\SKILL.md` (lines 80, 105); `...\skills\create-aggregate\workflows\` (4 files) |
 | Contrast target | `...\skills\extract-feature-service\SKILL.md` (line 56; Service-suffix example line 21) |
-| Authoring skill | `<plugin-repo>\plugins\nexus\skills\improve-skills\SKILL.md` |
-| Acceptance-bar source | `<plugin-repo>\plugins\nexus\skills\create-implementation-plan\SKILL.md` (§5) |
-| Cache/release model | `<plugin-repo>\docs\architecture\README.md` (constraint #3, ADR-1, ADR-3, ADR-9, Known limitations P2) |
-| Live CPM example (FE 8.1.0) | `src\Directory.Packages.props` (line 18) |
-| Reference anchors | `docs\proposals\reference-patterns-domain.md` (§1/§3/§6); `reference-patterns-structure.md` (§1) |
-| Plugin version | `<plugin-repo>\plugins\nexus-dotnet\.claude-plugin\plugin.json` (0.1.1) |
+| Authoring skill | `<plugin-repo>/plugins/nexus/skills/improve-skills/SKILL.md` |
+| Acceptance-bar source | `<plugin-repo>/plugins/nexus/skills/create-implementation-plan/SKILL.md` (§5) |
+| Cache/release model | `<plugin-repo>/docs/architecture/README.md` (constraint #3, ADR-1, ADR-3, ADR-9, Known limitations P2) |
+| Live CPM example (FE 8.1.0) | `src/Directory.Packages.props` (line 18) |
+| Reference anchors | `docs/proposals/reference-patterns-domain.md` (§1/§3/§6); `reference-patterns-structure.md` (§1) |
+| Plugin version | `<plugin-repo>/plugins/nexus-dotnet/.claude-plugin/plugin.json` (0.1.1) |
 
 ---
 

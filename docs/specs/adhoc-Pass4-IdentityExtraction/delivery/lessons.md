@@ -1,6 +1,6 @@
 # Identity Extraction (Pass 4) — Lessons
 
-> **Learner consolidation — 2026-06-10** (→ `<plugin-repo>`)
+> **Learner consolidation — 2026-06-10** (→ the plugin source repo)
 > - `[APPLIED]` hedge-is-a-deferred-read (M1/M3/M4/L4 resolvable from disk) + trace cross-module contract fields to the actual source DTO (H1) → **nexus** `create-implementation-plan` (Plan Grounding & Deviation Rules) — recurred in Pass 3c-C, 5.
 > - `[APPLIED]` pre-sanctioned deviations (dependency graph + convention forks declared in the plan) → **nexus** `create-implementation-plan` — recurred in Pass 2, 3c-C.
 > - `[APPLIED]` promote-entity-to-aggregate skill gap → folded into **nexus-dotnet** `create-aggregate` ("Promote an Existing Entity… in place" section) per owner decision — also flagged in Pass 5 Q5.

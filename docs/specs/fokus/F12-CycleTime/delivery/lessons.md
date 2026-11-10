@@ -10,7 +10,7 @@
 
 - When the endpoint loads status transitions for both target and prior sprint (for delta computation), load both sprint IDs together in a single `GetSprintsWithMembershipsAsync` call, then collect ticket IDs from both and load all transitions in one `GetStatusTransitionsForTicketsAsync` call. This avoids two round-trips and the service can compute both sprints from the same transition list.
 
-- EF migration commands must run from the solution root (`<fokus-repo>`), not from a subfolder. The `-p` and `-s` paths are relative to the working directory.
+- EF migration commands must run from the solution root (the original Fokus project), not from a subfolder. The `-p` and `-s` paths are relative to the working directory.
 
 - Sprint-start clamping for cycle time: clamp `enterTime = max(transition.Timestamp, sprintStart)`. Sprint-end clamping: clamp `exitTime = min(nextTransition.Timestamp, sprintEnd)`. When ticket is still in stage at sprint end (no next transition), use `sprintEnd` as exit. This is different from F10's bug time-in-progress which does not clamp (intentional per BR18 note in spec).
 

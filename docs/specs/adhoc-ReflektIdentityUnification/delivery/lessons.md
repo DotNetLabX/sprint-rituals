@@ -19,7 +19,7 @@
 
 - **Subagent (Explore) findings stranded again** — both `Explore` agents returned `"Ignored"`/`"Ready"` placeholders, not findings (matches known MEMORY note). Direct Grep/Glob/Read was faster and reliable for this verification. Lesson: for load-bearing factual verification in this environment, prefer direct tools over spawned Explore agents.
 
-- **The RA1 `InitialReflektSchema` migration is incremental, not from-scratch.** It layers audit columns onto tables created by the **lifted `<reflekt-repo>` migrations** (`AddTeam`…`AddReviewStatus`, still present), so the existing `reflekt.db` already has `Users` + `Participants.UserId` FK. Step 7's "drop Users / rename column" is valid against that base, but must also **drop the `ParticipantConfiguration` FK `HasOne<User>()` + `{SprintId, UserId}` index** (lines 24-25) — the plan says "rename column" without mentioning the FK to the dropped table. Recorded as a migration-correctness note for implementation.
+- **The RA1 `InitialReflektSchema` migration is incremental, not from-scratch.** It layers audit columns onto tables created by the **migrations lifted from the original Reflekt project** (`AddTeam`…`AddReviewStatus`, still present), so the existing `reflekt.db` already has `Users` + `Participants.UserId` FK. Step 7's "drop Users / rename column" is valid against that base, but must also **drop the `ParticipantConfiguration` FK `HasOne<User>()` + `{SprintId, UserId}` index** (lines 24-25) — the plan says "rename column" without mentioning the FK to the dropped table. Recorded as a migration-correctness note for implementation.
 
 ### Phase-2 implementation
 

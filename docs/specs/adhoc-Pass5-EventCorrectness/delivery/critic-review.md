@@ -106,4 +106,4 @@ No scope creep detected. The plan is, if anything, conservative — its defect i
 
 ---
 
-**Reviewed:** docs\specs\adhoc-Pass5-EventCorrectness\delivery\plan.md
+**Reviewed:** docs/specs/adhoc-Pass5-EventCorrectness/delivery/plan.md

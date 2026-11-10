@@ -74,7 +74,7 @@ One row per canonical rule (SddLifecycle C1). Deprecate-never-delete: a retired/
 ### AlertThresholdBoundary
 - state: resolved-spec-repaired (owner verdict 2026-07-04 — keep code; spec.md rule 10 + SR-1/SR-28 repaired to ">=" inclusive, matching the original Fokus behavior)
 - spec citation: (repaired) "count backward how many consecutive sprints the developer's bug ratio is at or above the threshold (>=, inclusive — a sprint exactly at the threshold counts toward the streak)."
-- code attestation: BR-21 — BugRatioAnalyzer.cs:272 'ratio >= threshold' (inclusive), deliberately pinned by mutation-gated test Alert_Fires_When_RatioExactlyAtThreshold_ForConsecutiveCount; original Fokus KB (<fokus-repo> docs/kb/analytics/bug-ratio.md) documents the same '>= threshold'
+- code attestation: BR-21 — BugRatioAnalyzer.cs:272 'ratio >= threshold' (inclusive), deliberately pinned by mutation-gated test Alert_Fires_When_RatioExactlyAtThreshold_ForConsecutiveCount; original Fokus KB (the original Fokus project's docs/kb/analytics/bug-ratio.md) documents the same '>= threshold'
 
 
 ## Changelog

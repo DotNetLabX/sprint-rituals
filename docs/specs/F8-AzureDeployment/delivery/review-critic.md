@@ -105,11 +105,11 @@ Not applicable (round 1).
 
 ### [UNRANKED] F-B — Rollback depends on an artifact no step creates, and the live app stops serving as soon as Step 8 runs
 **Anchor:** unranked — no anchor fits; persona grades
-**Band:** MEDIUM–HIGH; driver: whether the live old-Fokus build is reproducible from `<fokus-repo>` HEAD. Reader's suggested level: MEDIUM.
+**Band:** MEDIUM–HIGH; driver: whether the live old-Fokus build is reproducible from the original Fokus project HEAD. Reader's suggested level: MEDIUM.
 **Shape:** rollback precondition missing; cutover window unstated
 **Consequence:** Rollback needs old binaries no step saves, and the live app stops serving as soon as setup runs, before any new build is deployed.
-**Evidence:** quoted — plan.md:108 rollback "redeploy the old Fokus zip, startup command `dotnet Fokus.API.dll`, restore `Database = …`"; plan.md:113-114 Step 7 backs up only the DB; plan.md:89 Step 4 sets startup `dotnet Host.dll` and deletes `Database`; plan.md:79 deploy uses `--clean true`, which wipes `/home/site/wwwroot` (the old binaries). Verified absent: `<fokus-repo>\src\Services\Fokus\Fokus.API\deploy.zip` and `…\publish`.
-**Surfaces:** plan.md § Step 4, § Step 6, § Step 7, § Step 9; `<fokus-repo>\deploy.ps1`
+**Evidence:** quoted — plan.md:108 rollback "redeploy the old Fokus zip, startup command `dotnet Fokus.API.dll`, restore `Database = …`"; plan.md:113-114 Step 7 backs up only the DB; plan.md:89 Step 4 sets startup `dotnet Host.dll` and deletes `Database`; plan.md:79 deploy uses `--clean true`, which wipes `/home/site/wwwroot` (the old binaries). Verified absent: `<fokus-repo>/src/Services/Fokus/Fokus.API/deploy.zip` and `…\publish`.
+**Surfaces:** plan.md § Step 4, § Step 6, § Step 7, § Step 9; `<fokus-repo>/deploy.ps1`
 **Source:** plan Steps 6–9. **Issue:** no old zip exists on disk, and which commit is live is unrecorded. `provision.ps1` (Step 8) changes the startup command to a DLL that is not yet deployed and removes the connection string, so the old app fails on its next restart until Step 9 succeeds. The plan treats Steps 8 and 9 as independent. **Impact:** if the first deploy fails, an extended outage of the work app with a rollback that must first be reconstructed.
 **Fix:** Step 7 also exports the live `/home/site/wwwroot` (Kudu zip download) and records the old startup command and the `Database` value. Steps 8 and 9 are stated as one back-to-back cutover with the downtime window named. Rollback in the runbook references that saved zip.
 
@@ -163,8 +163,8 @@ Not applicable (round 1).
 **Anchor:** unranked — no anchor fits; persona grades
 **Shape:** observability prerequisite missing
 **Consequence:** The first-boot failure the plan expects most would leave no readable log, since container logging is never switched on.
-**Evidence:** quoted — plan.md:120 "log stream shows `SQLite journal mode for … : delete`", but Step 4's setting list (plan.md:89-91) has no log configuration. The old runbook enables it explicitly: `<fokus-repo>\docs\deployment-azure.md` § 9 "az webapp log config --docker-container-logging filesystem".
-**Surfaces:** plan.md § Step 4, § Step 9; `<fokus-repo>\docs\deployment-azure.md`
+**Evidence:** quoted — plan.md:120 "log stream shows `SQLite journal mode for … : delete`", but Step 4's setting list (plan.md:89-91) has no log configuration. The old runbook enables it explicitly: `<fokus-repo>/docs/deployment-azure.md` § 9 "az webapp log config --docker-container-logging filesystem".
+**Surfaces:** plan.md § Step 4, § Step 9; `<fokus-repo>/docs/deployment-azure.md`
 **Source:** plan Steps 4 and 9. **Issue:** Step 9 relies on log output, and so does diagnosing J1's first-boot failure, but nothing turns logging on. **Impact:** a failed first boot is diagnosed blind. Reader's suggested level: LOW.
 **Fix:** `provision.ps1` sets `--docker-container-logging filesystem`, and the runbook includes `az webapp log tail`.
 
@@ -187,7 +187,7 @@ Not applicable (round 1).
 **Fix (settled here, since this mode owns mechanics):** detect with `context.Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite"`. Read the effective mode via `GetDbConnection()` plus `DbCommand.ExecuteScalar()`. Validate `Sqlite:JournalMode` against the allow-list at the top of `Migrate<T>`, before `EnsureDataDirectory`. J1 item 1 additionally moves the pragma before `Migrate()`. The new test project reuses `Microsoft.EntityFrameworkCore.Sqlite` (already in `Directory.Packages.props`).
 
 ## Gap Analysis
-- **Operator rights in Step 8:** it assumes the owner can create an Entra app registration and federated credential in *the work tenant* and assign a role at site scope. The plan's Open Questions say "None", but this is unconfirmed.
+- **Operator rights in Step 8:** it assumes the owner can create an Entra app registration and federated credential in the work tenant and assign a role at site scope. The plan's Open Questions say "None", but this is unconfirmed.
 - **Verified as safe (checked against code):**
   - `--clean true` clears `/home/site/wwwroot`, not `/home/data`.
   - Published `appsettings.json` is Host's own.
@@ -204,7 +204,7 @@ Not applicable (round 1).
 - Does Basic-tier automatic backup cover a Linux app's `/home/data`? Unconfirmed from the Microsoft Learn page (D1).
 - Does the live `Database` connection string really equal `/home/data/fokus.db`? Source is the Fokus docs, not a live read (F-A).
 
-Reviewed: docs\specs\F8-AzureDeployment\delivery\plan.md
+Reviewed: docs/specs/F8-AzureDeployment/delivery/plan.md
 
 ### Merge — round 1
 

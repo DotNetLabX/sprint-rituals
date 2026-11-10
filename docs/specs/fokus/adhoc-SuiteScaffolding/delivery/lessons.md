@@ -28,7 +28,7 @@
 
 - **Ad-hoc scaffolding plans should include CLAUDE.md creation in the step that needs it:** Step 4 used the `create-service` skill which requires `CLAUDE.md`, but the plan did not mention creating it. The developer had to create it manually (noted as a deviation). When a plan step references a skill with known prerequisites, the plan should explicitly include those prerequisites or note them.
 
-- **Reference project pattern works well for cross-repo domain modeling:** Pointing to `<reference-repo>\src\Services\Auth\` as a reference with a clear "what to adopt / what NOT to adopt" table gave the developer unambiguous guidance. The implementation matched the reference patterns precisely (partial class split, manual IAggregateRoot on User, IdentityDbContext inheritance). This table format should be reused in future plans that reference external codebases.
+- **Reference project pattern works well for cross-repo domain modeling:** Pointing to `<reference-repo>/src/Services/Auth/` as a reference with a clear "what to adopt / what NOT to adopt" table gave the developer unambiguous guidance. The implementation matched the reference patterns precisely (partial class split, manual IAggregateRoot on User, IdentityDbContext inheritance). This table format should be reused in future plans that reference external codebases.
 
 - **Modular monolith Host composition is under-documented:** The plan covered Host wiring in Steps 3 and 9, but the actual composition pattern (multi-assembly FastEndpoints scanning, global pre-processor registration, multi-DbContext migration ordering) is complex enough to warrant a dedicated skill. The developer's lesson about the missing `compose-host` skill confirms this gap.
 

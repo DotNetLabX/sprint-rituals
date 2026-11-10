@@ -32,7 +32,7 @@
 
 ## Shared context (all sub-plans)
 
-- **Reflekt frontend source to bring in:** `<reflekt-repo>\web\reflekt-web\` (Vue ^3.5, Pinia ^3, Tailwind 4, **vue-router 5**, SignalR 10, lucide icons). Read-only reference repo — copy in, never modify the source.
+- **Reflekt frontend source to bring in:** `<reflekt-repo>/web/reflekt-web/` (Vue ^3.5, Pinia ^3, Tailwind 4, **vue-router 5**, SignalR 10, lucide icons). Read-only reference repo — copy in, never modify the source.
 - **Fokus frontend (in-repo):** `client\` (vue-router 4, apexcharts; builds to `src/Host/wwwroot`).
 - **Reflekt backend (in-repo since RA1):** `src/Services/Reflekt/`.
 - **RA4 panel endpoint (already shipped):** `GET /api/retro-sessions/{retroSessionId}/sprint-context` (Reflekt.API) — RA5-B's data source.

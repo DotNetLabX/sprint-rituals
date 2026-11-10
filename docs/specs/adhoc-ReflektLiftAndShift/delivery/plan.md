@@ -3,7 +3,7 @@
 **Status:** Approved (revised after code-grounded critic — NO-GO findings folded)
 **Pass:** RA1 — Reflekt Integration Program (`docs/backlog.md`)
 **Binding input:** `docs/architecture/decisions.md` ADR-001/004/011/013/014/016 + the RA1 backlog row. No `spec.md` (adhoc).
-**Source module:** `<reflekt-repo>\src\Services\Reflekt\{Reflekt.API,Reflekt.Domain,Reflekt.Persistence}` (read-only reference; copy, don't move-from).
+**Source module:** `<reflekt-repo>/src/Services/Reflekt/{Reflekt.API,Reflekt.Domain,Reflekt.Persistence}` (read-only reference; copy, don't move-from).
 
 ## What RA1 is — and is not
 

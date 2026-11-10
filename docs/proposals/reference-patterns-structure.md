@@ -1,6 +1,6 @@
 # Reference Patterns — dotnet-microservices
 
-Extracted from `<reference-repo>`. Read-only research. All citations use `path:line` format relative to `<reference-repo>`.
+Extracted from the reference codebase. Read-only research. All citations use `path:line` format relative to the reference codebase.
 
 ---
 

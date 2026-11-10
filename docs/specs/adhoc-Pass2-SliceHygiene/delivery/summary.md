@@ -3,7 +3,7 @@
 **Slug:** `adhoc-Pass2-SliceHygiene`
 **Status:** Done — reviewer APPROVED, Codex GO (Cycle 1), Step 1 done-check PASS.
 **Team mode:** Standard + Codex (Codex = independent cross-model second opinion on the implementation).
-**Repo:** `this repo` (code + artifacts in one repo — unlike Pass 1's plugin-repo split).
+**Repo:** this repo (code + artifacts in one repo — unlike Pass 1's plugin-repo split).
 **Scope:** MAXIMAL (user override of the architect's tight-scope recommendation — see questions.md).
 
 ## What shipped (8 steps, 105 files, +647/−576)

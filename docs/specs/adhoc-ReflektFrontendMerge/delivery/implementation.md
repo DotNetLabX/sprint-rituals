@@ -13,7 +13,7 @@
 **What changed:**
 - Created `client/apps/dashboard/`, `client/apps/retro/`, `client/packages/shared/` directories.
 - Moved all Fokus SPA content (`src/`, `index.html`, `vite.config.ts`, `package.json`, tsconfigs, `public/`, `README.md`) from `client/` into `client/apps/dashboard/` wholesale. Internal relative imports and the `@`→`src` alias are unchanged.
-- Copied Reflekt SPA from `<reflekt-repo>\web\reflekt-web\` (excluding `node_modules/`, `.vscode/`) into `client/apps/retro/`. Source repo is unmodified.
+- Copied Reflekt SPA from `<reflekt-repo>/web/reflekt-web/` (excluding `node_modules/`, `.vscode/`) into `client/apps/retro/`. Source repo is unmodified.
 - Authored `client/package.json` as the npm workspace root with `"workspaces": ["apps/*", "packages/*"]`. Hoisted shared deps (`vue`, `pinia`, `@microsoft/signalr`, `tailwindcss`, `vite`, etc.) to root; left app-unique deps in each app manifest (`apexcharts`, `vue-router@4` in dashboard; `lucide-vue-next`, `vue-router@5` in retro).
 - Dashboard `package.json` stripped to app-unique deps only. Retro `package.json` stripped similarly.
 - Created `client/packages/shared/package.json` as a private workspace package (`@sprint-rituals/shared`).
@@ -22,7 +22,7 @@
 
 **Deviation — tsconfig.node.json:** Retro's original `tsconfig.node.json` extended `@tsconfig/node24` (not available at workspace root). Replaced with the same standalone `compilerOptions` shape as the dashboard's `tsconfig.node.json`.
 
-**Verify:** `npm install` at `client/` resolves cleanly. Both `apps/dashboard/` and `apps/retro/` have their own `vite.config.ts`, router, and stores. `<reflekt-repo>` is unmodified.
+**Verify:** `npm install` at `client/` resolves cleanly. Both `apps/dashboard/` and `apps/retro/` have their own `vite.config.ts`, router, and stores. The original Reflekt project is unmodified.
 
 ---
 

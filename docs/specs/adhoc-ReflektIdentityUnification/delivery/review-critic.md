@@ -141,5 +141,5 @@ The systemic pattern is **not** rushing or copy-without-understanding — the pl
 - None requiring confidence downgrade — all findings carry direct file:line evidence. CRITICAL-1 and the value-space reasoning are HIGH confidence; HIGH-1 re-grounding error is HIGH confidence with quoted file evidence.
 
 ```
-Reviewed: docs\specs\adhoc-ReflektIdentityUnification\delivery\plan.md
+Reviewed: docs/specs/adhoc-ReflektIdentityUnification/delivery/plan.md
 ```

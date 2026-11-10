@@ -71,4 +71,4 @@ The mechanical arm is genuinely light (Reflekt is post-guard code). The actionab
 
 ## Operating model (inherited, authoritative)
 
-Same as Fokus (`refactor-triage.md` §Operating model / ADR-003): every finding is a **problem class** (fix all instances + root cause, not the cited example); **decision order** skill → reference project (`<reference-repo>`) → fix/create skill; latest framework versions. Each emitted pass runs through the standard pipeline (Standard+Codex, the mode used for every Fokus pass).
+Same as Fokus (`refactor-triage.md` §Operating model / ADR-003): every finding is a **problem class** (fix all instances + root cause, not the cited example); **decision order** skill → reference project → fix/create skill; latest framework versions. Each emitted pass runs through the standard pipeline (Standard+Codex, the mode used for every Fokus pass).

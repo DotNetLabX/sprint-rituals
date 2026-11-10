@@ -5,7 +5,7 @@
 
 ## Refresh Notes (vs as-built V2)
 
-This plan was originally written against an earlier, discarded scaffold attempt. It has been re-validated against the **real** SprintRituals V2 scaffold at `this repo` (built by `adhoc-SuiteScaffoldingV2`, reviewer-approved). Every stale reference below was corrected against the actual code:
+This plan was originally written against an earlier, discarded scaffold attempt. It has been re-validated against the **real** SprintRituals V2 scaffold in this repo (built by `adhoc-SuiteScaffoldingV2`, reviewer-approved). Every stale reference below was corrected against the actual code:
 
 | # | Stale claim (old plan) | Reality (as-built V2) | Fix applied |
 |---|------------------------|------------------------|-------------|
@@ -23,7 +23,7 @@ Scope, out-of-scope, privacy boundary, and the 8-step structure are unchanged. S
 
 ## Context
 
-The SprintRituals monorepo (`this repo\`) composes Identity + Fokus in a single Host (`src/Host/Program.cs`) but has no inter-module communication layer. The proposal mandates gRPC (protobuf-net.Grpc, code-first) for synchronous cross-module calls (§2) and MassTransit in-memory for integration events (§6). This plan delivers that infrastructure — contracts, server implementation, and event publishing — so Reflekt can consume them when ported.
+The SprintRituals monorepo (this repo) composes Identity + Fokus in a single Host (`src/Host/Program.cs`) but has no inter-module communication layer. The proposal mandates gRPC (protobuf-net.Grpc, code-first) for synchronous cross-module calls (§2) and MassTransit in-memory for integration events (§6). This plan delivers that infrastructure — contracts, server implementation, and event publishing — so Reflekt can consume them when ported.
 
 ## Scope
 
@@ -250,17 +250,17 @@ After a sprint's data is persisted during sync, publish the `SprintSynced` **int
 - `SprintRituals.slnx` (repo **root**) — add the `Blocks.Contracts` project (`dotnet sln SprintRituals.slnx add src/BuildingBlocks/Blocks.Contracts/Blocks.Contracts.csproj`, run from the repo root).
 - `CLAUDE.md` — add `Blocks.Contracts` to the BuildingBlocks list; update the tech-stack notes so gRPC (protobuf-net.Grpc) and MassTransit in-memory are described as wired, not "future use."
 
-**Acceptance:** `dotnet build SprintRituals.slnx` — zero `error CS`, **18 projects** (was 17).
+**Acceptance:** `dotnet build <repo>/SprintRituals.slnx` — zero `error CS`, **18 projects** (was 17).
 
 **Confidence:** high
 
 ## Testing Strategy
 
-Build/runtime verification runs against `this repo` (absolute paths; Bash cwd resets — see Cross-Repo Execution Notes).
+Build/runtime verification runs against this repo (absolute paths; Bash cwd resets — see Cross-Repo Execution Notes).
 
 | # | Check | Mode |
 |---|-------|------|
-| 1 | `dotnet build SprintRituals.slnx` → 0 `error CS`, 18 projects | **Unattended** (filter MSB file-lock errors per project-rules.md) |
+| 1 | `dotnet build <repo>/SprintRituals.slnx` → 0 `error CS`, 18 projects | **Unattended** (filter MSB file-lock errors per project-rules.md) |
 | 2 | Start Host (`run_in_background`); both Kestrel ports bind (5000 HTTP + h2c gRPC port both in "Now listening on" log) | **Unattended** (read startup log) |
 | 3 | MassTransit bus-started log line present at startup | **Unattended** (read startup log) |
 | 4 | Live gRPC call (`grpcurl` or a code-first test client) to `GetAvailableSprintsAsync` returns a response | **Hand-off** — needs a live gRPC client + seeded sprint data |
@@ -272,11 +272,11 @@ Build/runtime verification runs against `this repo` (absolute paths; Bash cwd re
 
 ## Cross-Repo Execution Notes
 
-This plan is authored in the Fokus repo (`<fokus-repo>`) but **all implementation happens in `this repo`** (mirrors the SuiteScaffoldingV2 plan).
+This plan is authored in the Fokus repo (the original Fokus project) but **all implementation happens in this repo** (mirrors the SuiteScaffoldingV2 plan).
 
-- **Absolute paths only.** The Bash tool's cwd **resets to `<fokus-repo>` after every call** — never rely on a prior `cd`. Reference every source file as `src\...` and run solution/build commands with the absolute slnx path (`dotnet build SprintRituals.slnx`).
+- **Absolute paths only.** The Bash tool's cwd **resets to the original Fokus project after every call** — never rely on a prior `cd`. Reference every source file by its absolute path (`<repo>/src/...`) and run solution/build commands with the absolute slnx path (`dotnet build <repo>/SprintRituals.slnx`), `<repo>` being this suite repo's root.
 - **Solution is at the repo root:** `SprintRituals.slnx` (NOT under `src/`).
-- **Run the Host with `run_in_background`.** `dotnet run` (or `dotnet bin\...\Host.dll`) from `src\Host` is long-running — start it detached and read the startup log; do not block. Kill the background Host (`Stop-Process`) before re-running a full `dotnet build`, or the file lock yields MSB3026/MSB3027 copy errors (not compile errors — filter with `error CS`).
+- **Run the Host with `run_in_background`.** `dotnet run` (or `dotnet bin\...\Host.dll`) from `src/Host` is long-running — start it detached and read the startup log; do not block. Kill the background Host (`Stop-Process`) before re-running a full `dotnet build`, or the file lock yields MSB3026/MSB3027 copy errors (not compile errors — filter with `error CS`).
 - **No commits.** Do not commit or push in either repo. Implementation lands as working-tree changes for review.
 - **No secrets.** Jira/Google/Xray credentials live in user-secrets, never in any committed file or artifact. The live-sync test (Testing item 5) hands off to the user — do not embed credentials to force it.
 

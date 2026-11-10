@@ -1,6 +1,6 @@
 # Reference Patterns: Domain Architecture
 
-Extracted from `<reference-repo>` — a real-world DDD + Vertical Slice + CQRS reference project.
+Extracted from the reference codebase — a real-world DDD + Vertical Slice + CQRS reference project.
 Stack: .NET 8/9, FastEndpoints, MediatR, Mapster, EF Core, MassTransit.
 
 ---

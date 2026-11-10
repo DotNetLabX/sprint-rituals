@@ -3,7 +3,7 @@
 Portable feedback file (ADR-1). These items are **plugin-bound**: they target nexus shipped hooks
 and skills that live in the version-keyed plugin cache and cannot be edited from this consuming
 project. Send this file to the plugin maintainer; on the maintainer's machine the same entries are
-applied directly in the plugin source repo (`<plugin-repo>\plugins`).
+applied directly in the plugin source repo (`<plugin-repo>/plugins`).
 
 Source project: **sprint-rituals**. Origin: learner consolidation pass, 2026-06-29 — across the
 Fokus + Reflekt feature/adhoc pipeline runs. Both items below cleared the 2-occurrence promotion

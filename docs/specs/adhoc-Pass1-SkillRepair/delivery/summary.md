@@ -3,7 +3,7 @@
 **Slug:** `adhoc-Pass1-SkillRepair`
 **Status:** Done — reviewer APPROVED, Codex GO (Cycle 2), Step 1 done-check PASS.
 **Team mode:** Standard + Codex (Codex = independent cross-model second opinion on both plan and implementation).
-**Deliverable repo:** `<plugin-repo>` (plugin source — separate git target). **Artifact repo:** `this repo` (this folder).
+**Deliverable repo:** the plugin source repo (plugin source — separate git target). **Artifact repo:** this repo (this folder).
 
 ## What shipped (5 core skills, plugin repo)
 

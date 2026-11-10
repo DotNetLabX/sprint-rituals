@@ -1,7 +1,7 @@
 # Nexus plugin feedback — v1.21.0 — 2026-07-04
 
 Portable feedback file (ADR-1). Send to the plugin maintainer; entries apply in the plugin source
-repo (`<plugin-repo>`).
+repo.
 
 Source project: **sprint-rituals**. Origin: **the first live execution of the adhoc-SddMergeGen
 Step 9 runbook** — `harness/merge.workflow.js` run against F13-BugRatio (spec arm

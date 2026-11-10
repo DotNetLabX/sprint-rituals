@@ -1,6 +1,6 @@
 # Pass 3b — AppSettings VOs + Identity Encapsulation — Lessons
 
-> **Learner consolidation — 2026-06-08** (→ `<plugin-repo>`)
+> **Learner consolidation — 2026-06-08** (→ the plugin source repo)
 > - `[APPLIED]` `required` + `private set` = CS9032 (build-breaking → promoted at 1 occurrence) → **nexus-dotnet** `conventions/csharp.md`.
 > - `[APPLIED]` EF migration drop+add destroys data → hand-edit `RenameColumn` (data-loss → promoted at 1 occurrence) → **nexus-dotnet** `conventions/ef-core.md`.
 > - `[APPLIED]` explicit member assignment over `req.Adapt(existing)` for tracked entities with `ComplexProperty` VOs; write-funnel `SetValues` doesn't deep-copy owned members → **nexus-dotnet** `persistence-patterns`.

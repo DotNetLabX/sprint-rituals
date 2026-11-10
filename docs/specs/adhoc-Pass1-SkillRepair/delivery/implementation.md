@@ -2,7 +2,7 @@
 
 ## Files Created
 
-All skill files are in the **plugin source repo** (`<plugin-repo>`), not in this repo. Pipeline artifacts (this file) stay in `this repo`.
+All skill files are in the **plugin source repo**, not in this repo. Pipeline artifacts (this file) stay in this repo.
 
 - `<plugin-repo>/plugins/nexus-dotnet/skills/domain-service/SKILL.md` — New skill: Domain-layer service pattern. Cross-aggregate computation, no-suffix naming rule, pure-by-default + narrow domain-owned read-port escape hatch, domain-type-out/endpoint-owns-response (ADR-010), no-DTO-input (ADR-006). Cross-refs: `analytics-computation-service`, `domain-patterns`, `persistence-patterns`, `extract-feature-service`, `service-registration`, `cqrs-patterns`. Cites ADR-005/006/010.
 - `<plugin-repo>/plugins/nexus-dotnet/skills/central-package-management/SKILL.md` — New skill: CPM setup and audit. `Directory.Packages.props` structure, migration recipe, three-form verification grep (inline `Version=`, child `<Version>`, `VersionOverride=`). Reference anchors (dotnet-microservices + SprintRituals). Cross-ref to `framework-currency`. Cites ADR-013.
@@ -25,7 +25,7 @@ All skill files are in the **plugin source repo** (`<plugin-repo>`), not in this
 - **`domain-service` scoped to single Domain-layer pattern.** Application-layer service (`ArticleAccessChecker`) is a "When This Doesn't Apply" contrast section, not a variant — consistent with FIX 1 in the plan. No sentence in `domain-service` implies a domain service lives in or depends on an Application layer, DbContext, or concrete repository.
 - **`analytics-computation-service` grep accept check passed.** Grep for `\.API/Features`, `response record`, `Service\.cs` in domain-service context returns zero domain-service-context hits. The one `.API/Features` hit is the "NOT here — pre-ADR-005 location" callout, which is correct.
 - **No weasel-wording.** Grep for `\badapt\b` and `\btoo simple\b` across all five SKILL.md files returns zero hits.
-- **`.claude/README.md` skill-count update — waived.** No `.claude/README.md` exists in `<plugin-repo>` (confirmed by Glob). Waived per the C-2 plan note: "developer confirms whether a plugin-level README skill index exists and updates it there, else records 'no skill-index README in plugin repo — waived.'"
+- **`.claude/README.md` skill-count update — waived.** No `.claude/README.md` exists in the plugin source repo (confirmed by Glob). Waived per the C-2 plan note: "developer confirms whether a plugin-level README skill index exists and updates it there, else records 'no skill-index README in plugin repo — waived.'"
 
 ---
 
@@ -141,15 +141,15 @@ None. All 7 steps executed in the prescribed authoring order. All plan constrain
 
 ## Step 6 — Dev-Loop Cache Sync (Q4 Gate)
 
-**Scripts/ re-confirmation:** `<plugin-repo>\scripts\` holds `gen-commands.mjs`, `gen-omni.mjs`, and `skill-classification.md`. None writes the install cache. The dev-loop is the sync mechanism (confirmed per plan LOW-5 and ADR-1).
+**Scripts/ re-confirmation:** `<plugin-repo>/scripts/` holds `gen-commands.mjs`, `gen-omni.mjs`, and `skill-classification.md`. None writes the install cache. The dev-loop is the sync mechanism (confirmed per plan LOW-5 and ADR-1).
 
 **Verified working dev-loop invocation:** Per the plugin's `docs/architecture/README.md` ADR-1, the dev-loop command is:
 ```
-claude --plugin-dir <plugin-repo>\plugins\nexus
+claude --plugin-dir <plugin-repo>/plugins/nexus
 ```
 The core `nexus` plugin is the entry point. `nexus-dotnet` declares `dependencies: ["nexus"]` (ADR-3), so the README's example `--plugin-dir` points at the **core** (`/plugins/nexus`), not at `nexus-dotnet`. When Claude loads the core via `--plugin-dir`, `nexus-dotnet` is loaded from the installed cache (version 0.1.1). **Caveat (C-3):** to load the *local working checkout* of `nexus-dotnet` skills simultaneously, both plugin dirs must be specified:
 ```
-claude --plugin-dir <plugin-repo>\plugins\nexus --plugin-dir <plugin-repo>\plugins\nexus-dotnet
+claude --plugin-dir <plugin-repo>/plugins/nexus --plugin-dir <plugin-repo>/plugins/nexus-dotnet
 ```
 After launch, `/reload-plugins` hot-reloads SKILL.md edits without a restart.
 

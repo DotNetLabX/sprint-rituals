@@ -11,7 +11,7 @@ After this milestone: Host composes Identity + Fokus services, Identity owns Per
 ## Scope
 
 **In scope:**
-- Fresh repo at `this repo\`
+- Fresh repo: this repo
 - Host project (single deployable, Web SDK)
 - Identity service (Person, User via IdentityUser<int>, Google OAuth)
 - Fokus service port (all features, Invitations stay in Fokus)
@@ -28,7 +28,7 @@ After this milestone: Host composes Identity + Fokus services, Identity owns Per
 
 ## Reference Project
 
-`<reference-repo>\src\Services\Auth\` — follow these patterns for Identity:
+`<reference-repo>/src/Services/Auth/` — follow these patterns for Identity:
 
 | Pattern | Reference file | What to adopt |
 |---------|---------------|---------------|
@@ -50,7 +50,7 @@ After this milestone: Host composes Identity + Fokus services, Identity owns Per
 
 | Decision | Choice | Why |
 |----------|--------|-----|
-| Repo | Fresh `this repo\`, private GitHub | Keep Fokus/Reflekt public and independent |
+| Repo | This repo, fresh, private GitHub | Keep Fokus/Reflekt public and independent |
 | Service naming | Identity | Owns Persons (universal identity), not just auth |
 | Folder structure | `src/Services/Identity/`, `src/Services/Fokus/` | Standard service convention |
 | User base class | `IdentityUser<int>` | Proper role management via ASP.NET Core Identity |
@@ -110,7 +110,7 @@ Role : IdentityRole<int>
 ## Target Structure
 
 ```
-this repo\
+sprint-rituals/
   .claude/                          # Copied from Fokus — skills, agents, rules
   docs/
     architecture/
@@ -138,7 +138,7 @@ this repo\
         Identity.API/
         Identity.Domain/
         Identity.Persistence/
-      Fokus/                        # Ported from <fokus-repo>\src\Services\Fokus\
+      Fokus/                        # Ported from <fokus-repo>/src/Services/Fokus/
         Fokus.API/                  # Class library, AppUser removed, Invitations kept
         Fokus.Domain/               # AppUser removed, Invitation stays
         Fokus.Persistence/          # AppUsers table removed, Invitations stays
@@ -187,16 +187,16 @@ Fokus.API does NOT reference Identity.API (no cross-service dependency yet).
 
 ### Step 1: Fresh repo + structure
 
-Create `this repo\`. Initialize git. Create the folder skeleton (`src/`, `src/Host/`, `src/Services/`, `src/Services/Identity/`, `src/Services/Fokus/`, `src/BuildingBlocks/`, `src/Modules/`, `client/`, `docs/`). Copy `.claude/` from Fokus (agents, skills, rules, conventions). Copy `docs/conventions/`, `docs/architecture/`, `docs/proposals/suite-integration-architecture.md`. Create `CLAUDE.md` (adapt from Fokus — update repo structure section for modular monolith). Create `SprintRituals.slnx` (empty, projects added in subsequent steps).
+Create this repo. Initialize git. Create the folder skeleton (`src/`, `src/Host/`, `src/Services/`, `src/Services/Identity/`, `src/Services/Fokus/`, `src/BuildingBlocks/`, `src/Modules/`, `client/`, `docs/`). Copy `.claude/` from Fokus (agents, skills, rules, conventions). Copy `docs/conventions/`, `docs/architecture/`, `docs/proposals/suite-integration-architecture.md`. Create `CLAUDE.md` (adapt from Fokus — update repo structure section for modular monolith). Create `SprintRituals.slnx` (empty, projects added in subsequent steps).
 
-**Source:** `<fokus-repo>\.claude\`, `<fokus-repo>\docs\conventions\`, `<fokus-repo>\docs\architecture\`
+**Source:** `<fokus-repo>/.claude/`, `<fokus-repo>/docs/conventions/`, `<fokus-repo>/docs/architecture/`
 **Accept:** Git repo initialized. Folder skeleton exists. `.claude/` setup in place.
 
 ### Step 2: Copy BuildingBlocks + Modules
 
-Copy all 6 BuildingBlocks projects from `<fokus-repo>\src\BuildingBlocks\`. Copy Jira and Xray modules from `<fokus-repo>\src\Modules\`. Add all to `SprintRituals.slnx`. Verify `dotnet build` passes for BuildingBlocks and Modules in isolation.
+Copy all 6 BuildingBlocks projects from `<fokus-repo>/src/BuildingBlocks/`. Copy Jira and Xray modules from `<fokus-repo>/src/Modules/`. Add all to `SprintRituals.slnx`. Verify `dotnet build` passes for BuildingBlocks and Modules in isolation.
 
-**Source:** `<fokus-repo>\src\BuildingBlocks\`, `<fokus-repo>\src\Modules\`
+**Source:** `<fokus-repo>/src/BuildingBlocks/`, `<fokus-repo>/src/Modules/`
 **Accept:** `dotnet build` passes for all copied projects.
 
 ### Step 3: Create Host project
@@ -217,7 +217,7 @@ Scaffold `src/Services/Identity/` with 3 projects: `Identity.API`, `Identity.Dom
 
 Create Person aggregate with partial class split (data + behaviors). Create User inheriting `IdentityUser<int>` with manual `IAggregateRoot` (DomainEvents list, audit properties, PersonId FK). Create Role extending `IdentityRole<int>`. Create `PersonSource` enum. Create `UserCreated` domain event.
 
-Follow reference: `<reference-repo>\src\Services\Auth\Auth.Domain\`
+Follow reference: `<reference-repo>/src/Services/Auth/Auth.Domain/`
 
 **Skill:** `create-aggregate`, `domain-patterns`
 **Files:** All under `src/Services/Identity/Identity.Domain/`
@@ -227,7 +227,7 @@ Follow reference: `<reference-repo>\src\Services\Auth\Auth.Domain\`
 
 Create `IdentityDbContext` inheriting `IdentityDbContext<User, Role, int>` with `DbSet<Person> Persons`. Create `PersonConfiguration` (email unique index, required fields). Create `UserConfiguration` (one-to-one FK per reference pattern). Create `PersonRepository` and `UserRepository` (concrete, with Includes in Query()). Wire `AddPersistenceServices` in DI — register DbContext (SQLite), Identity services (`AddIdentityCore<User>`, `AddRoles<Role>`, `AddEntityFrameworkStores`, `AddSignInManager`), repositories. Generate `InitialCreate` migration.
 
-Follow reference: `<reference-repo>\src\Services\Auth\Auth.Persistence\`
+Follow reference: `<reference-repo>/src/Services/Auth/Auth.Persistence/`
 
 **Skill:** `persistence-patterns`
 **Files:** All under `src/Services/Identity/Identity.Persistence/`
@@ -241,7 +241,7 @@ Create minimal endpoints: Login (minimal API route for Google challenge), Logout
 
 Wire `AddApiServices` — calls `AddIdentityAuth` (Google config, cookie config). Wire `AddIdentityModule` to call both layers. Wire `MapIdentityEndpoints` to map the login route.
 
-Follow reference: `<fokus-repo>\src\Services\Fokus\Fokus.API\Auth\AuthConfiguration.cs` (adapt for Person+User model)
+Follow reference: `<fokus-repo>/src/Services/Fokus/Fokus.API/Auth/AuthConfiguration.cs` (adapt for Person+User model)
 
 **Skill:** `create-feature`, `authorization-patterns`
 **Files:** Under `src/Services/Identity/Identity.API/`
@@ -249,19 +249,19 @@ Follow reference: `<fokus-repo>\src\Services\Fokus\Fokus.API\Auth\AuthConfigurat
 
 ### Step 8: Port Fokus service
 
-Copy `<fokus-repo>\src\Services\Fokus\` into `src/Services/Fokus/`. Convert `Fokus.API.csproj` from Web SDK to class library SDK. Remove `Program.cs` (Host owns this). Remove `Auth/AuthConfiguration.cs`, `Auth/AuthMiddleware.cs`, `Auth/ActiveUserPreProcessor.cs`. Remove `Features/Auth/Login/`, `Features/Auth/Logout/`, `Features/Auth/GetMe/`, `Features/Auth/GetUsers/`, `Features/Auth/UpdateRole/`, `Features/Auth/UpdateStatus/`. Keep `Features/Auth/CreateInvitation/`, `Features/Auth/GetInvitations/`, `Features/Auth/ValidateInvitation/`, `Features/Auth/RevokeInvitation/`.
+Copy `<fokus-repo>/src/Services/Fokus/` into `src/Services/Fokus/`. Convert `Fokus.API.csproj` from Web SDK to class library SDK. Remove `Program.cs` (Host owns this). Remove `Auth/AuthConfiguration.cs`, `Auth/AuthMiddleware.cs`, `Auth/ActiveUserPreProcessor.cs`. Remove `Features/Auth/Login/`, `Features/Auth/Logout/`, `Features/Auth/GetMe/`, `Features/Auth/GetUsers/`, `Features/Auth/UpdateRole/`, `Features/Auth/UpdateStatus/`. Keep `Features/Auth/CreateInvitation/`, `Features/Auth/GetInvitations/`, `Features/Auth/ValidateInvitation/`, `Features/Auth/RevokeInvitation/`.
 
 Remove `AppUser.cs` and `Behaviors/AppUser.cs` from Domain (User moved to Identity). Keep `Invitation.cs`. Remove `AppUsers` DbSet, `AppUserConfiguration`, `AppUserRepository` from Persistence. Keep Invitations.
 
 Adapt Invitation endpoints: replace `AppUserRepository` usage with claims-based user info. Rename `AddFokusServices` → `AddFokusModule`. Wire `AddPersistenceServices` and `AddApiServices` per `service-registration` skill. Add to solution. Reference from Host.
 
 **Skill:** `service-registration`
-**Source:** `<fokus-repo>\src\Services\Fokus\`
+**Source:** `<fokus-repo>/src/Services/Fokus/`
 **Accept:** Solution builds. All Fokus endpoints compile.
 
 ### Step 9: Port frontend + wire Host composition
 
-Copy `<fokus-repo>\client\` into `sprint-rituals/client/`. Update `vite.config.ts` — set `outDir` to `../src/Host/wwwroot`, proxy to Host port. Remove auth-related API calls that moved to Identity (login/logout/getMe) and point them at the same paths (no URL change needed — same Host serves both).
+Copy `<fokus-repo>/client/` into `sprint-rituals/client/`. Update `vite.config.ts` — set `outDir` to `../src/Host/wwwroot`, proxy to Host port. Remove auth-related API calls that moved to Identity (login/logout/getMe) and point them at the same paths (no URL change needed — same Host serves both).
 
 Wire final Host `Program.cs`: call both `AddIdentityModule` + `AddFokusModule`, configure FastEndpoints multi-assembly scanning (both service assemblies), register `ActiveUserPreProcessor` globally, handle migrations for both DbContexts (Identity first), wire OpenAPI + Scalar in dev, SPA fallback.
 

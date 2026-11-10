@@ -8,7 +8,7 @@ run (see proposal roadmap, step 3).
 
 Two-layer enforcement (adoption #4 — *schema = method — working copy → candidate for a nexus
 golden-set-schema skill once the pilot proves it*; see nexus boundary:
-`docs/proposals/br-coverage-harness-evaluation.md §Boundary & sequencing`):
+the evaluation of an employer-internal harness (a private document, not in this repo), § Boundary & sequencing):
 
 1. **Placement:** this file must live outside any directory visible to harness agents (`docs/audit/` is
    not an editable or optimize-tier surface — never move it to `src/`, `docs/kb/`, or any path the
@@ -22,7 +22,7 @@ golden-set-schema skill once the pilot proves it*; see nexus boundary:
    agent with shell access from reading the file directly (the harness's own audit-hook enforcement is
    same-process and can be bypassed). Placement + tripwire together; not placement alone.
 
-**Source:** curated via source-laddering — original Fokus docs (`<fokus-repo>\docs\`) attest intent; sprint-rituals code attests implementation. Both attestations verified per rule. Draft + methodology: `docs/proposals/br-coverage-golden-set-draft.md`.
+**Source:** curated via source-laddering — original Fokus docs (`<fokus-repo>/docs/`) attest intent; sprint-rituals code attests implementation. Both attestations verified per rule. Draft + methodology: `docs/proposals/br-coverage-golden-set-draft.md`.
 
 ## The 20 rules
 

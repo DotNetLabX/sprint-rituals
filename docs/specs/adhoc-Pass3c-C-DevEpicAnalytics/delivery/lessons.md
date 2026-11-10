@@ -1,6 +1,6 @@
 # Pass 3c-C: DevEpicAnalytics — Lessons
 
-> **Learner consolidation — 2026-06-10** (→ `<plugin-repo>`)
+> **Learner consolidation — 2026-06-10** (→ the plugin source repo)
 > - `[APPLIED]` plan-cited counts come from a grep at plan time, never memory (LOW-1) → **nexus** `create-implementation-plan` (Plan Grounding & Deviation Rules) — recurred with Pass 4, 5.
 > - `[APPLIED]` binding-contract scoping (public/wire identifiers binding, internal names free) → **nexus** `create-implementation-plan` — recurred in Pass 2, 4.
 > - `[APPLIED]` mixed-suffix domain folder → owner decision: retro-rename backlogged as `adhoc-Pass6-AnalyticsSuffixAlign` (backlog row 6).

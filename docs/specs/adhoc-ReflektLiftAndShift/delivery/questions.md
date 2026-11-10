@@ -39,7 +39,7 @@ Q1=A confirmed per plan. Implemented in Step 7.
 **To:** architect
 **Status:** Answered
 **Step:** Step 1 (Move projects + solution registration)
-**File:** `<reflekt-repo>\src\Services\Reflekt\Reflekt.API\Reflekt.API.csproj`
+**File:** `<reflekt-repo>/src/Services/Reflekt/Reflekt.API/Reflekt.API.csproj`
 
 **Context:** `Reflekt.API.csproj` currently uses `Sdk="Microsoft.NET.Sdk.Web"` — it is a standalone web startup project, with `Program.cs`, `Properties/`, `appsettings*.json`, `wwwroot/`, `deploy.zip`. All other API class libraries in the target use `Sdk="Microsoft.NET.Sdk"` + `<FrameworkReference Include="Microsoft.AspNetCore.App" />` (see `Fokus.API.csproj`, `Identity.API.csproj`). The Host is the sole `Sdk.Web` project.
 
@@ -69,7 +69,7 @@ needed — this is a clarification within Step 1's stated scope, not a new decis
 **To:** architect
 **Status:** Answered
 **Step:** Step 4 (Central Package Management — re-baseline)
-**File:** `src\Directory.Packages.props`
+**File:** `src/Directory.Packages.props`
 
 **Context:** Reflekt's `Directory.Packages.props` has `Mapster` at `10.0.0` and `Mapster.DependencyInjection` at `10.0.0`. The target's CPM has `Mapster` at `7.4.0` (and no `Mapster.DependencyInjection` entry yet). The plan says "target wins on overlaps" and to "flag any Reflekt package whose target pin is a downgrade."
 

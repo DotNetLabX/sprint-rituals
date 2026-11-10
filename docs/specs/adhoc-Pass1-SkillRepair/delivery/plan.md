@@ -8,7 +8,7 @@ Pass 1 is the root-cause arm of the refactor program: the earlier passes fix *co
 
 **This is a documentation/skill pass, not a code pass.** The deliverable is Markdown skill files. There is no compiler — the acceptance bar is redefined per Q4 (ADR citation + anti-pattern checks + embedded-example-valid + a skill-inventory dry-run).
 
-**Decision order (ADR-003):** correct skill → reference project `<reference-repo>` → fix/create the skill. The reference patterns are already extracted into `docs/proposals/reference-patterns-domain.md` and `reference-patterns-structure.md` — use those as the anchor; re-read the reference repo only if a proposal omits a needed detail. Every fix is a **problem class** (fix the skill so all future instances are right, not one example).
+**Decision order (ADR-003):** correct skill → the reference codebase → fix/create the skill. The reference patterns are already extracted into `docs/proposals/reference-patterns-domain.md` and `reference-patterns-structure.md` — use those as the anchor; re-read the reference repo only if a proposal omits a needed detail. Every fix is a **problem class** (fix the skill so all future instances are right, not one example).
 
 ## GENERAL-SKILL MANDATE — READ FIRST (D-A, binding)
 
@@ -33,19 +33,19 @@ Skill files are **NOT** in this project and **NOT** edited in the read-only cach
 
 | Repo | What lives here | Commit target |
 |------|-----------------|---------------|
-| `this repo` (this repo) | Pipeline artifacts ONLY: `plan.md`, `implementation.md`, `review.md`, `lessons.md`, `summary.md`, `questions.md` under `docs/specs/adhoc-Pass1-SkillRepair/delivery/` | this repo |
-| `<plugin-repo>` (plugin source) | The `SKILL.md` edits/creations (Steps 1–5) **and** `improve-skills` housekeeping (see C-2 note) | plugin repo |
+| this repo | Pipeline artifacts ONLY: `plan.md`, `implementation.md`, `review.md`, `lessons.md`, `summary.md`, `questions.md` under `docs/specs/adhoc-Pass1-SkillRepair/delivery/` | this repo |
+| the plugin source repo (plugin source) | The `SKILL.md` edits/creations (Steps 1–5) **and** `improve-skills` housekeeping (see C-2 note) | plugin repo |
 
 **Consequences the developer and reviewer must internalize:**
-- The diff to review for Steps 1–5 is in `<plugin-repo>`, not in `this repo`. `git status` in this project will NOT show the skill work. Run `git -C "<plugin-repo>" status` / `diff` to see it.
+- The diff to review for Steps 1–5 is in the plugin source repo, not in this repo. `git status` in this project will NOT show the skill work. Run `git -C "<plugin-repo>" status` / `diff` to see it.
 - implementation.md (in THIS repo) documents what changed; the actual changed files are in the other repo. Cite the plugin-repo paths.
 - The two repos are committed separately. The team-lead commits each to its own repo (commit/push gated to user request as always).
 
 ## Cache / discoverability model (Q1 sync step + Q4 dry-run — binding facts)
 
-Verified against the plugin repo's own architecture record (`<plugin-repo>\docs\architecture\README.md`, "Platform constraints" #3 + ADR-1 + ADR-3 + ADR-9):
+Verified against the plugin repo's own architecture record (`<plugin-repo>/docs/architecture/README.md`, "Platform constraints" #3 + ADR-1 + ADR-3 + ADR-9):
 
-- The installed cache is **version-keyed**: `<home>\.claude\plugins\cache\claude-nexus\nexus-dotnet\0.1.1\`. `/plugin update` is a **no-op unless `plugin.json`'s `version` changes**.
+- The installed cache is **version-keyed**: `<home>/.claude/plugins/cache/claude-nexus/nexus-dotnet/0.1.1/`. `/plugin update` is a **no-op unless `plugin.json`'s `version` changes**.
 - The installed `claude-nexus` marketplace points at the **GitHub remote** (`DotNetLabX/claude-nexus`), not the local source dir. So `/plugin update` would pull from GitHub — it will NOT pick up local-only edits without a commit+push+version-bump.
 - **Therefore the dev loop is the sync mechanism, NOT a build script.** Per ADR-1, `claude --plugin-dir <repo>/plugins/...` loads the working checkout live (cache-bypassed); `/reload-plugins` hot-reloads so `SKILL.md` edits apply immediately. **Dependency caveat (C-3):** `nexus-dotnet` declares `dependencies: ["nexus"]` (ADR-3) and the README's own dev-loop example points `--plugin-dir` at the **core** (`/plugins/nexus`). A single `--plugin-dir .../nexus-dotnet` may not load the core dependency in cache-bypass mode. Step 6 must **verify and record the working invocation** (likely both plugins on the path, or the core) — do not assume the nexus-dotnet-only command works.
 - There is no `scripts/` step that writes the cache: `scripts/` contains `gen-commands.mjs` (regenerates persona commands), `gen-omni.mjs` (mirrors nexus→the omni twin), and `skill-classification.md` (a doc) — none writes the install cache. (LOW-5: enumeration corrected from the prior "holds only two scripts.")
@@ -55,15 +55,15 @@ Verified against the plugin repo's own architecture record (`<plugin-repo>\docs\
 
 Steps 1–5 invoke `improve-skills`, which mandates three housekeeping artifacts: log every create/fix to `docs/skill-backlog.md`, append a per-skill `CHANGELOG.md` entry, and update `.claude/README.md` skill count/sections. **In the two-repo model these target the PLUGIN repo, not sprint-rituals:**
 
-- `<plugin-repo>\docs\skill-backlog.md` (create if absent) — one entry per created/fixed skill.
-- `<plugin-repo>\plugins\nexus-dotnet\skills\{name}\CHANGELOG.md` — for the two *repairs* (Steps 1, 2); creates may add an initial CHANGELOG, optional.
+- `<plugin-repo>/docs/skill-backlog.md` (create if absent) — one entry per created/fixed skill.
+- `<plugin-repo>/plugins/nexus-dotnet/skills/{name}/CHANGELOG.md` — for the two *repairs* (Steps 1, 2); creates may add an initial CHANGELOG, optional.
 - `.claude/README.md` skill-count update — **applies to the plugin repo if it carries one**; the developer confirms whether a plugin-level README skill index exists and updates it there, else records "no skill-index README in plugin repo — waived." **Do NOT touch any `.claude/README.md` in sprint-rituals.**
 
 State in implementation.md which housekeeping artifacts were written (with plugin-repo paths) and which were waived with reason.
 
 ## Already-fixed — EXCLUDED from scope (Q3, verified in source)
 
-Confirmed by inspecting `<plugin-repo>\plugins\nexus-dotnet\skills\`:
+Confirmed by inspecting `<plugin-repo>/plugins/nexus-dotnet/skills/`:
 - **`create-aggregate`** — the `workflows/` dir exists with `AggregateEfCore.md`, `AggregateRedis.md`, `ValueObject.md`, `DomainEvent.md`. The "references non-existent workflow files" SMELL is resolved. **Do not touch.**
 - **`persistence-patterns`** — the `ref`-param helper (line ~105) and `HasDefaultValueSql` (line ~80) are now documented as explicit warnings/caveats, not silent non-compilable patterns. **Do not touch.**
 
@@ -104,13 +104,13 @@ Each ADR is encoded **as a documented variant** per the General-Skill Mandate.
 
 ## Implementation Steps
 
-**Authoring order (binding): 3 → 1 → 2 → 4 → 5 → 6 → 7.** Author `domain-service` (Step 3) FIRST because Step 1 (analytics) reframes itself as a specialization of it and cross-references it by name. The steps are *numbered* by topic (repairs 1–2, creates 3–5, verify 6–7) but *authored* in dependency order. Step 7 verifies every cross-reference resolves as a backstop. All five SKILL.md files live under `<plugin-repo>\plugins\nexus-dotnet\skills\{name}\SKILL.md`.
+**Authoring order (binding): 3 → 1 → 2 → 4 → 5 → 6 → 7.** Author `domain-service` (Step 3) FIRST because Step 1 (analytics) reframes itself as a specialization of it and cross-references it by name. The steps are *numbered* by topic (repairs 1–2, creates 3–5, verify 6–7) but *authored* in dependency order. Step 7 verifies every cross-reference resolves as a backstop. All five SKILL.md files live under `<plugin-repo>/plugins/nexus-dotnet/skills/{name}/SKILL.md`.
 
 Each step's acceptance includes the **per-skill bar (Q4)**: (a) cites its governing ADR(s) by number; (b) passes the anti-pattern check (no "adapt" weasel-wording, no skill dismissed as too-simple) and the over-specification test (feature-specific guidance only, not restating generic DDD); (c) any embedded example is valid for its language — **C#** examples compile conceptually against this solution's actual BuildingBlocks (`Blocks.Domain`: `AggregateRoot`/`Entity<T>`/`ValueObject`/`StringValueObject`/`SingleValueObject<T>`; `Blocks.EntityFrameworkCore`; `Blocks.FastEndpoints`), **MSBuild XML** (CPM props) validates as MSBuild, **regex/grep** detection patterns are correct; (d) carries an "accepted but not proven until Passes 2/3 consume it" note; (e) **general-skill check** — SprintRituals choices appear as a labelled variant/worked example, not as the only way (D-A).
 
 ### Step 3 — Create `domain-service` skill (new) — author this first
 
-**File:** `<plugin-repo>\plugins\nexus-dotnet\skills\domain-service\SKILL.md` (create folder + file). **Disposition: Follow `improve-skills`.** **Confidence: low** — no direct precedent skill; this is a genuine design encoded from ADR-005 + the Q2 interactive answers. Explore the reference proposals (`reference-patterns-domain.md` §1, §6) and the existing `extract-feature-service` / `analytics-computation-service` skills before authoring, to position this skill against them. **Note: reference §6 (`ArticleAccessChecker`) is an Application-layer service, a DISTINCT pattern — Step 3 treats it as a contrast, not a variant of `domain-service` (FIX 1).**
+**File:** `<plugin-repo>/plugins/nexus-dotnet/skills/domain-service/SKILL.md` (create folder + file). **Disposition: Follow `improve-skills`.** **Confidence: low** — no direct precedent skill; this is a genuine design encoded from ADR-005 + the Q2 interactive answers. Explore the reference proposals (`reference-patterns-domain.md` §1, §6) and the existing `extract-feature-service` / `analytics-computation-service` skills before authoring, to position this skill against them. **Note: reference §6 (`ArticleAccessChecker`) is an Application-layer service, a DISTINCT pattern — Step 3 treats it as a contrast, not a variant of `domain-service` (FIX 1).**
 
 Encode the Q2-resolved design (governing ADRs: 005, 006, 010), **variant-aware** throughout (D-A):
 
@@ -127,7 +127,7 @@ Encode the Q2-resolved design (governing ADRs: 005, 006, 010), **variant-aware**
 
 ### Step 1 — Repair `analytics-computation-service` skill
 
-**File:** `<plugin-repo>\plugins\nexus-dotnet\skills\analytics-computation-service\SKILL.md`. **Disposition: Follow `improve-skills`.** **Confidence: medium** — this is a **whole-skill reframe**, not a surgical bullet edit (HIGH #4). The API/Service framing is pervasive: the `description` (line 3), "When to use" (line 13), the Reference-shape table (lines 21–27), and "Service structure" (lines 31–32) all teach `*.API/Features/Analytics/*Service.cs`, Service-suffixed names, and "response records at the top." Preserve the genuinely useful analytics correctness content (delta/direction/polarity triplet, sparkline builder, rolling average, multi/single-period, optional-data-source fast path).
+**File:** `<plugin-repo>/plugins/nexus-dotnet/skills/analytics-computation-service/SKILL.md`. **Disposition: Follow `improve-skills`.** **Confidence: medium** — this is a **whole-skill reframe**, not a surgical bullet edit (HIGH #4). The API/Service framing is pervasive: the `description` (line 3), "When to use" (line 13), the Reference-shape table (lines 21–27), and "Service structure" (lines 31–32) all teach `*.API/Features/Analytics/*Service.cs`, Service-suffixed names, and "response records at the top." Preserve the genuinely useful analytics correctness content (delta/direction/polarity triplet, sparkline builder, rolling average, multi/single-period, optional-data-source fast path).
 
 The SMELL to remove (governing ADRs: 005, 006, 010): "Response records at the top of the file — all records the service returns" (line ~31), "Service class — primary constructor with repository dependencies" (line ~32), and the repository "Exception" clause (line ~73). This couples computation to API response shape and to the DB.
 
@@ -142,7 +142,7 @@ Edits:
 
 ### Step 2 — Repair `domain-patterns` skill (add VO-vs-scalar rule; variant-annotate full-stack content)
 
-**File:** `<plugin-repo>\plugins\nexus-dotnet\skills\domain-patterns\SKILL.md`. **Disposition: Follow `improve-skills`.** **Confidence: high** — additive + annotation; do not delete content.
+**File:** `<plugin-repo>/plugins/nexus-dotnet/skills/domain-patterns/SKILL.md`. **Disposition: Follow `improve-skills`.** **Confidence: high** — additive + annotation; do not delete content.
 
 **2a. Add the VO-vs-scalar rule (gap, ADR-007).** The "Value Objects" section lists the three base types and the factory pattern but has **no rule for *when* to use a VO vs a flat scalar**. Add a subsection "When to use a value object (vs a flat scalar)":
 1. The rule: when two or more scalar fields are *cohesive* (always used together, share an invariant, or represent one concept), group them into a VO / owned type rather than flat scalars. A single standalone scalar with its own validation/identity (e.g. `EmailAddress`) is also a VO; a single incidental scalar (a count, a flag) stays a plain property.
@@ -158,20 +158,20 @@ Edits:
 
 ### Step 4 — Create `central-package-management` skill (new)
 
-**File:** `<plugin-repo>\plugins\nexus-dotnet\skills\central-package-management\SKILL.md` (create folder + file). **Disposition: Follow `improve-skills`.** **Confidence: high** — pattern derived in Pass 0 from the reference (`reference-patterns-structure.md` §1) and already applied in this solution (`src/Directory.Packages.props` — use as the live worked example).
+**File:** `<plugin-repo>/plugins/nexus-dotnet/skills/central-package-management/SKILL.md` (create folder + file). **Disposition: Follow `improve-skills`.** **Confidence: high** — pattern derived in Pass 0 from the reference (`reference-patterns-structure.md` §1) and already applied in this solution (`src/Directory.Packages.props` — use as the live worked example).
 
 Encode (governing ADR: 013):
 1. **What CPM is + when to apply** — one `Directory.Packages.props` at the solution `src/` root; `<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>` + (recommended) `<CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>`; one `<PackageVersion Include="..." Version="..."/>` per package; `.csproj` uses bare `<PackageReference Include="..."/>` with no version.
 2. **Migration recipe (problem-class)** — create the props file declaring each currently-pinned version; remove the version from every `<PackageReference>`; preserve other attributes/child elements (`PrivateAssets`/`IncludeAssets`, e.g. on `EntityFrameworkCore.Design`).
 3. **Verification grep — detect ALL version sources under a `PackageReference` (MED #7).** The check must catch: inline `Version="..."` attributes; child `<Version>...</Version>` elements; and `VersionOverride="..."` attributes — while preserving legitimate children (`PrivateAssets`, `IncludeAssets`). A single `Version=`-only grep is insufficient as a general skill. (In *this* repo Pass 0 already removed all three forms — `src/Directory.Packages.props` is clean and the csproj files carry only `PrivateAssets`/`IncludeAssets` children — so SprintRituals is the "after" worked example; the broadened grep is a skill-generality requirement for projects not yet clean. See Revision notes.)
-4. **Reference anchors** — reference `<reference-repo>\src\Directory.Packages.props`; live in-solution worked example `src\Directory.Packages.props`.
+4. **Reference anchors** — reference `<reference-repo>/src/Directory.Packages.props`; live in-solution worked example `src/Directory.Packages.props`.
 5. **Interplay note** — CPM + "bump everything to latest" can surface transitive breaking changes beyond the targeted package (Pass 0 hit a Refit major-version break). Cross-reference `framework-currency`.
 
 **Accept:** file exists; covers concept + migration recipe + **the broadened three-form verification grep** + reference anchors; cites ADR-013; per-skill bar (a)–(e) (the props XML validates as MSBuild).
 
 ### Step 5 — Create `framework-currency` skill (new)
 
-**File:** `<plugin-repo>\plugins\nexus-dotnet\skills\framework-currency\SKILL.md` (create folder + file). **Disposition: Follow `improve-skills`.** **Confidence: medium** — detection patterns and false-positives are documented in Pass 0 lessons; the risk is detection completeness + version-target correctness.
+**File:** `<plugin-repo>/plugins/nexus-dotnet/skills/framework-currency/SKILL.md` (create folder + file). **Disposition: Follow `improve-skills`.** **Confidence: medium** — detection patterns and false-positives are documented in Pass 0 lessons; the risk is detection completeness + version-target correctness.
 
 Encode (governing ADRs: 011, 012), **general rule + FastEndpoints variant (D-A):**
 1. **Currency rule (stack-agnostic).** Track latest stable versions of the core stack (declared centrally via CPM — cross-reference `central-package-management`); target framework .NET 10. This is the general rule.
@@ -196,7 +196,7 @@ Encode (governing ADRs: 011, 012), **general rule + FastEndpoints variant (D-A):
 This step makes the 5 edited/new skills *visible to the tooling* and confirms they're discoverable before Pass 2 consumes them.
 
 1. **Sync via the dev loop (NOT `/plugin update`) — verify the invocation (C-3).** The installed cache is version-keyed and the marketplace points at GitHub, so a local edit is only visible via the working-checkout dev loop. **`nexus-dotnet` depends on `nexus` (ADR-3), and the README's dev-loop example points `--plugin-dir` at the core** — so a single `--plugin-dir .../nexus-dotnet` may not load the core. The developer must **determine and record the working invocation** (e.g. `--plugin-dir` pointing at both plugins, or at the core, per ADR-1/ADR-3), then `/reload-plugins` for SKILL.md edits to apply. Record the exact working command in implementation.md as the Step 6 deliverable. (If the developer cannot relaunch the session, record this as the verification the team-lead/user runs — do NOT bump the plugin version or push, that's the out-of-scope release path.)
-   - **Closes the Q1 instruction.** Q1 asked to "inspect `<plugin-repo>\scripts\` for a build/sync script." Done during planning: `scripts/` holds `gen-commands.mjs`, `gen-omni.mjs`, and `skill-classification.md` (a doc) — **none writes the install cache** (LOW-5). So there is no cache-build script; the dev-loop is the sync. This is the closed answer to the instruction, not the instruction being skipped. Re-confirm `scripts/` contents if it changed since planning.
+   - **Closes the Q1 instruction.** Q1 asked to "inspect `<plugin-repo>/scripts/` for a build/sync script." Done during planning: `scripts/` holds `gen-commands.mjs`, `gen-omni.mjs`, and `skill-classification.md` (a doc) — **none writes the install cache** (LOW-5). So there is no cache-build script; the dev-loop is the sync. This is the closed answer to the instruction, not the instruction being skipped. Re-confirm `scripts/` contents if it changed since planning.
 2. **Verify the skills are present and well-formed.** Confirm each of the 5 skill files exists with valid frontmatter (`name` matching the folder, a `description`). The `name` must exactly match how plans/agents reference it (bare name, e.g. `domain-service`).
 3. **Skill-inventory dry-run.** Confirm the 5 skills would be discovered/mappable by `create-implementation-plan`'s skill-inventory step. The plugin's architecture record flags discovery as a known limitation (it globs `.claude/skills/`, missing plugin skills) — so the realistic dry-run is: (a) the skills appear in the available-skills list surfaced to an agent's context, and (b) a trial mapping (e.g. "planning a Pass-3 domain-enrichment step, does `domain-service` show up?") resolves by name. Record the result.
 
@@ -227,7 +227,7 @@ None. No migrations, no schema.
 
 ## Cross-Service Changes
 
-None in the SprintRituals solution. The changes are entirely in the plugin source repo (`<plugin-repo>`).
+None in the SprintRituals solution. The changes are entirely in the plugin source repo.
 
 ## Migration Notes
 
@@ -268,7 +268,7 @@ LOWs folded: LOW-4 (scope no-suffix rule to domain services; note API-layer serv
 None blocking — Q1–Q4 are Resolved (see questions.md); the two reviews' findings are folded above.
 
 **Flags for the team-lead (not blockers):**
-1. **Two commit targets.** Steps 1–5 (incl. `improve-skills` housekeeping) commit to `<plugin-repo>`; the pipeline artifacts commit to `this repo`. Commit/push only on user request.
+1. **Two commit targets.** Steps 1–5 (incl. `improve-skills` housekeeping) commit to the plugin source repo; the pipeline artifacts commit to this repo. Commit/push only on user request.
 2. **Plugin release is out of scope.** Making these skills available beyond this machine's dev-loop requires a `plugin.json` version bump + `claude plugin validate` + `gen-commands.mjs`/`gen-omni.mjs` + tag/push (plugin ADR-9). Queue after Pass 1 closes.
 3. **Skill-inventory discovery limitation** (plugin "Known limitations" P2): `create-implementation-plan` globs `.claude/skills/` and may under-report plugin skills. Step 6 verifies discoverability empirically; if blind, bare-name references still resolve at invocation. A proper fix is plugin-repo work, not Pass 1.
 4. **`extract-feature-service` mixed naming example** (LOW-4 origin): that skill lists `SprintIssueSyncService` (Service-suffixed) as a good example next to `HealthScoreCalculator`. Out of Pass 1 scope, but a future-cleanup candidate so it doesn't contradict the domain-service no-suffix rule.

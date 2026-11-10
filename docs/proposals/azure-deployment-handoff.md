@@ -16,7 +16,7 @@ standalone apps:
 
 | Live app | Azure account | Replace when |
 |---|---|---|
-| `<old-fokus-app>` (`<old-fokus-app>.azurewebsites.net`) | **Work** — tenant *the work tenant*, subscription *the subscription*, RG `<resource-group>` | **First** (this proposal) |
+| `<old-fokus-app>` (`<old-fokus-app>.azurewebsites.net`) | **Work** — the work tenant, the subscription, RG `<resource-group>` | **First** (this proposal) |
 | Reflekt (original) | **Personal** account | Later — not in the work tenant |
 
 One SprintRituals deployment replaces both, so it lands in **one** account only. Work account first.
@@ -41,7 +41,7 @@ migrating old Reflekt data.
 
 1. **Back up the live Fokus DB first.** Download `/home/data/fokus.db` (Kudu/SSH or `az webapp`
    file download) and keep it outside Azure. Nothing below should touch it, but it is the only copy.
-2. **Add `deploy.ps1` at repo root**, adapted from `<fokus-repo>\deploy.ps1` (27 lines):
+2. **Add `deploy.ps1` at repo root**, adapted from `<fokus-repo>/deploy.ps1` (27 lines):
    `cd client; npm ci; npm run build` (builds all three SPAs into `src/Host/wwwroot/{dashboard,retro,poker}`)
    → `dotnet publish src/Host -c Release -o publish` → zip → `az webapp deploy --type zip --clean true`.
    Read config (app name, RG, subscription) from a git-ignored `deploy-config.ps1` like Fokus does.
@@ -120,6 +120,6 @@ hosting choice.
 ## Provenance
 
 Solo session `adhoc-run-app`, 2026-10-05. Inputs: read-only `az` queries against `<old-fokus-app>`
-(names and flags only, no secret values); `<fokus-repo>\deploy.ps1` and `docs/deployment-azure.md`;
-`<reflekt-repo>\deploy.ps1`; `<private-repo>\deploy\*` and `.github/workflows/images.yml`;
+(names and flags only, no secret values); `<fokus-repo>/deploy.ps1` and `docs/deployment-azure.md`;
+`<reflekt-repo>/deploy.ps1`; `<private-repo>/deploy/*` and `.github/workflows/images.yml`;
 this repo's `src/Host/appsettings.json` and `Blocks.EntityFrameworkCore/Extensions/DbContextExtensions.cs`.

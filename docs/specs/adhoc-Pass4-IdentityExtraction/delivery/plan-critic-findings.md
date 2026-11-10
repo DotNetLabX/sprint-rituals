@@ -1,7 +1,7 @@
 # Plan-Critic Findings — adhoc-Pass4-IdentityExtraction (Mode 2, code-grounded)
 
 **Reviewed:** `docs/specs/adhoc-Pass4-IdentityExtraction/delivery/plan.md`
-against `definition/spec.md` + `delivery/questions.md` (Q1–Q15) + real source on disk + reference repo `<reference-repo>`.
+against `definition/spec.md` + `delivery/questions.md` (Q1–Q15) + real source on disk + the reference codebase.
 **Reviewer:** critic (nexus). Relay fallback file — NOT review.md, NOT a verdict. Folded by the architect into plan.md `## Plan Review`.
 
 Cross-referenced all 14 Business Rules, all 9 Acceptance Criteria, all 3 Flows, all 15 answered questions, and all 11 plan steps. **11 findings: 1 HIGH (blocking), 5 MEDIUM, 5 LOW.** No locked decision is contradicted by the plan (L1, Q13 two-direction gRPC, Q14 bootstrap-gated seed, ADR-001 no project refs all honored). The decomposition (11 steps unsplit) is NOT re-raised — accepted per instruction; no correctness problem found with the single chain.

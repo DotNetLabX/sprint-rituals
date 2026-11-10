@@ -14,7 +14,7 @@ Source files are files that contain application code. Agents restricted from wri
 These are NOT source files (agents may read/write them freely):
 - `docs/**` — documentation, specs, plans, KB entries
 - `.claude/**` — agent definitions, rules, skills
-- `client/index.html`, `client/*.config.*` — frontend build config
+- `client/apps/*/index.html`, `client/apps/*/*.config.*` — frontend build config
 - Root config files (`*.slnx`, `docker-compose.*`, `*.json`, `*.md`)
 
 ## Document Lifecycle — Proposals vs Plans (binding)
@@ -30,7 +30,7 @@ Rules:
 - **All plans live in a slug** (`docs/specs/{slug}/delivery/plan.md`). A plan never lives in `docs/proposals/`.
 - When you say **"plan," it is ready to implement.** If it still needs refining, it is a **proposal**, not a plan.
 - The `{slug}` is assigned by the team lead or PO (see agents-workflow); agents never derive it. A proposal graduates into a slug's `plan.md` when the work is scheduled.
-- Idea/research/evaluation docs (e.g. the BR-coverage proposal, research, golden-set draft, the harness evaluation) correctly stay in `docs/proposals/` — they are proposals, not plans.
+- Idea/research/evaluation docs (e.g. the BR-coverage proposal, research, golden-set draft) correctly stay in `docs/proposals/` — they are proposals, not plans.
 
 ## Guardrails — DO NOT
 

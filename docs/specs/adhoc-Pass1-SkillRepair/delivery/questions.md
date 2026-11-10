@@ -6,24 +6,24 @@
 **Status:** Resolved
 **Step:** Phase 1 analysis
 
-**Context:** This project has **zero local skills**. There is no `.claude/skills/` directory and no `SKILL.md` anywhere under `this repo` (verified by `find`). The project deliberately went "plugin-canonical" — `docs/proposals/nexus-format-gap.md` records that all plugin-provided agents/rules/skills were removed locally so the project relies entirely on the installed `nexus` + `nexus-dotnet` plugins.
+**Context:** This project has **zero local skills**. There is no `.claude/skills/` directory and no `SKILL.md` anywhere under this repo (verified by `find`). The project deliberately went "plugin-canonical" — `docs/proposals/nexus-format-gap.md` records that all plugin-provided agents/rules/skills were removed locally so the project relies entirely on the installed `nexus` + `nexus-dotnet` plugins.
 
 Every skill Pass 1 targets (`domain-patterns`, `analytics-computation-service`, `create-aggregate`, `persistence-patterns`, `create-feature`, `service-registration`, plus the missing `central-package-management` / `framework-currency`, plus a new `domain-service`) lives only in the **versioned, shared plugin cache**:
-`<home>\.claude\plugins\cache\claude-nexus\nexus-dotnet\0.1.1\skills\` and `...\nexus\0.1.2\skills\`.
+`<home>/.claude/plugins/cache/claude-nexus/nexus-dotnet/0.1.1/skills/` and `...\nexus\0.1.2\skills\`.
 
 Editing those files affects **every project on this machine**, is outside this git repo, and is upstream-plugin maintenance — not something the SprintRituals pipeline (developer edits repo → reviewer reviews repo diff → team-lead commits repo) can carry. The pipeline has nothing in-repo to operate on if the work happens in the cache.
 
 The `nexus-format-gap.md` proposal is itself explicit that skill/format fixes belong "in the plugin-build project," not here.
 
 **Question:** Where should Pass 1's skill repairs land? Options:
-- **(A) Project-local override** — create `.claude\skills\{name}\SKILL.md` for each repaired/new skill (project copies that shadow the plugin). Reverses the plugin-canonical decision for these specific skills; keeps the work inside this repo and pipeline-reviewable. **Recommended IF the work must run through this project's pipeline.**
+- **(A) Project-local override** — create `.claude/skills/{name}/SKILL.md` for each repaired/new skill (project copies that shadow the plugin). Reverses the plugin-canonical decision for these specific skills; keeps the work inside this repo and pipeline-reviewable. **Recommended IF the work must run through this project's pipeline.**
 - **(B) Upstream the fixes in the plugin-build project** — Pass 1 here produces only the *specifications* (a skill-repair spec doc per skill: exact defect, target wording, ADR mapping) committed to `docs/`, and the actual `SKILL.md` edits are done in the plugin repo as a separate effort. Keeps plugin-canonical intact; this repo stays the source of truth for *what* to change, not *where the skill lives*.
 - **(C) Hybrid** — new project-specific skills (`domain-service`, `central-package-management`, `framework-currency`) land project-local (A); edits to existing shared skills (`analytics-computation-service` SMELL, `domain-patterns` VO gap) are specified for upstream (B).
 
 This decision determines the entire shape of the plan (what files the developer creates/edits) and must be made before any plan can be written.
 
 ### Answer
-**Operating model (none of A/B/C — the keystone is a separate editable plugin SOURCE repo).** Skills are NOT project-local and NOT edited in the read-only cache. They are fixed in the editable plugin source repo `<plugin-repo>` (a separate git repo). All 5 Pass 1 skills live under `plugins/nexus-dotnet/skills/`:
+**Operating model (none of A/B/C — the keystone is a separate editable plugin SOURCE repo).** Skills are NOT project-local and NOT edited in the read-only cache. They are fixed in the editable plugin source repo (a separate git repo). All 5 Pass 1 skills live under `plugins/nexus-dotnet/skills/`:
 - repair `plugins/nexus-dotnet/skills/analytics-computation-service/`
 - repair `plugins/nexus-dotnet/skills/domain-patterns/`
 - create `plugins/nexus-dotnet/skills/domain-service/` (new)
@@ -31,8 +31,8 @@ This decision determines the entire shape of the plan (what files the developer 
 - create `plugins/nexus-dotnet/skills/framework-currency/` (new)
 
 Consequences for the plan:
-- Pipeline artifacts (plan.md, implementation.md, review.md, lessons.md, summary.md) stay in THIS repo at `docs/specs/adhoc-Pass1-SkillRepair/delivery/`. Skill edits land in the plugin repo. **Two repos, two commit targets** — the diff to review is in `<plugin-repo>`.
-- Include a step to **rebuild/sync the installed plugin cache** from source after edits (inspect `<plugin-repo>\scripts\` for a build/sync script) so the Q4 dry-run skill-inventory scan sees the new skills. Verify the cache reflects the edits before the dry-run.
+- Pipeline artifacts (plan.md, implementation.md, review.md, lessons.md, summary.md) stay in THIS repo at `docs/specs/adhoc-Pass1-SkillRepair/delivery/`. Skill edits land in the plugin repo. **Two repos, two commit targets** — the diff to review is in the plugin source repo.
+- Include a step to **rebuild/sync the installed plugin cache** from source after edits (inspect `<plugin-repo>/scripts/` for a build/sync script) so the Q4 dry-run skill-inventory scan sees the new skills. Verify the cache reflects the edits before the dry-run.
 
 ---
 
@@ -46,7 +46,7 @@ Consequences for the plan:
 
 ADR-005 mandates a cross-aggregate **domain service** pattern: services in `{Module}.Domain/{Area}/` (e.g. `Fokus.Domain/Analytics/SprintSummaryCalculator.cs`) that **return domain types / value objects, never API response DTOs**; the endpoint Mapster-maps the domain result to the response DTO. This is the resolution for triage problems #4/#5/#6/#7 and is the single largest skill gap (no skill currently defines a domain-service concept).
 
-Complication: the reference project (`<reference-repo>`, `reference-patterns-domain.md` §6) explicitly found **"No standalone Domain Service with domain-layer dependencies"** — it puts cross-aggregate logic in Application-layer handlers / an `ArticleAccessChecker`-style Application service. But ADR-004 says this project has **no Application layer** (API + Domain + Persistence only). So the reference's chosen home for cross-aggregate logic (the Application layer) **does not exist here**, and ADR-005 deliberately diverges by placing it in the Domain layer instead.
+Complication: the reference project (the reference codebase, `reference-patterns-domain.md` §6) explicitly found **"No standalone Domain Service with domain-layer dependencies"** — it puts cross-aggregate logic in Application-layer handlers / an `ArticleAccessChecker`-style Application service. But ADR-004 says this project has **no Application layer** (API + Domain + Persistence only). So the reference's chosen home for cross-aggregate logic (the Application layer) **does not exist here**, and ADR-005 deliberately diverges by placing it in the Domain layer instead.
 
 The skill therefore can't be a straight reference port — its shape is a genuine design decision.
 
@@ -98,7 +98,7 @@ Lower-confidence / possibly-out-of-scope:
 6. Any of the lower-confidence items (`create-feature`, `cqrs-patterns`, `service-registration`/`Migrate<T>` async) in scope? **Which.**
 
 ### Answer
-**5 core skills only.** Repair `analytics-computation-service` + `domain-patterns` (add the VO-vs-scalar rule per ADR-007). Create `domain-service` + `central-package-management` + `framework-currency`. Do NOT touch `create-feature`, `cqrs-patterns`, or `service-registration`. Confirm against the **source repo** (`<plugin-repo>`) that `create-aggregate` (workflow files) and `persistence-patterns` (ref-param / HasDefaultValueSql) are already fixed and exclude them. For `framework-currency`, include the bare `SendAsync(...)` form AND the HttpClient / SignalR `SendAsync` false-positives (per Pass 0 lessons).
+**5 core skills only.** Repair `analytics-computation-service` + `domain-patterns` (add the VO-vs-scalar rule per ADR-007). Create `domain-service` + `central-package-management` + `framework-currency`. Do NOT touch `create-feature`, `cqrs-patterns`, or `service-registration`. Confirm against the **source repo** (the plugin source repo) that `create-aggregate` (workflow files) and `persistence-patterns` (ref-param / HasDefaultValueSql) are already fixed and exclude them. For `framework-currency`, include the bare `SendAsync(...)` form AND the HttpClient / SignalR `SendAsync` false-positives (per Pass 0 lessons).
 
 ---
 

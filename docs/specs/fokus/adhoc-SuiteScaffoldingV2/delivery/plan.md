@@ -5,21 +5,21 @@
 
 ## Context
 
-Fokus (mature, F1–F35) and Reflekt are standalone repos. The decided proposal merges them into one **modular-monolith** Host with a new **Identity** module. The prior scaffold was discarded: it copied Fokus into a fresh repo and chose **full ASP.NET Core Identity**, which caused 3 review cycles (vulnerable `System.Security.Cryptography.Xml` NuGet, can't-inherit-both `IAggregateRoot` gymnastics, IsActive-migration bug). The discarded code was deleted; `this repo\` is now an empty repo shell (only a suite-aware `.gitignore`, one "Initial commit").
+Fokus (mature, F1–F35) and Reflekt are standalone repos. The decided proposal merges them into one **modular-monolith** Host with a new **Identity** module. The prior scaffold was discarded: it copied Fokus into a fresh repo and chose **full ASP.NET Core Identity**, which caused 3 review cycles (vulnerable `System.Security.Cryptography.Xml` NuGet, can't-inherit-both `IAggregateRoot` gymnastics, IsActive-migration bug). The discarded code was deleted; this repo is now an empty repo shell (only a suite-aware `.gitignore`, one "Initial commit").
 
-This plan rebuilds the scaffold **into that empty repo**, via a disciplined clean copy from `<fokus-repo>\`, with a **hard end-to-end verification gate**.
+This plan rebuilds the scaffold **into that empty repo**, via a disciplined clean copy from the original Fokus project, with a **hard end-to-end verification gate**.
 
 ## Locked Decisions (user-confirmed this session)
 
 | # | Decision | Choice |
 |---|----------|--------|
-| 1 | Repo | Continue empty `this repo\` (don't re-copy a 3rd time, don't tear up live `fokus`) |
+| 1 | Repo | Continue in this empty repo (don't re-copy a 3rd time, don't tear up live `fokus`) |
 | 2 | Code migration | **Clean copy** from `fokus` + **hard verify gate**. No git-history preservation — `fokus` repo remains the historical record |
 | 3 | Scope | **Scaffold only** — Host + Identity + Fokus-as-module, running with Google OAuth. No gRPC, no MassTransit, no Reflekt |
 | 4 | Suite name | **SprintRituals** (`SprintRituals.slnx`, modules keep own root namespaces: `Identity.*`, `Fokus.*`) |
 | 5 | **Identity model** | **Plain DDD** — `Person : AggregateRoot<int>` + `User : Entity<int>`. **No ASP.NET Core Identity / IdentityUser / IdentityDbContext / UserManager.** Role = string claim. Google-only |
 | 6 | Invitation | **Stays in Fokus** (Fokus feature). Redemption-at-login deferred to the infra increment |
-| 7 | Pipeline artifacts | Live in `<fokus-repo>\docs\specs\` (the `.claude` pipeline only exists here); code is built in `sprint-rituals` |
+| 7 | Pipeline artifacts | Live in `<fokus-repo>/docs/specs/` (the `.claude` pipeline only exists here); code is built in `sprint-rituals` |
 
 **Forward context (non-binding):** the suite is Google-only SSO. Real multi-provider SSO, if ever needed, becomes a separate "platform" application — so this Identity module stays minimal and swappable.
 
@@ -43,7 +43,7 @@ This plan rebuilds the scaffold **into that empty repo**, via a disciplined clea
 
 ## Identity Reference
 
-`<reference-repo>\src\Services\Auth\` — adopt the **DDD structure**, not the membership stack.
+`<reference-repo>/src/Services/Auth/` — adopt the **DDD structure**, not the membership stack.
 
 | Adopt | Do NOT adopt |
 |-------|--------------|
@@ -120,21 +120,21 @@ Fokus.API does NOT reference Identity.* (no cross-module dependency in the scaff
 
 ## Cross-Repo Execution Notes (read before implementing)
 
-This pipeline runs from `<fokus-repo>` (where `.claude/` + the plan live), but **all code is built in `this repo`**. Verified working in this session: writes to sprint-rituals and all Bash/`dotnet`/`npm`/`git` commands execute **without permission prompts** (`settings.local.json` blanket-allows Bash/Write/Edit/Task/Skill). Operating rules:
+This pipeline runs from the original Fokus project (where `.claude/` + the plan live), but **all code is built in this repo**. Verified working in this session: writes to sprint-rituals and all Bash/`dotnet`/`npm`/`git` commands execute **without permission prompts** (`settings.local.json` blanket-allows Bash/Write/Edit/Task/Skill). Operating rules:
 
-1. **Always use absolute paths.** The Bash shell cwd **resets to `<fokus-repo>` after every call.** For builds/migrations/tests, pass absolute paths or chain in a single invocation: `cd this repo && dotnet build src/SprintRituals.slnx`.
+1. **Always use absolute paths.** The Bash shell cwd **resets to the original Fokus project after every call.** For builds/migrations/tests, pass absolute paths or chain in a single invocation: `cd <repo> && dotnet build src/SprintRituals.slnx`.
 2. **The Host run is long-running.** `dotnet run --project src/Host` blocks — launch it with `run_in_background`, then probe it; never run it foreground.
 3. **EF migrations** rely on the hardcoded design-time connection string (Step 6); run from sprint-rituals with explicit `-p`/`-s` project paths.
 4. **Google credentials are a secret the user must supply.** `Google:ClientId`/`ClientSecret` are NOT in the repo. The auth gate items (3, 3b, and the browser-dependent 4/6/7) **cannot pass unattended** — they need real Google OAuth creds in sprint-rituals user-secrets *and* a human at a browser. An unattended team run can complete **Steps 1–8 + gate items 1, 2, 8** (build, startup, migrations, Scalar shows both modules) and must hand live-login verification back to the user. **Never commit secrets.**
-5. The Identity service `CLAUDE.md` (Step 4 prerequisite) is **already authored** at `src\Services\Identity\CLAUDE.md` — do not regenerate it; Step 1's `.claude` seed must not overwrite it.
+5. The Identity service `CLAUDE.md` (Step 4 prerequisite) is **already authored** at `src/Services/Identity/CLAUDE.md` — do not regenerate it; Step 1's `.claude` seed must not overwrite it.
 
 ## Implementation Steps
 
 ### Step 1: Repo skeleton + `.claude`/`docs` seed
 
-Create the folder skeleton in `this repo\`: `src/Host/`, `src/BuildingBlocks/`, `src/Modules/`, `src/Services/Identity/`, `src/Services/Fokus/`, `client/`, `docs/`. Seed `.claude/` (agents, rules, conventions, skills), `docs/conventions/`, `docs/architecture/`, and `docs/proposals/suite-integration-architecture.md` from `<fokus-repo>\`. Create root `CLAUDE.md` adapted from Fokus's — update the **Repo Structure** section for the modular monolith (Host + modules), keep stack/port/guardrail sections. Create empty `SprintRituals.slnx`.
+Create the folder skeleton in this repo: `src/Host/`, `src/BuildingBlocks/`, `src/Modules/`, `src/Services/Identity/`, `src/Services/Fokus/`, `client/`, `docs/`. Seed `.claude/` (agents, rules, conventions, skills), `docs/conventions/`, `docs/architecture/`, and `docs/proposals/suite-integration-architecture.md` from the original Fokus project. Create root `CLAUDE.md` adapted from Fokus's — update the **Repo Structure** section for the modular monolith (Host + modules), keep stack/port/guardrail sections. Create empty `SprintRituals.slnx`.
 
-- **Source:** `<fokus-repo>\.claude\`, `<fokus-repo>\docs\conventions\`, `<fokus-repo>\docs\architecture\`
+- **Source:** `<fokus-repo>/.claude/`, `<fokus-repo>/docs/conventions/`, `<fokus-repo>/docs/architecture/`
 - **Note:** the `.gitignore` already present in sprint-rituals is correct — do not overwrite it.
 - **Note (non-blocking):** `.claude` is also being extracted into a plugin ("Nexus"). For now, copy it so the repo is self-sufficient; migrating to the plugin is a separate track.
 - **Accept:** folder skeleton exists; `.claude/` + `docs/` seeded; root `CLAUDE.md` describes the monolith; empty `SprintRituals.slnx` present.
@@ -142,9 +142,9 @@ Create the folder skeleton in `this repo\`: `src/Host/`, `src/BuildingBlocks/`, 
 
 ### Step 2: Copy BuildingBlocks + Modules; verify isolated build
 
-Clean-copy all 6 BuildingBlocks (`Blocks.Core`, `Blocks.Exceptions`, `Blocks.Domain`, `Blocks.EntityFrameworkCore`, `Blocks.AspNetCore`, `Blocks.FastEndpoints`) and both Modules (`Jira/Jira.Contracts`, `Jira/Jira.RestApi`, `Xray/Xray.Contracts`, `Xray/Xray.GraphQL`) from `<fokus-repo>\src\`. Add all to `SprintRituals.slnx`.
+Clean-copy all 6 BuildingBlocks (`Blocks.Core`, `Blocks.Exceptions`, `Blocks.Domain`, `Blocks.EntityFrameworkCore`, `Blocks.AspNetCore`, `Blocks.FastEndpoints`) and both Modules (`Jira/Jira.Contracts`, `Jira/Jira.RestApi`, `Xray/Xray.Contracts`, `Xray/Xray.GraphQL`) from `<fokus-repo>/src/`. Add all to `SprintRituals.slnx`.
 
-- **Source:** `<fokus-repo>\src\BuildingBlocks\`, `<fokus-repo>\src\Modules\`
+- **Source:** `<fokus-repo>/src/BuildingBlocks/`, `<fokus-repo>/src/Modules/`
 - **Accept:** `dotnet build` passes (0 `CS` errors) for all 10 copied projects in isolation. Check the full output for `NU1903`/`NU1902` advisories — report any (lesson).
 - **Confidence:** high
 
@@ -203,14 +203,14 @@ Create `Auth/ActiveUserPreProcessor.cs` (global pre-processor; looks up Identity
 - **Person join (F2):** `UserResponse`/`MeResponse` carry `Email`, `DisplayName`, `AvatarUrl` (Person fields) plus `Role`, `IsActive`, `LastLoginAt`, `Id` (User fields). Populate via the repository's `Include(Person)`; `DisplayName` = `Person.FullName`. The `{id}` route param is `User.Id` (write-back target for UpdateRole/UpdateStatus). Wire `AddIdentityModule` → `AddApiServices` (Google+cookie) + `AddPersistenceServices`; `MapIdentityEndpoints` maps the minimal-API routes.
 
 - **Skill:** `create-feature`, `authorization-patterns`
-- **Source pattern:** `<fokus-repo>\src\Services\Fokus\Fokus.API\Auth\` and `Features/Auth/{GetMe,GetUsers,UpdateRole,UpdateStatus,Login,Logout}/`
+- **Source pattern:** `<fokus-repo>/src/Services/Fokus/Fokus.API/Auth/` and `Features/Auth/{GetMe,GetUsers,UpdateRole,UpdateStatus,Login,Logout}/`
 - **Lesson:** `[Tags]` needs `global using Microsoft.AspNetCore.Http;`; `ILogger<>` needs `global using Microsoft.Extensions.Logging;` (class-library context).
 - **Accept:** Identity builds end-to-end; Google config compiles; `GetMe` returns claims shape.
 - **Confidence:** medium (auth flow is the highest-risk area; port carefully, diff against Fokus original)
 
 ### Step 8: Port Fokus as a module
 
-Clean-copy `<fokus-repo>\src\Services\Fokus\` (excluding `Fokus.Tests` unless trivially portable) into `src/Services/Fokus/`. Convert `Fokus.API.csproj` Web SDK → class library + `<FrameworkReference Include="Microsoft.AspNetCore.App" />`; remove the Google/Scalar/OpenAPI packages now owned by Host/Identity; add `Microsoft.AspNetCore.Http` + `Microsoft.Extensions.Logging` to `GlobalUsings.cs` (lessons). Remove `Program.cs` (Host owns it).
+Clean-copy `<fokus-repo>/src/Services/Fokus/` (excluding `Fokus.Tests` unless trivially portable) into `src/Services/Fokus/`. Convert `Fokus.API.csproj` Web SDK → class library + `<FrameworkReference Include="Microsoft.AspNetCore.App" />`; remove the Google/Scalar/OpenAPI packages now owned by Host/Identity; add `Microsoft.AspNetCore.Http` + `Microsoft.Extensions.Logging` to `GlobalUsings.cs` (lessons). Remove `Program.cs` (Host owns it).
 
 **Remove (moved to Identity):** `Auth/AuthConfiguration.cs`, `Auth/AuthMiddleware.cs`, `Auth/ActiveUserPreProcessor.cs`; `Features/Auth/{Login,Logout,GetMe,GetUsers,UpdateRole,UpdateStatus}/`; `Domain/Auth/AppUser.cs` + `Behaviors/AppUser.cs`; `Persistence/Configurations/AppUserConfiguration.cs`, `Persistence/Repositories/AppUserRepository.cs`, `AppUsers` DbSet.
 
@@ -225,7 +225,7 @@ Clean-copy `<fokus-repo>\src\Services\Fokus\` (excluding `Fokus.Tests` unless tr
 
 ### Step 9: Host composition + frontend + VERIFY GATE
 
-Wire the final Host `Program.cs`: call `AddIdentityModule` + `AddFokusModule`; register FastEndpoints across **both** assemblies via `services.AddFastEndpoints(o => o.Assemblies = [ ... ])` (v6 IServiceCollection API — lesson) with the global `ActiveUserPreProcessor`; configure cookie + Google auth (owned by Identity's `AddApiServices`); run **both** DbContext migrations on startup (**Identity first**, then Fokus) and ensure the `data/` dir exists; seed Fokus `AppSettings` default row (port Fokus's startup seed); gate Scalar/OpenAPI to `IsDevelopment`; `MapFallbackToFile("index.html")`. Copy `<fokus-repo>\client\` → `sprint-rituals/client/`; set Vite `build.outDir` → `../src/Host/wwwroot`; keep `/api` + `/auth` proxy to the Host port. Update root `CLAUDE.md` (Identity module added; auth now in Identity) and add all projects to `SprintRituals.slnx`.
+Wire the final Host `Program.cs`: call `AddIdentityModule` + `AddFokusModule`; register FastEndpoints across **both** assemblies via `services.AddFastEndpoints(o => o.Assemblies = [ ... ])` (v6 IServiceCollection API — lesson) with the global `ActiveUserPreProcessor`; configure cookie + Google auth (owned by Identity's `AddApiServices`); run **both** DbContext migrations on startup (**Identity first**, then Fokus) and ensure the `data/` dir exists; seed Fokus `AppSettings` default row (port Fokus's startup seed); gate Scalar/OpenAPI to `IsDevelopment`; `MapFallbackToFile("index.html")`. Copy `<fokus-repo>/client/` → `sprint-rituals/client/`; set Vite `build.outDir` → `../src/Host/wwwroot`; keep `/api` + `/auth` proxy to the Host port. Update root `CLAUDE.md` (Identity module added; auth now in Identity) and add all projects to `SprintRituals.slnx`.
 
 - **Skill:** `service-registration` (Host composition + multi-assembly + multi-DbContext)
 

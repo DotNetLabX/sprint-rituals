@@ -12,12 +12,12 @@ Each decision is a binding contract. Deviating in a plan or implementation is a 
 The system is a modular monolith. `src/Host` is the only Web SDK / deployable project; every `*.API` is a class library composed into one process. Module boundaries (API/Domain/Persistence per module, DB-per-module, gRPC + integration events across modules) are kept so future service extraction needs only the Host split. (Ratifies `proposals/suite-integration-architecture.md` §1.)
 
 ## ADR-002 — Reference project
-**`<reference-repo>`** is the canonical pattern source. When the codebase smells and no correct skill covers it, derive the pattern from this repo, then fix/create the skill. (The reference uses .NET, FastEndpoints, MediatR, Mapster, EF Core, MassTransit, Central Package Management.)
+**The reference codebase** is the canonical pattern source. When the codebase smells and no correct skill covers it, derive the pattern from it, then fix/create the skill. (The reference uses .NET, FastEndpoints, MediatR, Mapster, EF Core, MassTransit, Central Package Management.)
 
 ## ADR-003 — Decision order when code smells
 1. A correct skill exists → **apply the skill**.
 2. No skill, or the skill itself smells → **use the reference project (ADR-002)** → then **fix or create the skill**.
-Every finding is a **problem class**: fix all instances across the codebase, not only the cited example, and fix the root cause (skill/process), not only the symptom. Enforced by `.claude/rules/engineering-discipline.md`.
+Every finding is a **problem class**: fix all instances across the codebase, not only the cited example, and fix the root cause (skill/process), not only the symptom. Enforced by the agent plugin's `engineering-discipline` rule (it ships with the plugin, not in this repo).
 
 ## ADR-004 — Light stack retained (no MediatR, no Application layer)
 Each module is **API + Domain + Persistence** only. FastEndpoints endpoint classes are the command/query handlers. **No MediatR, no Application project.** (Confirms `v1.md`; chosen over full reference alignment.)

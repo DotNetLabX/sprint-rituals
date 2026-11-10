@@ -82,7 +82,7 @@ After reading v1.md, the genuinely actionable items shrink to:
 1. **Every finding is a problem class, not the example.** Fix all instances across the codebase, not just the cited file.
 2. **Root cause first.** In most cases the skill already shows the right way and was ignored — fix the skill/process, not only the code. Root-cause analysis: `skill-adherence-root-cause.md`.
 3. **Decision order when code smells:** skill exists & correct → apply it · skill missing or itself smells → use the **reference project** → then fix/create the skill.
-4. **Reference project:** `<reference-repo>` (user said `c:`; the path is on `d:`). **Pending user confirmation of exact variant.** Path to be recorded in the architecture doc.
+4. **Reference project:** the reference codebase (user said `c:`; the path is on `d:`). **Pending user confirmation of exact variant.** Path to be recorded in the architecture doc.
 5. **Always latest framework versions.**
 
 ## Root cause (why skills were not followed)
@@ -144,6 +144,6 @@ Early features (F1/F4) shipped **before** the skill-enforcement guards existed. 
 
 ## Open items (need user input or reference inspection)
 
-- **O1** Confirm exact reference-project path (4 candidates on `the owner's source folder`).
+- **O1** Confirm exact reference-project path (4 candidates on the owner's machine).
 - **O2** Derive the domain-service / computation-placement target pattern from the reference project (fixes `analytics-computation-service` smell + #4/#5/#6).
 - **O3** Confirm earlier-triage decisions: A1 (domain→Jira coupling), B4-Identity (encapsulate Person/User?), D2-Xray-secret-at-rest.

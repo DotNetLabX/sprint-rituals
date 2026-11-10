@@ -112,4 +112,4 @@ These were checked adversarially and found **faithful, accurate, and coherent** 
 - **Optionally apply L2** (three-word camelCase qualifier in create-implementation-plan) — cheap correctness guard for a shared skill.
 - L1 and L3 need no action.
 
-Reviewed: <plugin-repo>\plugins (nexus 1.2.3 + nexus-dotnet 1.0.1) against docs/specs/adhoc-Pass{0,1,2,3,3b,3c,3c-B}/delivery/lessons.md
+Reviewed: <plugin-repo>/plugins (nexus 1.2.3 + nexus-dotnet 1.0.1) against docs/specs/adhoc-Pass{0,1,2,3,3b,3c,3c-B}/delivery/lessons.md
