@@ -8,7 +8,7 @@
 
 **NO-GO — Round 1.** Found **9 HIGH, 7 MEDIUM and 5 LOW** issues. No CRITICAL findings. No files were modified.
 
-Reviewed the [F7 spec](docs/specs/F7-PokerTicketContext/definition/spec.md), [F6 spec](docs/specs/F6-PlanningPoker/definition/spec.md), [Poker architecture](docs/architecture/poker/v1.md), [owner rulings](docs/specs/F7-PokerTicketContext/definition/ideas.md:83), and [tooltips](docs/specs/F7-PokerTicketContext/definition/help.tooltips.md).
+Reviewed the [F7 spec](/docs/specs/F7-PokerTicketContext/definition/spec.md), [F6 spec](/docs/specs/F6-PlanningPoker/definition/spec.md), [Poker architecture](/docs/architecture/poker/v1.md), [owner rulings](/docs/specs/F7-PokerTicketContext/definition/ideas.md:83), and [tooltips](/docs/specs/F7-PokerTicketContext/definition/help.tooltips.md).
 
 1. **HIGH — Unsupported restriction on final estimates.**  
    **File + section:** F7 spec, Entities → EstimationItem; Flows 7–8; Business Rules 19–21; Acceptance Criteria. Owner ruling 10.  
@@ -127,18 +127,18 @@ Resume in Codex: codex resume 01a10ad8-94f8-7702-a738-0b38176c17e3
 
 **NO-GO — one HIGH and two MEDIUM findings.**
 
-References: **S** = [F7 spec.md](docs/specs/F7-PokerTicketContext/definition/spec.md); **T** = [help.tooltips.md](docs/specs/F7-PokerTicketContext/definition/help.tooltips.md). Numbers below are file lines.
+References: **S** = [F7 spec.md](/docs/specs/F7-PokerTicketContext/definition/spec.md); **T** = [help.tooltips.md](/docs/specs/F7-PokerTicketContext/definition/help.tooltips.md). Numbers below are file lines.
 
 1. **R2-01 — HIGH — fold; round-1 miss: jira-write**  
-   **File:** [S:244](docs/specs/F7-PokerTicketContext/definition/spec.md:244), also S:58,137,320.  
-   The pending-write guard excludes **Skip**. A pending decision leaves the item Revealed until Jira confirms; the transition table still permits Revealed → Skipped. A subsequent Jira confirmation can overwrite Skipped with Decided, and the Jira write already contradicts the unchanged [F6 Rule 9](docs/specs/F6-PlanningPoker/definition/spec.md:175) guarantee that skipping produces no estimate or write-back. Round protection does not resolve this: Skip does not change the round.
+   **File:** [S:244](/docs/specs/F7-PokerTicketContext/definition/spec.md:244), also S:58,137,320.  
+   The pending-write guard excludes **Skip**. A pending decision leaves the item Revealed until Jira confirms; the transition table still permits Revealed → Skipped. A subsequent Jira confirmation can overwrite Skipped with Decided, and the Jira write already contradicts the unchanged [F6 Rule 9](/docs/specs/F6-PlanningPoker/definition/spec.md:175) guarantee that skipping produces no estimate or write-back. Round protection does not resolve this: Skip does not change the round.
 
 2. **R2-02 — MEDIUM — fold**  
-   **File:** [S:251](docs/specs/F7-PokerTicketContext/definition/spec.md:251), also S:253,300,303; T:54.  
+   **File:** [S:251](/docs/specs/F7-PokerTicketContext/definition/spec.md:251), also S:253,300,303; T:54.  
    The new reset exception makes a visible, non-current ticket eligible for Next despite existing Jira points. Rule 36, AC303 and the Next tooltip still say tickets with Jira points are passed over. For example, resetting a previously estimated ticket from a private look makes it eligible under Rule 34 but ineligible under those other clauses. The fold leaves two conflicting navigation contracts.
 
 3. **R2-03 — MEDIUM — fold**  
-   **File:** [S:310](docs/specs/F7-PokerTicketContext/definition/spec.md:310), against S:39,130,233,234,311.  
+   **File:** [S:310](/docs/specs/F7-PokerTicketContext/definition/spec.md:310), against S:39,130,233,234,311.  
    The AI-absence criterion uses the current switch and field validity without limiting them to round start. If a round starts with AI enabled and a valid value, then the switch turns off—or a refresh changes the field to text/negative—AC310 says no AI tile appears. Rules 20–21 instead retain that round’s AI participation and frozen value. This leaves the effective timing and refresh guarantees internally inconsistent.
 
 The inherited F6 guarantee break is R2-01. R2-02 and R2-03 are contradictions within F7.

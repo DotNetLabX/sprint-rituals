@@ -264,7 +264,7 @@ Round: 1 · Depth: product · Bar: product completeness · Ruler: seed only (`do
 - Does "Next unestimated" skip Skipped tickets, and does "any number" mean half-steps only? (F7-M6.) Recommendation: keep both. Confidence: medium.
 - Should a person on a private look block auto-reveal? (F7-L1.) Recommendation: yes, with the banner flagging that voting is open. Confidence: low, a toss-up that wants the owner's call.
 
-Reviewed: docs\specs\F7-PokerTicketContext\definition\spec.md
+Reviewed: docs/specs/F7-PokerTicketContext/definition/spec.md
 
 ### Merge — round 1
 

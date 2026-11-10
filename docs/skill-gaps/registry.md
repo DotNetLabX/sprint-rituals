@@ -113,7 +113,7 @@ Gap flags the estate noticed in a plan's Gap?/justification cell but never logge
   meta shape (adhoc-PipelineCraftImprovements) — not counted.
 - Verification scratch artifacts (orchestrator-side, outside the estate): tierb-collection.md,
   skeptic-verdicts.md in the session scratchpad.
-- **Cross-repo cross-check applied (2026-07-18):** `<private-repo>\docs\skill-gaps\cross-repo.md`
+- **Cross-repo cross-check applied (2026-07-18):** a cross-repo skill-gaps file in a private repo
   compared the four suite registries. Consequences here: the two §B ritual-step rows flipped to
   `rejected`; the three sprint-rituals-own §C rows flipped to `confirmed` (build queue below).
   Rows evidenced by `fokus/*` / `reflekt/*` plans (tooltip-wiring, vue-chart-components,
