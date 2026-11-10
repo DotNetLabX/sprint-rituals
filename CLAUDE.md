@@ -93,13 +93,13 @@ All services publish host ports using an `{AA}XY` scheme. See `docs/conventions/
 
 ## Reference Projects (read-only, outside this repo)
 
-| Path | Role |
-|------|------|
-| `<fokus-repo>` | **Original Fokus project** — source of truth for ported business rules: architecture, product docs, feature specs, plans, populated `docs/kb/`, and original code |
-| `<reflekt-repo>` | **Original Reflekt project** — same artifact lineage; the Reflekt port into this repo is a future increment |
-| `<reference-repo>` | **Best-practices reference codebase** for .NET patterns |
+| Project | Role |
+|---------|------|
+| Fokus (original) | **Original Fokus project** — source of truth for ported business rules: architecture, product docs, feature specs, plans, populated `docs/kb/`, and original code |
+| Reflekt (original) | **Original Reflekt project** — same artifact lineage; the Reflekt port into this repo is a future increment |
+| dotnet-microservices | **Best-practices reference codebase** for .NET patterns |
 
-Use these when reverse-engineering business rules or verifying ported behavior: the original specs/plans attest *intent* independently of code. Never modify them from this repo.
+These are separate repositories, not part of this one; where they sit is machine-specific. Use these when reverse-engineering business rules or verifying ported behavior: the original specs/plans attest *intent* independently of code. Never modify them from this repo.
 
 ## Guardrails
 

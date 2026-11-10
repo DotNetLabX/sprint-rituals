@@ -4,7 +4,7 @@
 
 - `Microsoft.Extensions.Logging.Abstractions` is available transitively in `Jira.RestApi` via `Refit.HttpClientFactory` — no explicit `PackageReference` needed for `ILogger<T>`.
 - When a primary constructor parameter is promoted to a `protected` property for subclass access, all internal usages in the base class must also be updated to use the property (not the constructor parameter directly). The compiler accepts both, but consistency requires the property.
-- The solution file is at `src/Fokus.slnx`, not at the repo root. Use `dotnet build "<fokus-repo>\src\Fokus.slnx"` for full solution builds.
+- The solution file is at `src/Fokus.slnx`, not at the repo root. Use `dotnet build "<fokus-repo>/src/Fokus.slnx"` for full solution builds.
 - `RestApiJiraClient.RequestAsync` maps all non-2xx Jira responses to `BadGatewayException` (or `UnauthorizedException` for 401). There is no typed JQL parse error — catching `BadGatewayException` is the correct approach for the epic JQL fallback pattern.
 
 ## Architect Lessons

@@ -1,42 +1,8 @@
-# reflekt-web
+# Retro (Reflekt)
 
-This template should help get you started developing with Vue 3 in Vite.
+The Reflekt retrospective app of Sprint Rituals: Vue 3, TypeScript, Pinia and Tailwind CSS, built with Vite, with live updates over SignalR.
 
-## Recommended IDE Setup
+- **Dev server:** from `client/`, run `npm run dev:retro` — it serves the app at `http://localhost:5172/retro/` and proxies API and SignalR calls to the host on `http://localhost:5100`, which must be running.
+- **Build:** from `client/`, `npm run build` builds all three apps; this one goes to `src/Host/wwwroot/retro/`, where the host serves it at `/retro/`.
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Recommended Browser Setup
-
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
-```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
-npm run build
-```
+Setup, secrets and the rest of the suite: see the [root README](../../../README.md).

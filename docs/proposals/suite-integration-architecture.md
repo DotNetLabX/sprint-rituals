@@ -228,4 +228,3 @@ No integration plumbing is built for meeting-to-spec now. The connection is thro
 ## 13. Migration
 
 Fresh repo. Existing Reflekt and Fokus repos are not merged with git history preservation — not worth the complexity. The new monorepo is published to Laurentiu's personal GitHub (`ldumit`) first (private), establishing independent authorship provenance before any company fork, consistent with the IP strategy from the suite strategy document.
-

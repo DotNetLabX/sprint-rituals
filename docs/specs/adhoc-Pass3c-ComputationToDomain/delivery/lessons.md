@@ -1,6 +1,6 @@
 # Pass 3c — ComputationToDomain — Lessons
 
-> **Learner consolidation — 2026-06-08** (→ `<plugin-repo>`)
+> **Learner consolidation — 2026-06-08** (→ the plugin source repo)
 > - `[APPLIED]` "grep before delete" must be a hard, numbered sub-step for shared-type deletions → **nexus** `create-implementation-plan` — recurred in Pass 3c-B.
 > - `[APPLIED]` cross-step shared wire/value-type ownership must drive split boundaries; grep all record consumers (incl. gRPC) before decomposing → **nexus** `create-implementation-plan` (enumerate-all-consumers rule).
 > - `[APPLIED]` explicit old→new rename table makes wire-stability checks deterministic → **nexus** `create-implementation-plan`.

@@ -61,7 +61,7 @@ Pass 5 closes the four domain-event-dispatch-correctness findings from the refac
 **Skill-verification notes:**
 - **Step 1** performs no action that any skill frontmatter covers (it adds an XML doc comment stating intent). `None` is warranted.
 - **Steps 2–3** configure persistence + add a migration → `persistence-patterns` covers entity configuration and migrations. `Follow`.
-- **Step 4** modifies the shared `RepositoryBase.UpsertAsync`. `persistence-patterns` documents `UpsertAsync` exists and even notes `CurrentValues.SetValues` does not deep-copy **owned/complex** types — but it does **not** cover the **private backing-field** copy concern named by B7. No skill frontmatter matches this specific fix, and the reference project (`<reference-repo>`) has **no `RepositoryBase`** to derive a pattern from (verified). `None` is warranted; the fix + a skill-improvement note feed back into `persistence-patterns`.
+- **Step 4** modifies the shared `RepositoryBase.UpsertAsync`. `persistence-patterns` documents `UpsertAsync` exists and even notes `CurrentValues.SetValues` does not deep-copy **owned/complex** types — but it does **not** cover the **private backing-field** copy concern named by B7. No skill frontmatter matches this specific fix, and the reference project has **no `RepositoryBase`** to derive a pattern from (verified). `None` is warranted; the fix + a skill-improvement note feed back into `persistence-patterns`.
 
 **Anti-pattern check:** no "adapt" near a skill ref; no skill dismissed as "too simple"; Follow steps carry only feature-specific inputs (file:line + the one value to change / the migration command), not restated EF boilerplate.
 

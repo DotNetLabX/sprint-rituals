@@ -1,0 +1,461 @@
+{
+  "format_version": 1,
+  "feature": "F11-PublishCleanup",
+  "kind_of_run": "architect-led run",
+  "state": "complete",
+  "started": "2026-11-10T18:09:38.928Z",
+  "closed": "2026-11-10T19:23:44.531Z",
+  "plugin_versions": [
+    "2.4.120"
+  ],
+  "claude_code_versions": [
+    "2.1.322"
+  ],
+  "spawns": [
+    {
+      "role": "architect",
+      "name": "architect-1",
+      "models": [
+        "claude-fable-5-2"
+      ],
+      "plugin_versions": [
+        "2.4.120"
+      ],
+      "claude_code_versions": [
+        "2.1.322"
+      ],
+      "calls": 69,
+      "tokens": {
+        "input": 152,
+        "cache_written_5m": 0,
+        "cache_written_1h": 248635,
+        "cache_read": 25606376,
+        "output": 110466
+      },
+      "peak_context": 458799,
+      "compactions": 0,
+      "first_activity": "2026-11-10T18:09:38.928Z",
+      "last_activity": "2026-11-10T19:23:44.187Z",
+      "active_ms": 4449867
+    },
+    {
+      "role": "critic",
+      "name": "critic-second",
+      "models": [
+        "claude-sonnet-5-5"
+      ],
+      "plugin_versions": [
+        "2.4.120"
+      ],
+      "claude_code_versions": [
+        "2.1.322"
+      ],
+      "review_link": {
+        "kind": "plan",
+        "round": 1
+      },
+      "calls": 20,
+      "tokens": {
+        "input": 40,
+        "cache_written_5m": 124219,
+        "cache_written_1h": 0,
+        "cache_read": 1891545,
+        "output": 22352
+      },
+      "peak_context": 124221,
+      "compactions": 0,
+      "first_activity": "2026-11-10T18:27:34.038Z",
+      "last_activity": "2026-11-10T18:32:10.130Z",
+      "active_ms": 276092
+    },
+    {
+      "role": "developer",
+      "name": "dev-s1",
+      "models": [
+        "claude-opus-5-5"
+      ],
+      "plugin_versions": [
+        "2.4.120"
+      ],
+      "claude_code_versions": [
+        "2.1.322"
+      ],
+      "calls": 79,
+      "tokens": {
+        "input": 170,
+        "cache_written_5m": 305333,
+        "cache_written_1h": 0,
+        "cache_read": 13300711,
+        "output": 76253
+      },
+      "peak_context": 305335,
+      "compactions": 0,
+      "first_activity": "2026-11-10T18:49:21.727Z",
+      "last_activity": "2026-11-10T19:06:57.572Z",
+      "active_ms": 1055845
+    },
+    {
+      "role": "architect",
+      "name": "architect-2",
+      "models": [
+        "claude-opus-5-5"
+      ],
+      "plugin_versions": [
+        "2.4.120"
+      ],
+      "claude_code_versions": [
+        "2.1.322"
+      ],
+      "calls": 15,
+      "tokens": {
+        "input": 30,
+        "cache_written_5m": 199987,
+        "cache_written_1h": 0,
+        "cache_read": 2701252,
+        "output": 10031
+      },
+      "peak_context": 207940,
+      "compactions": 0,
+      "first_activity": "2026-11-10T19:08:07.759Z",
+      "last_activity": "2026-11-10T19:09:51.504Z",
+      "active_ms": 103745
+    },
+    {
+      "role": "reviewer",
+      "name": "reviewer-second",
+      "models": [
+        "claude-sonnet-5-5"
+      ],
+      "plugin_versions": [
+        "2.4.120"
+      ],
+      "claude_code_versions": [
+        "2.1.322"
+      ],
+      "review_link": {
+        "kind": "code",
+        "round": 1
+      },
+      "calls": 28,
+      "tokens": {
+        "input": 56,
+        "cache_written_5m": 158416,
+        "cache_written_1h": 0,
+        "cache_read": 3319135,
+        "output": 20223
+      },
+      "peak_context": 158418,
+      "compactions": 0,
+      "first_activity": "2026-11-10T19:08:16.973Z",
+      "last_activity": "2026-11-10T19:11:29.288Z",
+      "active_ms": 192315
+    },
+    {
+      "role": "developer",
+      "name": "dev-fix-c1",
+      "models": [
+        "claude-opus-5-5"
+      ],
+      "plugin_versions": [
+        "2.4.120"
+      ],
+      "claude_code_versions": [
+        "2.1.322"
+      ],
+      "calls": 20,
+      "tokens": {
+        "input": 40,
+        "cache_written_5m": 145318,
+        "cache_written_1h": 0,
+        "cache_read": 2208952,
+        "output": 25900
+      },
+      "peak_context": 145320,
+      "compactions": 0,
+      "first_activity": "2026-11-10T19:18:31.406Z",
+      "last_activity": "2026-11-10T19:22:32.310Z",
+      "active_ms": 240904
+    },
+    {
+      "role": "critic",
+      "name": "critic-1",
+      "models": [
+        "gpt-6.1-sol"
+      ],
+      "forwarder_model": "claude-fable-5-2",
+      "review_link": {
+        "kind": "plan",
+        "round": 1
+      },
+      "plugin_versions": [
+        "2.4.120"
+      ],
+      "claude_code_versions": [
+        "2.1.322"
+      ],
+      "calls": 25,
+      "tokens": {
+        "input": 123800,
+        "cache_written": 0,
+        "cache_read": 2379776,
+        "output": 25929
+      },
+      "first_activity": "2026-11-10T18:27:32.407Z",
+      "last_activity": "2026-11-10T18:40:49.957Z",
+      "active_ms": 797550
+    },
+    {
+      "role": "critic",
+      "name": "critic-2",
+      "models": [
+        "gpt-6.1-sol"
+      ],
+      "forwarder_model": "claude-fable-5-2",
+      "review_link": {
+        "kind": "plan",
+        "round": 2
+      },
+      "plugin_versions": [
+        "2.4.120"
+      ],
+      "claude_code_versions": [
+        "2.1.322"
+      ],
+      "calls": 8,
+      "tokens": {
+        "input": 59700,
+        "cache_written": 0,
+        "cache_read": 208000,
+        "output": 10546
+      },
+      "first_activity": "2026-11-10T18:49:19.942Z",
+      "last_activity": "2026-11-10T18:54:00.442Z",
+      "active_ms": 280500
+    },
+    {
+      "role": "reviewer",
+      "name": "reviewer-1",
+      "models": [
+        "gpt-6.1-sol"
+      ],
+      "forwarder_model": "claude-fable-5-2",
+      "review_link": {
+        "kind": "code",
+        "round": 1
+      },
+      "plugin_versions": [
+        "2.4.120"
+      ],
+      "claude_code_versions": [
+        "2.1.322"
+      ],
+      "calls": 21,
+      "tokens": {
+        "input": 122718,
+        "cache_written": 0,
+        "cache_read": 1765632,
+        "output": 21284
+      },
+      "first_activity": "2026-11-10T19:08:07.391Z",
+      "last_activity": "2026-11-10T19:17:11.837Z",
+      "active_ms": 544446
+    }
+  ],
+  "plan_steps": {
+    "steps": [
+      {
+        "step": "1",
+        "spawns": [
+          "dev-s1"
+        ],
+        "tokens": {
+          "input": 12,
+          "cache_written_5m": 90782,
+          "cache_written_1h": 0,
+          "cache_read": 416597,
+          "output": 2579
+        },
+        "active_ms": 31058
+      },
+      {
+        "step": "2",
+        "spawns": [
+          "dev-s1"
+        ],
+        "tokens": {
+          "input": 16,
+          "cache_written_5m": 4147,
+          "cache_written_1h": 0,
+          "cache_read": 646793,
+          "output": 3098
+        },
+        "active_ms": 313472
+      },
+      {
+        "step": "3",
+        "spawns": [
+          "dev-s1"
+        ],
+        "tokens": {
+          "input": 28,
+          "cache_written_5m": 31435,
+          "cache_written_1h": 0,
+          "cache_read": 1464191,
+          "output": 14151
+        },
+        "active_ms": 140635
+      },
+      {
+        "step": "4",
+        "spawns": [
+          "dev-s1"
+        ],
+        "tokens": {
+          "input": 44,
+          "cache_written_5m": 46268,
+          "cache_written_1h": 0,
+          "cache_read": 3158488,
+          "output": 23960
+        },
+        "active_ms": 238024
+      },
+      {
+        "step": "5",
+        "spawns": [
+          "dev-s1"
+        ],
+        "tokens": {
+          "input": 28,
+          "cache_written_5m": 20323,
+          "cache_written_1h": 0,
+          "cache_read": 2370943,
+          "output": 13651
+        },
+        "active_ms": 140991
+      },
+      {
+        "step": "6",
+        "spawns": [
+          "dev-s1"
+        ],
+        "tokens": {
+          "input": 14,
+          "cache_written_5m": 91366,
+          "cache_written_1h": 0,
+          "cache_read": 1430111,
+          "output": 3500
+        },
+        "active_ms": 39273
+      }
+    ],
+    "before_first_step": {
+      "spawns": [],
+      "tokens": {
+        "input": 0,
+        "cache_written_5m": 0,
+        "cache_written_1h": 0,
+        "cache_read": 0,
+        "output": 0
+      },
+      "active_ms": 0
+    },
+    "after_last_step": {
+      "spawns": [
+        "dev-fix-c1",
+        "dev-s1"
+      ],
+      "tokens": {
+        "input": 68,
+        "cache_written_5m": 166330,
+        "cache_written_1h": 0,
+        "cache_read": 6022540,
+        "output": 41214
+      },
+      "active_ms": 393296
+    }
+  },
+  "review_rounds": {
+    "spec": [],
+    "plan": [
+      {
+        "round": 1,
+        "readers": [
+          {
+            "name": "critic-second",
+            "models": [
+              "claude-sonnet-5-5"
+            ]
+          },
+          {
+            "name": "critic-1",
+            "models": [
+              "gpt-6.1-sol"
+            ]
+          }
+        ]
+      },
+      {
+        "round": 2,
+        "readers": [
+          {
+            "name": "critic-2",
+            "models": [
+              "gpt-6.1-sol"
+            ]
+          }
+        ]
+      }
+    ],
+    "code": [
+      {
+        "round": 1,
+        "readers": [
+          {
+            "name": "reviewer-second",
+            "models": [
+              "claude-sonnet-5-5"
+            ]
+          },
+          {
+            "name": "reviewer-1",
+            "models": [
+              "gpt-6.1-sol"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "fix_cycles": 1,
+  "test_build_runs": {
+    "count": 4,
+    "total_duration_ms": 56158,
+    "runs": [
+      {
+        "runner": "agent",
+        "duration_ms": 10112
+      },
+      {
+        "runner": "agent",
+        "duration_ms": 26330
+      },
+      {
+        "runner": "agent",
+        "duration_ms": 4023
+      },
+      {
+        "runner": "close",
+        "duration_ms": 15693
+      }
+    ]
+  },
+  "owner_touches": {
+    "question_box_answered": 3,
+    "typed_message": 0
+  },
+  "completeness": {
+    "spawns": [],
+    "fields": []
+  },
+  "output_tokens_note": "output tokens are as the platform recorded them, which can fall short of what the model produced"
+}

@@ -23,7 +23,7 @@
 - **Kind:** missing
 - **Searched for:** authoring a cross-platform build→publish→zip→deploy script, an idempotent provisioning script, and GitHub CI + manual-deploy workflows with OIDC
 - **Why it would help:** three plan steps (3–5) went `Skill: None` with inline contracts
-- **References:** `<fokus-repo>\deploy.ps1`, `<reflekt-repo>\deploy.ps1`, `deploy/` + `.github/workflows/` (to be created)
+- **References:** `<fokus-repo>/deploy.ps1`, `<reflekt-repo>/deploy.ps1`, `deploy/` + `.github/workflows/` (to be created)
 - **Evidence:** [F8-AzureDeployment]
 
 - **A last-round NO-GO reads as "still failing" to the owner.** Round 2 ended NO-GO, every finding was folded, and the schedule (no CRITICAL → no round 3) closed the review — but the plan's review note didn't say the verdict was on the pre-fold text, so the owner came back believing findings were open. Fix: when a review ends on folded findings with no verifying round, the `## Plan Review` note says in one line that the verdict judged the pre-fold plan and where each fold landed. [F8-AzureDeployment, 2026-10-30]

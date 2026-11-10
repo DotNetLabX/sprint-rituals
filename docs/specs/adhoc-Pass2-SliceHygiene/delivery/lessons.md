@@ -1,6 +1,6 @@
 # Pass 2 — SliceHygiene — Lessons
 
-> **Learner consolidation — 2026-06-08** (→ `<plugin-repo>`)
+> **Learner consolidation — 2026-06-08** (→ the plugin source repo)
 > - `[APPLIED]` file list MUST equal the exact acceptance grep; definition-line not usage grep → **nexus** `create-implementation-plan` (Refactoring & Type-Move rules) — recurred in Pass 3c, 3c-B.
 > - `[APPLIED]` Mapster eligibility test (single-source + name-aligned only) → **nexus-dotnet** `create-feature` Mappings workflow.
 > - `[APPLIED]` `IgnoreNonMapped(true)` is a whitelist not a shield; `.Adapt(existing)` never nulls (the no-op-write erratum) → **nexus-dotnet** `persistence-patterns`.

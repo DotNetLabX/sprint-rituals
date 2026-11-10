@@ -7,7 +7,7 @@
 
 ## Developer Lessons
 - When a plan defers tooltip wiring to a late step but the same HTML line is already being modified in an earlier step, do both edits together in the earlier step. Document the merge in implementation.md to avoid the architect flagging a missing step.
-- PowerShell paths with trailing backslash fail in bash quoting (`"<fokus-repo>\client\"` is parsed as escaped quote). Always use paths without trailing backslash in bash, or use forward slashes.
+- PowerShell paths with trailing backslash fail in bash quoting (`"<fokus-repo>/client/"` is parsed as escaped quote). Always use paths without trailing backslash in bash, or use forward slashes.
 - TypeScript type-check (`npx tsc --noEmit`) producing no output = zero errors — successful outcome.
 - Capacity lookup logic inlined in `ComputeLeaderboard` (private static method) rather than extracted to a helper — the method already has all parameters in scope. Extracting adds indirection without value in a self-contained private method.
 

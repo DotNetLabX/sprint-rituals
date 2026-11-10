@@ -45,7 +45,7 @@ Two HIGH findings require fixes before developer handoff. No CRITICAL findings. 
 
 **Issue:** The current Fokus bootstrap flow auto-sets `AppSettings.CompanyDomain` from the first admin's email domain when `CompanyDomain` is null. Step 7 describes the bootstrap path as "first User (count 0) -> create Person + User with Role = Admin" but does not mention reading `AppSettingsRepository` or seeding `CompanyDomain`. Since this runs in Identity's `OnTicketReceived` and `AppSettings` lives in `fokus.db` (a different DbContext), Identity's auth handler would need cross-module access to replicate this.
 
-**Evidence -- current code** (`<fokus-repo>\src\Services\Fokus\Fokus.API\Auth\AuthConfiguration.cs`):
+**Evidence -- current code** (`<fokus-repo>/src/Services/Fokus/Fokus.API/Auth/AuthConfiguration.cs`):
 ```csharp
 var settings = await appSettingsRepository.GetAsync();
 var domain = email.Contains('@') ? email.Split('@')[1] : null;
@@ -72,14 +72,14 @@ if (domain is not null && settings.CompanyDomain is null)
 
 **Issue:** Step 6 defines `UserRepository` with: `GetByIdAsync`, `GetByPersonIdAsync`, `CountAsync`, `CountActiveAdminsAsync`. Step 7 moves the `GetUsers` endpoint (`GET /api/users`) to Identity, which currently calls `AppUserRepository.GetAllAsync()`. No equivalent method exists in the planned repository.
 
-**Evidence -- current GetUsersEndpoint** (`<fokus-repo>\src\Services\Fokus\Fokus.API\Features\Auth\GetUsers\GetUsersEndpoint.cs` line 11):
+**Evidence -- current GetUsersEndpoint** (`<fokus-repo>/src/Services/Fokus/Fokus.API/Features/Auth/GetUsers/GetUsersEndpoint.cs` line 11):
 ```csharp
 var users = await appUserRepository.GetAllAsync(ct);
 ```
 
 **Evidence -- plan Step 6 repository methods:** "Concrete ... `UserRepository` (`GetByIdAsync`, `GetByPersonIdAsync`, `CountAsync`, `CountActiveAdminsAsync`)." No `GetAllAsync`.
 
-**Evidence -- current AppUserRepository** (`<fokus-repo>\src\Services\Fokus\Fokus.Persistence\Repositories\AppUserRepository.cs`):
+**Evidence -- current AppUserRepository** (`<fokus-repo>/src/Services/Fokus/Fokus.Persistence/Repositories/AppUserRepository.cs`):
 ```csharp
 public async Task<List<AppUser>> GetAllAsync(CancellationToken ct = default) =>
     await db.AppUsers.OrderBy(u => u.DisplayName).ToListAsync(ct);
@@ -119,7 +119,7 @@ public async Task<List<AppUser>> GetAllAsync(CancellationToken ct = default) =>
 
 The plan does not mention these 4 companion files (6+ types total).
 
-**Evidence:** Grep of `<fokus-repo>\src\Services\Fokus\Fokus.API\Features\Auth` confirms all four companion files exist alongside their endpoint files.
+**Evidence:** Grep of `<fokus-repo>/src/Services/Fokus/Fokus.API/Features/Auth` confirms all four companion files exist alongside their endpoint files.
 
 **Impact:** Low risk in practice (build fails immediately without them), but unnecessary ambiguity.
 
@@ -192,7 +192,7 @@ The biggest lesson -- avoid ASP.NET Core Identity -- is now a structural decisio
 
 ## Multi-perspective Notes
 
-- **Developer perspective:** Steps are implementable without guessing for the most part. The main friction point is the Person+User join needed for `GetUsers`/`GetMe` responses (HIGH F2). Step 7's auth flow description is detailed enough to port from. The source pattern references (`<fokus-repo>\...`) are precise and helpful.
+- **Developer perspective:** Steps are implementable without guessing for the most part. The main friction point is the Person+User join needed for `GetUsers`/`GetMe` responses (HIGH F2). Step 7's auth flow description is detailed enough to port from. The source pattern references (`<fokus-repo>/...`) are precise and helpful.
 - **Reviewer perspective:** Acceptance criteria are verifiable. The 9-point verify gate is the strongest part of this plan versus the discarded run. The Step 8 grep/diff verification sub-step is excellent practice.
 - **Skeptic perspective:** The highest-risk area is Step 7 (auth flow) -- correctly flagged as "medium confidence." The plan mitigates this with "port carefully, diff against Fokus original." The CompanyDomain auto-seeding gap (HIGH F1) is the kind of behavior that silently disappears in a port -- it is cross-module and the plan's scope boundary makes it easy to overlook.
 
@@ -215,7 +215,7 @@ The biggest lesson -- avoid ASP.NET Core Identity -- is now a structural decisio
 **Slug:** adhoc-SuiteScaffoldingV2
 **Verdict: PASS** — all 9 plan steps Implemented / Deviated-with-valid-reason. No Missing steps. All 4 locked decisions verified honored in built code (not just claimed). Routes to reviewer for Step 2.
 
-This check verifies `implementation.md` against `plan.md` and spot-checks the built code in `this repo`. It is a conformance/done check, not a code review.
+This check verifies `implementation.md` against `plan.md` and spot-checks the built code in this repo. It is a conformance/done check, not a code review.
 
 ### Pre-commitment Predictions (made before reading implementation.md)
 
@@ -233,7 +233,7 @@ Two of three predictions did not materialize — the structural decision to bake
 |------|----------|----------|----------|
 | a | Plain DDD — NO ASP.NET Core Identity anywhere | **HONORED** | Grep zero hits for IdentityUser/UserManager/IdentityRole/RoleManager/AddIdentityCore/Microsoft.AspNetCore.Identity in source. `User`/`Person` are plain `Entity<int>`/`AggregateRoot<int>`. Role = string claim emitted as `ClaimTypes.Role` (`AuthConfiguration.cs:167`). DbContext is plain (`ApplicationDbContext<IdentityDbContext>`, not `IdentityDbContext<>`). |
 | b | Invitation stays in Fokus (not moved to Identity) | **HONORED** | `Invitation` aggregate, `InvitationConfiguration`, `InvitationRepository`, and all 4 endpoints (Create/Get/Revoke/Validate) live under `src/Services/Fokus/`. Only Identity reference is a deferred invite-token stub in `AuthConfiguration.cs:88-95` that does NOT read the Fokus aggregate (cross-module plumbing correctly deferred). |
-| c | Clean copy — Fokus source repo `<fokus-repo>` never modified | **HONORED** | `git status` in fokus shows zero `src/` changes — only `.claude/hooks`, `settings.local.json`, `docs/backlog.md`, proposals, and the pipeline artifacts under `docs/specs/adhoc-SuiteScaffoldingV2/`. No application source touched. |
+| c | Clean copy — the original Fokus project never modified | **HONORED** | `git status` in fokus shows zero `src/` changes — only `.claude/hooks`, `settings.local.json`, `docs/backlog.md`, proposals, and the pipeline artifacts under `docs/specs/adhoc-SuiteScaffoldingV2/`. No application source touched. |
 | d | No secrets committed | **HONORED** | `appsettings.json` Google/Jira sections hold empty-string placeholders. Credentials handed off via user-secrets (`UserSecretsId` in Host.csproj, documented in implementation.md handoff). No `.db`, `.env`, or credential file tracked by git (repo still at single "Initial commit"). |
 
 ### Per-Step Conformance Dispositions
@@ -420,7 +420,7 @@ Plan spec says "ordered by `Person.FullName`". Implementation uses `.OrderBy(x =
 
 | Finding | Pre-existing? | Verdict |
 |---|---|---|
-| NU1903 `Microsoft.Build.Tasks.Core` | Yes — identical advisory in `<fokus-repo>` source | Confirmed pre-existing. Do not chase. |
+| NU1903 `Microsoft.Build.Tasks.Core` | Yes — identical advisory in the original Fokus project source | Confirmed pre-existing. Do not chase. |
 | CS9107 `DeveloperRepository` constructor | Yes — originates in Fokus source `Fokus.Persistence/Repositories/DeveloperRepository.cs:6` | Confirmed pre-existing. Do not chase. |
 
 ---

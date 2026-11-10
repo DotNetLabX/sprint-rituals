@@ -1,7 +1,7 @@
 # Nexus plugin feedback — v1.20.0 — 2026-07-03
 
 Portable feedback file (ADR-1). Send to the plugin maintainer; entries apply in the plugin source
-repo (`<plugin-repo>\plugins`).
+repo (`<plugin-repo>/plugins`).
 
 Source project: **sprint-rituals**. Origin: solo-run `mine-from-spec` pilot, 2026-07-03 — the spec
 arm of `mine-verify-cover` executed standalone against the three specs whose classes already carry

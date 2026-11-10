@@ -21,10 +21,10 @@
 ### Repo root / .claude / docs
 - `CLAUDE.md` — root CLAUDE.md adapted for modular-monolith (Host + Identity + Fokus); auth ownership and DB table documented
 - `SprintRituals.slnx` — solution file with all 17 projects
-- `.claude\` — copied from `<fokus-repo>\.claude\` (agents, rules, conventions, skills, settings.json)
-- `docs\conventions\` — copied from Fokus (csharp.md, ef-core.md, project-rules.md, etc.)
-- `docs\architecture\` — copied from Fokus (index.md, v1.md)
-- `docs\proposals\suite-integration-architecture.md` — copied from Fokus
+- `.claude/` — copied from `<fokus-repo>/.claude/` (agents, rules, conventions, skills, settings.json)
+- `docs/conventions/` — copied from Fokus (csharp.md, ef-core.md, project-rules.md, etc.)
+- `docs/architecture/` — copied from Fokus (index.md, v1.md)
+- `docs/proposals/suite-integration-architecture.md` — copied from Fokus
 
 ### BuildingBlocks (clean copy from Fokus)
 - `src/BuildingBlocks/Blocks.Core/` — guard utilities, FluentValidation helpers
@@ -114,7 +114,7 @@
 
 ## Files Modified (sprint-rituals only; Fokus source unchanged)
 
-All modifications are in `this repo\` — the Fokus source repo (`<fokus-repo>\`) was never touched.
+All modifications are in this repo — the Fokus source repo (the original Fokus project) was never touched.
 
 ---
 
@@ -160,7 +160,7 @@ These require a real Google ClientId/Secret and a browser. Steps:
 
 1. **Supply Google credentials via user-secrets** (never commit to any file):
    ```
-   cd src\Host
+   cd src/Host
    dotnet user-secrets set "Google:ClientId" "<your-client-id>"
    dotnet user-secrets set "Google:ClientSecret" "<your-client-secret>"
    ```
@@ -171,7 +171,7 @@ These require a real Google ClientId/Secret and a browser. Steps:
 
 3. **Start the Host:**
    ```
-   cd src\Host
+   cd src/Host
    dotnet run
    ```
 

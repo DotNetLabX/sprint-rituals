@@ -1,7 +1,7 @@
 # Nexus plugin feedback — v2.4.72 — 2026-10-30
 
 Portable feedback file (ADR-1). Send to the plugin maintainer; entries apply in the plugin source
-repo (`<plugin-repo>`).
+repo.
 
 Source project: **sprint-rituals**. Origin: **declare-verify-roles onboarding** (solo session),
 declaring a `unit` role that chains three `dotnet test` invocations.

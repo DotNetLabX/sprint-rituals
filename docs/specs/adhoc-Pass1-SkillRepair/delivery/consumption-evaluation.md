@@ -82,7 +82,7 @@ The biggest single bucket, and it's the plugin's own machinery, not agent behavi
 
 **nexus hooks are separate and essential** (`pipeline-gate`, SessionStart rules, `pre-compact`) — NOT touched.
 
-**Fix (applied):** `OMC_SKIP_HOOKS=pre-tool-use,post-tool-use` added to `~/.claude/settings.json` and `~/.claude-omni/settings.json` (env block). Skip tokens verified in source: `pre-tool-enforcer.mjs`→`pre-tool-use`, `post-tool-verifier.mjs`→`post-tool-use`, `keyword-detector.mjs`→`keyword-detector`; `DISABLE_OMC=1` kills all. Takes effect next session start.
+**Fix (applied):** `OMC_SKIP_HOOKS=pre-tool-use,post-tool-use` added to `~/.claude/settings.json` and a second personal settings file (env block). Skip tokens verified in source: `pre-tool-enforcer.mjs`→`pre-tool-use`, `post-tool-verifier.mjs`→`post-tool-use`, `keyword-detector.mjs`→`keyword-detector`; `DISABLE_OMC=1` kills all. Takes effect next session start.
 
 **What's lost:** nothing functional — only the per-tool advice injected to the model. **Agents are not hooks:** `document-specialist`, `critic`, `architect`, `analyst` keep working; keyword auto-triggers and project-memory also stay (we only skipped the two per-tool nags).
 

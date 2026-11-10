@@ -47,7 +47,7 @@ Cross-cutting, mechanical, no per-feature semantics. No user input required — 
 **Scope:**
 1. **Central Package Management** (ADR-013) — add `src/Directory.Packages.props` (`ManagePackageVersionsCentrally=true`); move every version to `<PackageVersion>`; strip `Version=` from all `<PackageReference>` across the 18 projects.
 2. **Framework currency** (ADR-011, ADR-012) — replace deprecated `SendOkAsync` / legacy `Send*Async` with the modern `Send.*` API (**~89 calls across 54 files** — grep `Send(Ok|NoContent|String|Created|...)Async`); bump FastEndpoints (and core packages) to latest stable; fix any breaking changes.
-3. **Thin composition root** (ADR-014) — move per-module wiring out of `Host/Program.cs` into each module's `Add{Module}Module` + `Map{Module}Endpoints`; introduce/use an `app.Migrate<TDbContext>()` helper; relocate MassTransit, gRPC server/client registration, and DB seeding into the owning module. `Program.cs` ends as Add / Init / Use only. Pattern: `service-registration` skill + reference (`<reference-repo>`).
+3. **Thin composition root** (ADR-014) — move per-module wiring out of `Host/Program.cs` into each module's `Add{Module}Module` + `Map{Module}Endpoints`; introduce/use an `app.Migrate<TDbContext>()` helper; relocate MassTransit, gRPC server/client registration, and DB seeding into the owning module. `Program.cs` ends as Add / Init / Use only. Pattern: `service-registration` skill + reference (the reference codebase).
 4. **Convention alignment** (ADR-001, finding E1) — rewrite the stack-conventions block (CLAUDE.md / `docs/conventions/`) that describes "Services/ = Microservices", `ApiGateway/` (YARP), and `docker-compose` to reflect the decided modular monolith.
 
 **Acceptance:** `dotnet build SprintRituals.slnx` green; no `SendOkAsync` remains; `Host/Program.cs` contains no per-module wiring; CPM active (no per-project versions); conventions text matches the modular monolith.
@@ -58,7 +58,7 @@ Cross-cutting, mechanical, no per-feature semantics. No user input required — 
 
 ## Pass 1 — Skill Repair  (slug: `adhoc-Pass1-SkillRepair`, Status: Done)
 
-Root-cause arm: the skills that encode the patterns the later passes apply. **Skills are GENERAL / multi-variant** (D-A) — SprintRituals' ADRs are documented as *one* variant, not hard-coded. Deliverables live in the **shared plugin repo** `<plugin-repo>\plugins\nexus-dotnet\skills\` (two-repo model — separate git target from these artifacts).
+Root-cause arm: the skills that encode the patterns the later passes apply. **Skills are GENERAL / multi-variant** (D-A) — SprintRituals' ADRs are documented as *one* variant, not hard-coded. Deliverables live in the **shared plugin repo** `<plugin-repo>/plugins/nexus-dotnet/skills/` (two-repo model — separate git target from these artifacts).
 
 **Scope (5 core skills):**
 1. **Repair `analytics-computation-service`** — whole-skill reframe: computation lives in Domain (ADR-005), not an API/Service class; endpoint owns the response DTO + Mapster map (D-B/ADR-010). Renamed away from the `-service` weasel-suffix framing.
@@ -78,7 +78,7 @@ Root-cause arm: the skills that encode the patterns the later passes apply. **Sk
 ## Notes for the team-lead
 
 - **Read first:** `docs/architecture/index.md` (→ `decisions.md`) and `docs/conventions/project-rules.md`. They are binding.
-- **Decision order (ADR-003):** correct skill → reference project `<reference-repo>` → fix/create the skill. Every fix is a problem *class* (fix all instances).
+- **Decision order (ADR-003):** correct skill → the reference codebase → fix/create the skill. Every fix is a problem *class* (fix all instances).
 - **Pass 1 (skill repair)** — **Done.** `domain-service` shape reviewed interactively with the user (D-A general/multi-variant; D-B endpoint-owns-DTO; repo stays out of domain — handler loads). Skills committed to the plugin repo.
 - **Pass 4 (Identity extraction)** — **Done.** Scope (A2) resolved at launch: Invitation stays in Fokus (L1); full cut delivered (redemption-at-login, company-domain auto-seed, dual gRPC). Jira→Person keyed on ExternalId (Jira Cloud hides email). See `docs/specs/adhoc-Pass4-IdentityExtraction/delivery/summary.md`. Follow-ups: NU1903 transitive-dep advisory; optional inactive-user reactivation policy; frontend invite pages (Q12 deferred).
 - Use the **nexus** pipeline agents (`/nexus:{agent}`), not OMC equivalents (per the `pipeline-guardrails` rule).
@@ -87,7 +87,7 @@ Root-cause arm: the skills that encode the patterns the later passes apply. **Sk
 
 # Reflekt Integration Program
 
-Bring Reflekt (real-time collaborative retro tool, `<reflekt-repo>`) into the monolith as a module. **Binding constraints:** `docs/architecture/decisions.md` ADR-016…020 (+ the full register) and `docs/conventions/project-rules.md`. Design narrative: `docs/proposals/suite-integration-architecture.md` (ADRs win on conflict).
+Bring Reflekt (real-time collaborative retro tool, the original Reflekt project) into the monolith as a module. **Binding constraints:** `docs/architecture/decisions.md` ADR-016…020 (+ the full register) and `docs/conventions/project-rules.md`. Design narrative: `docs/proposals/suite-integration-architecture.md` (ADRs win on conflict).
 
 **Strategy (owner-decided 2026-06-14):** lift-and-shift first, then refactor/integrate — keep the mechanical move bisectable from semantic change, same mechanical-before-deep order as the refactor suite. Reflekt already matches the stack and the API/Domain/Persistence layout, so the lift is low-risk.
 
@@ -104,7 +104,7 @@ Bring Reflekt (real-time collaborative retro tool, `<reflekt-repo>`) into the mo
 **Notes:**
 - RA2/RA3/RA5 depend only on RA1's green build and can run in any order after it. RA3 reads cleaner if RA2 lands first (auth/Person wiring in place) but it is not a hard dependency. RA4 is the only one that needs RA3 — it renders the snapshot the sprint-ownership pass introduces.
 - Reflekt is newer than pre-refactor Fokus and already follows ADR-008/009 (2-file split, `Command`/`Query` naming), so the ADR-alignment burden (Send.* currency, thin composition root, VOs) is light — folded into RA1 where it diverges, not a separate pass.
-- The Reflekt source carries its own design provenance under `<reflekt-repo>\ai-coding\plans\` (~25 feature plans/lessons) — use it to attest intent when porting behavior.
+- The Reflekt source carries its own design provenance under `<reflekt-repo>/ai-coding/plans/` (~25 feature plans/lessons) — use it to attest intent when porting behavior.
 
 ---
 
@@ -127,7 +127,7 @@ Mirror of the Fokus refactoring path (`refactor-triage.md` → ADRs → numbered
 
 # Planning Poker (new feature)
 
-The suite's third sprint ritual — real-time planning poker for sprint estimation, alongside Fokus (analytics) and Reflekt (retro). New module; graduates the product draft `docs/architecture/poker-v1.md`.
+The suite's third sprint ritual — real-time planning poker for sprint estimation, alongside Fokus (analytics) and Reflekt (retro). New module; graduates the product draft `docs/architecture/poker/v1.md`.
 
 | ID | Slug | Type | Status | Spec | Depends on |
 |----|------|------|--------|------|-----------|
@@ -151,6 +151,7 @@ Graduates `docs/proposals/azure-deployment-handoff.md` (ratified 2026-10-05). Go
 | F8 | F8-AzureDeployment | technical (ADR-collapsed) | **Built** (2026-10-30) — operator cutover (plan Steps 6–8) owed | ADR-024 + `docs/specs/F8-AzureDeployment/delivery/plan.md` | — |
 | F9 | F9-ReflektDataCarryOver | technical (needs plan) | **Later** | ADR-024 (Data carry-over) | F8 live; read access to the personal-account `reflekt` app's `/home/data/reflekt.db` |
 | F10 | F10-NightlyDbSnapshot | technical (needs plan) | **Later** (owner, 2026-10-05) | ADR-024 (Storage — Backups) | F8 live. Free-plan safety net: the app writes a consistent copy of each SQLite database nightly to `/home/data/sprint-rituals/backups/`, keeping the last 7 |
+| F11 | F11-PublishCleanup | technical (plan only) | ✓ **Done** (2026-11-10) — history scrub and publish owed, on the owner's word | `docs/specs/F11-PublishCleanup/delivery/summary.md` | — |
 
 **Notes:**
 - F9 must land **before** Reflekt users are pointed at `/retro/`. Scope to settle at its planning: old Reflekt schema → new `ReflektDbContext` mapping, and old Reflekt users → Identity Persons (guests get no Person — ADR-022).
@@ -159,15 +160,15 @@ Graduates `docs/proposals/azure-deployment-handoff.md` (ratified 2026-10-05). Go
 
 # Documentation Structure Port (`docs/` per-product namespacing — ADR-023)
 
-Per **ADR-023** + `docs/proposals/per-product-doc-namespacing.md`: docs organized per product with an always-load backbone + on-demand subtrees. Reference repos (`<fokus-repo>`, `<reflekt-repo>`) remain the canonical read-only archive — nothing is ever lost there.
+Per **ADR-023** + `docs/proposals/per-product-doc-namespacing.md`: docs organized per product with an always-load backbone + on-demand subtrees. Reference repos (the original Fokus project, the original Reflekt project) remain the canonical read-only archive — nothing is ever lost there.
 
 | Item | Status | Notes |
 |------|--------|-------|
-| product/ | ✓ **Done** (2026-06-21) | `product/{fokus,reflekt}/` + `product/suite-strategy.md` backbone + thin `product/index.md` router |
+| product/ | ✓ **Done** (2026-06-21) | `product/{fokus,reflekt}/` + thin `product/index.md` router |
 | specs/ history | ✓ **Done** (2026-06-21) | Full import, namespaced `specs/fokus/` (66 folders) + `specs/reflekt/` (5). This repo's own passes stay flat at `specs/` root |
 | kb/ | **Held** (owner) | Sprint-rituals' own flat KB kept; Fokus/Reflekt KB **not** imported (owner decision). Per-product KB split deferred until a 2nd product's KB matters |
 | architecture/ | ✓ **Done** (2026-06-21) | Namespaced `architecture/{fokus,reflekt,poker}/`; **imported Reflekt architecture** (`reflekt/v1.md`+`index.md` — was the real gap); `v1.md`→`fokus/`, `poker-v1.md`→`poker/v1.md`; index `@`-includes fixed. Open: `poker/v1.md` is a product spec (consider `product/poker/`); convert backbone `@`-includes → on-demand links (ADR-023) |
-| adhoc-ReflektLegacyDocsConvert | **Later — needs pipeline** | Convert Reflekt's pre-nexus `docs/features/` + `docs/plans/` (source: `<reflekt-repo>\docs\`) into nexus `docs/specs/{slug}/` format. Owner chose *convert* (not copy-as-is). Its own pipeline run |
-| Cross-ref cleanup | **Later** | Internal links in ported docs (e.g. product → suite-strategy) point at old paths — fix pass |
+| adhoc-ReflektLegacyDocsConvert | **Later — needs pipeline** | Convert Reflekt's pre-nexus `<reflekt-repo>/docs/features/` + `<reflekt-repo>/docs/plans/` (in the original Reflekt project) into nexus `docs/specs/{slug}/` format. Owner chose *convert* (not copy-as-is). Its own pipeline run |
+| Cross-ref cleanup | **Later** | Internal links in ported docs point at old paths — fix pass |
 
-**Nexus generalization:** `docs/proposals/per-product-doc-namespacing.md` (Draft, options across activation/resolution/loading axes) + `docs/plugin-feedback/nexus-1.16.1-2026-06-21.md` — to be discussed with the nexus architect; the plugin change ships from `<plugin-repo>`.
+**Nexus generalization:** `docs/proposals/per-product-doc-namespacing.md` (Draft, options across activation/resolution/loading axes) + `docs/plugin-feedback/nexus-1.16.1-2026-06-21.md` — to be discussed with the nexus architect; the plugin change ships from the plugin source repo.

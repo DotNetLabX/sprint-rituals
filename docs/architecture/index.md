@@ -2,7 +2,7 @@
 
 **How to read this:** `decisions.md` is the authoritative, current register — it wins over everything below where they conflict. `fokus/v1.md` is the Fokus standalone era (historical, partially superseded). Suite-level integration decisions live in `../proposals/suite-integration-architecture.md`. Per-product architecture is namespaced under `fokus/`, `reflekt/`, `poker/` (ADR-023).
 
-**Reference project:** `<reference-repo>` — canonical pattern source for the skill→reference decision order (see `decisions.md` ADR-002/003 and `.claude/rules/engineering-discipline.md`).
+**Reference project:** the reference codebase — canonical pattern source for the skill→reference decision order (see `decisions.md` ADR-002/003 and the agent plugin's `engineering-discipline` rule).
 
 @decisions.md
 

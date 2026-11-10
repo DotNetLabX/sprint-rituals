@@ -4,7 +4,7 @@ Portable feedback file (ADR-1). These items are **plugin-bound**: they target ne
 skills, agent files, and pipeline path/context-loading rules that live in the version-keyed plugin
 cache and cannot be edited from this consuming project. Send this file to the plugin maintainer; on
 the maintainer's machine the same entries are applied directly in the plugin source repo
-(`<plugin-repo>\plugins\nexus`).
+(`<plugin-repo>/plugins/nexus`).
 
 Source project: **sprint-rituals**. Origin: an architect-led design discussion (session
 "folder-structure", 2026-06-21) on how to organize the docs being ported from the original Fokus and
@@ -29,7 +29,7 @@ reversible — doc layout follows the service split, not the deployment topology
 
 ## Investigation findings (nexus 1.16.1, verified 2026-06-21)
 
-Source: read-only sweep of `<plugin-repo>\plugins\nexus`.
+Source: read-only sweep of `<plugin-repo>/plugins/nexus`.
 
 1. **No slug→product/area routing hook exists** anywhere — agents, `rules/agents-workflow.md`, and
    `hooks/scripts/` were all checked. The slug resolves to exactly one thing: `docs/specs/{slug}/`.

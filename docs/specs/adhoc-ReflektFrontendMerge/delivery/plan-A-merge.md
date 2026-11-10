@@ -19,16 +19,16 @@ client/
   package.json            # workspaces: ["apps/*", "packages/*"]
   apps/
     dashboard/            # = current client/* (Fokus), moved wholesale
-    retro/                # = <reflekt-repo>\web\reflekt-web\* (Reflekt), copied in
+    retro/                # = <reflekt-repo>/web/reflekt-web/* (Reflekt), copied in
   packages/
     shared/               # build-time shared lib (Step 3)
 ```
 
 - Move the existing Fokus SPA (`client/src`, `client/index.html`, `client/vite.config.ts`, `client/package.json`, tsconfig, etc.) into `client/apps/dashboard/`. Internal relative imports and the `@`→`src` alias are preserved by the wholesale move; only workspace-root and outDir-relative paths change (Step 2).
-- Copy the Reflekt SPA from `<reflekt-repo>\web\reflekt-web\` into `client/apps/retro/` (source repo is read-only — copy, don't move). Preserve its own `vite.config.ts`, `package.json`, router, stores.
+- Copy the Reflekt SPA from `<reflekt-repo>/web/reflekt-web/` into `client/apps/retro/` (source repo is read-only — copy, don't move). Preserve its own `vite.config.ts`, `package.json`, router, stores.
 - Author `client/package.json` as the workspace root; reconcile the trivially-skewed shared dep versions (Vue 3.5, Pinia 3, Tailwind 4, Vite 8, SignalR 10) to a single version each at the root; leave app-unique deps (apexcharts in dashboard, lucide in retro; **vue-router 4 in dashboard, 5 in retro**) in their own app manifests.
 
-**Accept:** `npm install` at `client/` resolves one hoisted dependency tree; both `apps/dashboard` and `apps/retro` retain their own `vite.config.ts`, router, and stores; no Reflekt source file references the original `reflekt-web` path; `<reflekt-repo>` is unmodified.
+**Accept:** `npm install` at `client/` resolves one hoisted dependency tree; both `apps/dashboard` and `apps/retro` retain their own `vite.config.ts`, router, and stores; no Reflekt source file references the original `reflekt-web` path; the original Reflekt project is unmodified.
 **Skill:** None · **TDD:** no · **Confidence:** medium (workspace restructure; developer verifies hoist + per-app build before proceeding)
 
 ## Step 2 — Two Vite builds with path-prefixed bases → `Host/wwwroot/{dashboard,retro}`

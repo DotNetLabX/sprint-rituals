@@ -1,6 +1,6 @@
 # Lessons — adhoc-Pass0-Foundations
 
-> **Learner consolidation — 2026-06-08** (→ `<plugin-repo>`)
+> **Learner consolidation — 2026-06-08** (→ the plugin source repo)
 > - `[APPLIED]` Windows `cd /d` build bite → **nexus-dotnet** `conventions/csharp.md` (Build Verification) — recurred in Pass 3c-B.
 > - `[APPLIED]` "replace all" needs false-positive guards (HttpClient/SignalR `SendAsync`) → **nexus** `create-implementation-plan` (Refactoring & Type-Move rules); .NET `SendAsync` specifics already in **nexus-dotnet** `framework-currency`.
 > - `[APPLIED]` adhoc passes review against ADR register, not a spec → **nexus** `architect.md` (Feature Spec Workflow).
@@ -17,11 +17,11 @@
 
 - **Problem-class scope needs explicit boundary-drawing when instances span future-pass territory.** The stale "Microservices/ApiGateway" text appears in 13 files, but only `project-rules.md` is E1-scope. Skill files use the same words legitimately (scaffolding vocabulary = Pass 1); the agent file is a learner-owned flow artifact; the Fokus CLAUDE.md drift overlaps Pass 4. Distinguishing "instance of the class" from "same words, different concern" prevents a Pass 0 plan from bleeding into Passes 1/4. Flag the out-of-scope instances for routing rather than silently fixing or ignoring.
 
-- **Decision-order (ADR-003) for missing-skill steps = derive from reference + log the gap, don't inline-and-forget.** CPM and framework-currency have no skill. The plan derives both from `<reference-repo>` (the props file, FastEndpoints 7 `Send.*`) and logs the skill gaps to lessons for Pass 1, rather than treating "no skill" as license to freestyle. The reference project read paid off — exact props shape and the `Migrate<T>()` helper were ported verbatim.
+- **Decision-order (ADR-003) for missing-skill steps = derive from reference + log the gap, don't inline-and-forget.** CPM and framework-currency have no skill. The plan derives both from the reference codebase (the props file, FastEndpoints 7 `Send.*`) and logs the skill gaps to lessons for Pass 1, rather than treating "no skill" as license to freestyle. The reference project read paid off — exact props shape and the `Migrate<T>()` helper were ported verbatim.
 
 ## Skill Gaps (for Pass 1 — skill repair)
 
-- **`central-package-management` skill — MISSING.** No skill covers CPM. Pattern source: `<reference-repo>\src\Directory.Packages.props` (`ManagePackageVersionsCentrally` + `CentralPackageTransitivePinningEnabled`, bare `<PackageReference>` in csproj). Create in Pass 1.
+- **`central-package-management` skill — MISSING.** No skill covers CPM. Pattern source: `<reference-repo>/src/Directory.Packages.props` (`ManagePackageVersionsCentrally` + `CentralPackageTransitivePinningEnabled`, bare `<PackageReference>` in csproj). Create in Pass 1.
 - **`framework-currency` rule/skill — MISSING.** No rule enforces "latest stable + modern `Send.*` API." The `Send.*` migration map and the "verify method names against the installed package, not memory" guard should become a skill or convention. Reference: FastEndpoints 7.0.1 `Send.*` surface.
 - **`Migrate<TDbContext>()` helper** — built in this pass into `Blocks.EntityFrameworkCore`; `service-registration` already references `app.Migrate<T>()` but the helper didn't exist locally (a "Build then Follow" case). Once built, `service-registration` becomes fully Followable for Host composition.
 

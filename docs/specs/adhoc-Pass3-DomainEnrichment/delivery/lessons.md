@@ -1,6 +1,6 @@
 # Pass 3 — DomainEnrichment — Lessons
 
-> **Learner consolidation — 2026-06-08** (→ `<plugin-repo>`)
+> **Learner consolidation — 2026-06-08** (→ the plugin source repo)
 > - `[APPLIED]` adhoc passes gate on ADR register + triage (cross-check every ADR vs its triage verdict) → **nexus** `architect.md` — recurred in Pass 0, 1.
 > - `[APPLIED]` critic spawn unavailable → honest self-review + escalate the independent pass (never call in-context "independent") → **nexus** `architect.md`.
 > - `[APPLIED]` project-reference removal must grep dependent `GlobalUsings` + property/field/return types, not just `.csproj` → **nexus** `create-implementation-plan`.

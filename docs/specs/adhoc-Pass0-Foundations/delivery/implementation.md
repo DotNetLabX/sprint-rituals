@@ -172,7 +172,7 @@
 
 ## Lessons to Log
 
-1. **Missing skill: `central-package-management`** — no skill exists for introducing CPM. Pattern derived from `<reference-repo>\src\Directory.Packages.props`. Log gap for Pass 1 skill repair.
+1. **Missing skill: `central-package-management`** — no skill exists for introducing CPM. Pattern derived from `<reference-repo>/src/Directory.Packages.props`. Log gap for Pass 1 skill repair.
 2. **Missing skill/rule: `framework-currency`** — no skill covers detecting and migrating deprecated FastEndpoints APIs. Pattern derived from reference project (FastEndpoints 7+ `Send.*`). Log gap for Pass 1.
 3. **`Microsoft.EntityFrameworkCore.Relational` required for `Migrate<T>()`** — the base `Microsoft.EntityFrameworkCore` package does not include `GetConnectionString()` or `Database.Migrate()`. Any building-block that calls these must reference the Relational package explicitly.
 4. **Refit 11 breaking change: `ApiExceptionBase.Content`** — the `Content` property moved from `ApiExceptionBase` to `ApiException` in Refit 11. Code using `response.Error?.Content` must cast: `(response.Error as ApiException)?.Content`.

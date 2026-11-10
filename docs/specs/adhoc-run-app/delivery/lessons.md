@@ -72,7 +72,7 @@
   SignalR broadcast); same for all 21 Reflekt + 5 Poker broadcasts and Identity's
   `AnnounceCompanyDomainOnUserCreatedHandler`. Fix: cast to `IEvent` so the non-generic overload
   (runtime-type dispatch) wins. Verified with a scratch FastEndpoints 8.1 probe (0 runs → 1 run).
-  - Attested: the original Reflekt (`<reflekt-repo>` `DomainEventPublishingInterceptor`) documented this
+  - Attested: the original Reflekt project (its `DomainEventPublishingInterceptor`) documented this
     exact trap and worked around it with reflection; the port to `Blocks.FastEndpoints` dropped it.
   - Takeaway: when porting shared infrastructure, carry over the "why" comments — they are the spec.
     No test covers event dispatch end-to-end; a Blocks-level test would have caught it at scaffold time.

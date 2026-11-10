@@ -16,7 +16,7 @@
 ## Developer Lessons
 - [APPLIED] When a store action is described as "appends to the workflow stages list in the form", that form state lives in the view, not the store. The store action should only mutate store-owned state (the sidelined list); the view handler does the form mutation. Conflating these causes the store to mutate persisted `settings.workflowStages` which breaks the proposal-vs-saved separation.
 - [APPLIED] For detection empty-state UI, guard against flickering by checking all three conditions together: `form.workflowStages.length === 0 && detectionResult === null && !detecting`. Without the `!detecting` guard, the empty-state message flashes during the auto-detect call on mount.
-- [TRACKED] The bash shell in this environment is POSIX bash, not PowerShell -- use forward-slash paths (`<private-repo>`) and pipe to `tail`, not `Select-Object -Last`.
+- [TRACKED] The bash shell in this environment is POSIX bash, not PowerShell -- use forward-slash paths (`/d/...`) and pipe to `tail`, not `Select-Object -Last`.
 - [APPLIED] EF Core `Contains` on a fetched `List<string>` of IDs translates to SQL `IN (...)` correctly. For very large sets this would need batching, but the Fokus dataset is bounded.
 - [APPLIED] Skill gap: No frontend Pinia store extension skill exists. Pattern: what state belongs in the store vs the view form, async loading flags, action naming. Suggested name: `pinia-store-patterns`.
 - [APPLIED] Skill gap: No Vue 3 view-form pattern skill exists. Pattern: reactive form local to view, `syncFromStore()` on mount, optimistic form mutation vs persisted store state. Suggested name: `vue-view-form-patterns`.

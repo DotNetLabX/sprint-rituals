@@ -14,32 +14,12 @@
     "nexus-channels@claude-nexus": false
   },
   "permissions": {
-    "defaultMode": "bypassPermissions",
-    "allow": [
-      "Bash",
-      "Read",
-      "Grep",
-      "Glob",
-      "Edit",
-      "Write",
-      "WebFetch",
-      "WebSearch",
-      "Skill",
-      "Workflow",
-      "Task",
-      "TaskCreate",
-      "TaskUpdate",
-      "TaskList",
-      "TaskGet",
-      "TaskOutput"
-    ],
     "deny": [
       "Bash(rm -rf /:*)",
       "Bash(rm -rf /*)",
       "Bash(rm -rf ~:*)",
       "Bash(rm -rf ~/*)",
       "Bash(sudo:*)",
-      "Bash(git push:*)",
       "Bash(git reset --hard:*)",
       "Bash(docker rm:*)",
       "Read(./**/.env)",
@@ -47,7 +27,5 @@
       "Read(./**/secrets/**)",
       "Read(./.credentials/**)"
     ]
-  },
-  "skipDangerousModePermissionPrompt": true,
-  "skipWorkflowUsageWarning": true
+  }
 }

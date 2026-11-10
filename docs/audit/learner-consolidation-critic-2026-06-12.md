@@ -17,7 +17,7 @@ I diffed the old vs new Build Verification bullet. The generalization preserves 
 
 The only softening is the exit-1 description changing from "masquerades as a **compiler** failure" to "masquerades as a **real** failure." This change is correct and *necessary* for the generalization — a failed git command is not a compiler failure. This is a faithful refinement, not a distortion.
 
-**`git -C` form vs the M6 self-correction:** The M6 com-log entry (`adhoc-Pass4-IdentityExtraction/delivery/communication-log.md:100`) records the actual self-correction as `git -C "this repo" …`. The csharp.md generalization uses the generic placeholder `git -C "<private-repo>" …`. That is a correct generalization (placeholder for the repo path), consistent with the M6 entry. **No distortion.**
+**`git -C` form vs the M6 self-correction:** The M6 com-log entry (`adhoc-Pass4-IdentityExtraction/delivery/communication-log.md:100`) records the actual self-correction as `git -C "<repo>" …`. The csharp.md generalization uses the generic placeholder `git -C "<repo>" …`. That is a correct generalization (placeholder for the repo path), consistent with the M6 entry. **No distortion.**
 
 **Severity: LOW-1** (confirmation that faithfulness holds; no defect).
 
@@ -101,19 +101,19 @@ The Pass5 addendum header dates the R-log "logged 2026-06-09" while the addendum
 Both MEDIUMs survive as MEDIUM (neither rises to HIGH): MEDIUM-1 is a wording nicety on 1 of 7 correctly-dispositioned items; MEDIUM-2 is mitigated by the always-present harness tool description, which I verified directly. No finding involves data loss, security, or silent incorrect user-facing output, so nothing is artificially held high. Zero CRITICAL, zero HIGH → **GO**, no ADVERSARIAL escalation triggered.
 
 Reviewed:
-- <plugin-repo>\plugins\nexus-dotnet\conventions\csharp.md
-- <plugin-repo>\plugins\nexus-dotnet\CHANGELOG.md
-- <plugin-repo>\plugins\nexus-dotnet\.claude-plugin\plugin.json
-- docs\specs\adhoc-Pass4-IdentityExtraction\delivery\lessons.md
-- docs\specs\adhoc-Pass5-EventCorrectness\delivery\lessons.md
-- docs\specs\adhoc-Pass4-IdentityExtraction\delivery\communication-log.md
-- docs\specs\adhoc-Pass5-EventCorrectness\delivery\communication-log.md
-- docs\specs\adhoc-Pass0-Foundations\delivery\lessons.md
-- docs\specs\adhoc-Pass3c-B-DeliveryMetrics\delivery\lessons.md
-- <plugin-repo>\plugins\nexus\rules\agents-workflow.md (lines 70–104)
-- <plugin-repo>\plugins\nexus\agents\team-lead.md (lines 40–52, 198–217, 270–289, 353–369)
-- <plugin-repo>\plugins\nexus\agents\learner.md (promotion-bar lines 17/31/47)
-- <plugin-repo>\plugins\nexus\CHANGELOG.md (1.4.0–1.7.1 version verification)
+- <plugin-repo>/plugins/nexus-dotnet/conventions/csharp.md
+- <plugin-repo>/plugins/nexus-dotnet/CHANGELOG.md
+- <plugin-repo>/plugins/nexus-dotnet/.claude-plugin/plugin.json
+- docs/specs/adhoc-Pass4-IdentityExtraction/delivery/lessons.md
+- docs/specs/adhoc-Pass5-EventCorrectness/delivery/lessons.md
+- docs/specs/adhoc-Pass4-IdentityExtraction/delivery/communication-log.md
+- docs/specs/adhoc-Pass5-EventCorrectness/delivery/communication-log.md
+- docs/specs/adhoc-Pass0-Foundations/delivery/lessons.md
+- docs/specs/adhoc-Pass3c-B-DeliveryMetrics/delivery/lessons.md
+- <plugin-repo>/plugins/nexus/rules/agents-workflow.md (lines 70–104)
+- <plugin-repo>/plugins/nexus/agents/team-lead.md (lines 40–52, 198–217, 270–289, 353–369)
+- <plugin-repo>/plugins/nexus/agents/learner.md (promotion-bar lines 17/31/47)
+- <plugin-repo>/plugins/nexus/CHANGELOG.md (1.4.0–1.7.1 version verification)
 
 ---
 

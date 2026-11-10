@@ -17,7 +17,7 @@ Both MEDIUM findings from the initial review were addressed:
 
 **Fix 2 — BuildCarryOverDestination** (`CarryOverService.cs:480-482`): `priorCarryOverSp` now includes `&& !IsExcluded(m.FinalStatus, excludedStatuses)`. Method signature extended to accept `excludedStatuses`; call site at line 239 passes it correctly. Correct.
 
-**Build (cycle 1):** `dotnet build <fokus-repo>\src\Fokus.slnx` — succeeded, 0 errors.
+**Build (cycle 1):** `dotnet build <fokus-repo>/src/Fokus.slnx` — succeeded, 0 errors.
 
 ---
 
@@ -104,7 +104,7 @@ var priorCarryOverSp = priorCarryOverMemberships
 
 | Check | Result | Command | Output |
 |-------|--------|---------|--------|
-| .NET build | pass | `dotnet build <fokus-repo>\src\Fokus.slnx` | Build succeeded, 0 errors, 2 warnings (pre-existing NU1903 vulnerability in Microsoft.Build.Tasks.Core — not introduced by this feature) |
+| .NET build | pass | `dotnet build <fokus-repo>/src/Fokus.slnx` | Build succeeded, 0 errors, 2 warnings (pre-existing NU1903 vulnerability in Microsoft.Build.Tasks.Core — not introduced by this feature) |
 | TypeScript | pass | `npx vue-tsc --noEmit` (in client/) | No output, exit code 0 |
 
 ---

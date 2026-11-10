@@ -1,6 +1,6 @@
 # Communication Log — adhoc-SuiteScaffoldingV2
 
-Hub-and-spoke audit trail. Team lead orchestrated; code built into `this repo` from session running in `<fokus-repo>`.
+Hub-and-spoke audit trail. Team lead orchestrated; code built into this repo from session running in the original Fokus project.
 
 | # | From → To | Message | Problem / Resolution |
 |---|-----------|---------|----------------------|

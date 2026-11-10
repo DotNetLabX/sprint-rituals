@@ -4,7 +4,7 @@
 
 ## Context
 
-Cross-project skill mining of 3 well-crafted the employer skills identified 15 convergent improvement patterns and 8 medium+ value additional techniques for Fokus's pipeline infrastructure. These are all documentation/configuration changes — no source code is modified. The goal is to harden the agent pipeline, improve cross-phase intelligence, add protective guardrails, and standardize artifact formats.
+Cross-project skill mining of 3 well-crafted skills of the employer identified 15 convergent improvement patterns and 8 medium+ value additional techniques for Fokus's pipeline infrastructure. These are all documentation/configuration changes — no source code is modified. The goal is to harden the agent pipeline, improve cross-phase intelligence, add protective guardrails, and standardize artifact formats.
 
 ## Scope
 

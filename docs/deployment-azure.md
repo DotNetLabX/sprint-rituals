@@ -16,7 +16,7 @@ Both scripts run under Windows PowerShell 5.1 and PowerShell 7. On Windows, star
 
 ## Prerequisites
 
-- [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli), signed in with `az login` to tenant *the work tenant*, subscription *the subscription* (`az account set --subscription "the subscription"` if you have several).
+- [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli), signed in with `az login` to the work tenant, on the subscription (`az account set --subscription "<subscription>"` if you have several).
 - For laptop deploys: Node 24 and the .NET 10 SDK.
 - PowerShell 7 is optional — Windows PowerShell 5.1 runs both scripts.
 - The local target file: copy `deploy/deploy-config.example.ps1` to `deploy/deploy-config.ps1` (git-ignored) and check its values (`<app-name>`, `<resource-group>`). Without it, pass `-AppName` and `-ResourceGroup` to each script.
@@ -78,18 +78,18 @@ Nothing in this section changes `<old-fokus-app>`. The new app exists after step
 
    If Azure refuses a second free Linux plan, skip the plan and create the app with `--plan <old-plan-name>` instead. HTTPS-only is set later by `-Cutover`.
 2. **Google:** on the existing OAuth client, add the redirect URI `https://<app-name>.azurewebsites.net/auth/callback` (and the JavaScript origin `https://<app-name>.azurewebsites.net`), keeping every existing URI.
-3. **OIDC app registration** in tenant *the work tenant* (needs the right to create app registrations):
+3. **OIDC app registration** in the work tenant (needs the right to create app registrations):
 
    ```powershell
    az ad app create --display-name <deploy-identity-name> --query appId -o tsv   # <appId>
    az ad sp create --id <appId> -o none
-   Set-Content -Path credential.json -Value '{"name":"github-production","issuer":"https://token.actions.githubusercontent.com","subject":"repo:ldumit/sprint-rituals:environment:production","audiences":["api://AzureADTokenExchange"]}'
+   Set-Content -Path credential.json -Value '{"name":"github-production","issuer":"https://token.actions.githubusercontent.com","subject":"repo:<github-owner>/<repo>:environment:production","audiences":["api://AzureADTokenExchange"]}'
    az ad app federated-credential create --id <appId> --parameters "@credential.json" -o none
    Remove-Item credential.json
    az role assignment create --assignee <appId> --role "Website Contributor" --scope /subscriptions/<subscriptionId>/resourceGroups/<resource-group>/providers/Microsoft.Web/sites/<app-name> -o none
    ```
 
-   The federated credential trusts only the `production` environment of this repository (subject `repo:ldumit/sprint-rituals:environment:production`). **Website Contributor** is scoped to the one site: it can deploy, but cannot touch the plan, so a tier change is always a person's act. If you cannot create the app registration, the laptop deploy path (`deploy.ps1`) still works; record that in the feature's `implementation.md`.
+   The federated credential trusts only the `production` environment of this repository (subject `repo:<github-owner>/<repo>:environment:production`). **Website Contributor** is scoped to the one site: it can deploy, but cannot touch the plan, so a tier change is always a person's act. If you cannot create the app registration, the laptop deploy path (`deploy.ps1`) still works; record that in the feature's `implementation.md`.
 4. **GitHub** (repository settings):
    - create the environment `production`, with deployment branches limited to `main`;
    - add five repository **variables** (not secrets — none of them is secret): `AZURE_CLIENT_ID` (`<appId>`), `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_WEBAPP_NAME` (`<app-name>`), `AZURE_RESOURCE_GROUP` (`<resource-group>`).

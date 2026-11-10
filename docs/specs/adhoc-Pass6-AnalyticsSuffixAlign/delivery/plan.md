@@ -25,7 +25,7 @@ Impacted: `Fokus.Domain` (class declarations) and `Fokus.API` (DI, gRPC service 
 - All `*Result` / `*Data` domain records and the `*Response` wire envelopes — never part of a calculator rename.
 - The other static helpers (`MetricCardBuilder`, `TransitionAttributionChecker`, `CompletionChecker`, `ExcludedDeveloperFilter`) — already non-`Calculator`-suffixed.
 - Prior-pass delivery artifacts under `docs/specs/*/delivery/` — immutable point-in-time records.
-- The shared plugin skill (`analytics-computation-service` SKILL.md, in `<plugins-folder>`) — skill edits route through the learner, never from this repo. The skill teaches `SprintSummaryCalculator` as its `Calculator` exemplar; our project's call to make it an `Analyzer` is a deliberate local decision, not a skill defect.
+- The shared plugin skill (`analytics-computation-service` SKILL.md, in the plugin source folder) — skill edits route through the learner, never from this repo. The skill teaches `SprintSummaryCalculator` as its `Calculator` exemplar; our project's call to make it an `Analyzer` is a deliberate local decision, not a skill defect.
 - The coverage-workstream artifacts (`docs/audit/golden-set.md`, `docs/proposals/br-coverage-golden-set-draft.md`, `docs/audit/research-raw/golden-code-mining.md`) and any *pending* `BugRatio*Tests.cs` scaffolding — see **Open Questions / Coordination**.
 
 ## Skill Mapping

@@ -57,5 +57,5 @@ FastEndpoints class extending `Endpoint<TRequest,TResponse>` / `EndpointWithoutR
 
 ## Reference
 
-- Structure pattern: `<reference-repo>\src\Services\Auth\` — adopt the DDD Person/User/Role split + partial-class behaviors; do NOT adopt `IdentityUser`/JWT/value-objects.
-- Behavioral pattern: the current Fokus auth (`<fokus-repo>\src\Services\Fokus\Fokus.API\Auth\`) — Identity is that proven model, split into Person + User.
+- Structure pattern: `<reference-repo>/src/Services/Auth/` — adopt the DDD Person/User/Role split + partial-class behaviors; do NOT adopt `IdentityUser`/JWT/value-objects.
+- Behavioral pattern: the current Fokus auth (`<fokus-repo>/src/Services/Fokus/Fokus.API/Auth/`) — Identity is that proven model, split into Person + User.

@@ -2,27 +2,27 @@
 
 ## Files Created
 
-- `src\BuildingBlocks\Blocks.Contracts\Blocks.Contracts.csproj` — new app-specific contracts BuildingBlock; `System.ServiceModel.Primitives` only (no protobuf-net, no MassTransit)
-- `src\BuildingBlocks\Blocks.Contracts\Grpc\ISprintAnalyticsService.cs` — `[ServiceContract]` interface: `GetSprintSummaryAsync`, `GetDisruptionMetricsAsync`, `GetCarryOverHistoryAsync`
-- `src\BuildingBlocks\Blocks.Contracts\Grpc\ISprintCatalogService.cs` — `[ServiceContract]` interface: `GetAvailableSprintsAsync`
-- `src\BuildingBlocks\Blocks.Contracts\Grpc\DataContracts\SprintRequest.cs` — request with `SprintId` + optional `SubTeam`
-- `src\BuildingBlocks\Blocks.Contracts\Grpc\DataContracts\TeamRequest.cs` — request with optional `SubTeam`
-- `src\BuildingBlocks\Blocks.Contracts\Grpc\DataContracts\AnonymizedSprintSummary.cs` — team-level response with `ScopeAdditionEntry` nested type; no per-developer fields
-- `src\BuildingBlocks\Blocks.Contracts\Grpc\DataContracts\DisruptionMetrics.cs` — scope disruption breakdown; team-level only
-- `src\BuildingBlocks\Blocks.Contracts\Grpc\DataContracts\CarryOverHistory.cs` — carry-over rate + rolling history with `SprintCarryOverEntry`
-- `src\BuildingBlocks\Blocks.Contracts\Grpc\DataContracts\SprintInfo.cs` — catalog entry (named collision with `Fokus.API.Features.Analytics.SprintInfo` documented in file)
-- `src\BuildingBlocks\Blocks.Contracts\Grpc\DataContracts\SprintCatalogResponse.cs` — wraps `List<SprintInfo>`
-- `src\BuildingBlocks\Blocks.Contracts\IntegrationEvents\SprintSynced.cs` — POCO record; no MassTransit dependency
-- `src\Services\Fokus\Fokus.API\Grpc\SprintAnalyticsGrpcService.cs` — implements `ISprintAnalyticsService`; reproduces data-loading orchestration from `GetSprintSummaryEndpoint` / `GetScopeChangeEndpoint` / `GetCarryOverEndpoint`; strips all per-developer fields at mapping boundary
-- `src\Services\Fokus\Fokus.API\Grpc\SprintCatalogGrpcService.cs` — implements `ISprintCatalogService`; thin wrapper over `SprintRepository.GetAnalyticsSprintsAsync`
+- `src/BuildingBlocks/Blocks.Contracts/Blocks.Contracts.csproj` — new app-specific contracts BuildingBlock; `System.ServiceModel.Primitives` only (no protobuf-net, no MassTransit)
+- `src/BuildingBlocks/Blocks.Contracts/Grpc/ISprintAnalyticsService.cs` — `[ServiceContract]` interface: `GetSprintSummaryAsync`, `GetDisruptionMetricsAsync`, `GetCarryOverHistoryAsync`
+- `src/BuildingBlocks/Blocks.Contracts/Grpc/ISprintCatalogService.cs` — `[ServiceContract]` interface: `GetAvailableSprintsAsync`
+- `src/BuildingBlocks/Blocks.Contracts/Grpc/DataContracts/SprintRequest.cs` — request with `SprintId` + optional `SubTeam`
+- `src/BuildingBlocks/Blocks.Contracts/Grpc/DataContracts/TeamRequest.cs` — request with optional `SubTeam`
+- `src/BuildingBlocks/Blocks.Contracts/Grpc/DataContracts/AnonymizedSprintSummary.cs` — team-level response with `ScopeAdditionEntry` nested type; no per-developer fields
+- `src/BuildingBlocks/Blocks.Contracts/Grpc/DataContracts/DisruptionMetrics.cs` — scope disruption breakdown; team-level only
+- `src/BuildingBlocks/Blocks.Contracts/Grpc/DataContracts/CarryOverHistory.cs` — carry-over rate + rolling history with `SprintCarryOverEntry`
+- `src/BuildingBlocks/Blocks.Contracts/Grpc/DataContracts/SprintInfo.cs` — catalog entry (named collision with `Fokus.API.Features.Analytics.SprintInfo` documented in file)
+- `src/BuildingBlocks/Blocks.Contracts/Grpc/DataContracts/SprintCatalogResponse.cs` — wraps `List<SprintInfo>`
+- `src/BuildingBlocks/Blocks.Contracts/IntegrationEvents/SprintSynced.cs` — POCO record; no MassTransit dependency
+- `src/Services/Fokus/Fokus.API/Grpc/SprintAnalyticsGrpcService.cs` — implements `ISprintAnalyticsService`; reproduces data-loading orchestration from `GetSprintSummaryEndpoint` / `GetScopeChangeEndpoint` / `GetCarryOverEndpoint`; strips all per-developer fields at mapping boundary
+- `src/Services/Fokus/Fokus.API/Grpc/SprintCatalogGrpcService.cs` — implements `ISprintCatalogService`; thin wrapper over `SprintRepository.GetAnalyticsSprintsAsync`
 
 ## Files Modified
 
-- `src\Services\Fokus\Fokus.API\Fokus.API.csproj` — added `MassTransit.Abstractions` (for `IPublishEndpoint` without pulling full MassTransit into the module), `protobuf-net.Grpc.AspNetCore`, and `Blocks.Contracts` project reference (Step 4)
-- `src\Services\Fokus\Fokus.API\Features\Sync\SprintIssueSyncService.cs` — added `IPublishEndpoint` to primary constructor; added `SprintSynced` publish inside `SyncSprintsFromJiraAsync` loop after each successful `SyncAsync` call, before the catch block (Step 7)
-- `src\Host\Host.csproj` — added `MassTransit` and `protobuf-net.Grpc.AspNetCore` packages (Steps 5, 6)
-- `src\Host\Program.cs` — added `AddCodeFirstGrpc()`, `AddMassTransit(...UsingInMemory...)`, `MapGrpcService<SprintAnalyticsGrpcService>()`, `MapGrpcService<SprintCatalogGrpcService>()` (Steps 5, 6)
-- `src\Host\appsettings.json` — created `Kestrel:Endpoints` section: HTTP on 5000 (`Http1AndHttp2`) + gRPC h2c on 5001 (`Http2`) (Step 5)
+- `src/Services/Fokus/Fokus.API/Fokus.API.csproj` — added `MassTransit.Abstractions` (for `IPublishEndpoint` without pulling full MassTransit into the module), `protobuf-net.Grpc.AspNetCore`, and `Blocks.Contracts` project reference (Step 4)
+- `src/Services/Fokus/Fokus.API/Features/Sync/SprintIssueSyncService.cs` — added `IPublishEndpoint` to primary constructor; added `SprintSynced` publish inside `SyncSprintsFromJiraAsync` loop after each successful `SyncAsync` call, before the catch block (Step 7)
+- `src/Host/Host.csproj` — added `MassTransit` and `protobuf-net.Grpc.AspNetCore` packages (Steps 5, 6)
+- `src/Host/Program.cs` — added `AddCodeFirstGrpc()`, `AddMassTransit(...UsingInMemory...)`, `MapGrpcService<SprintAnalyticsGrpcService>()`, `MapGrpcService<SprintCatalogGrpcService>()` (Steps 5, 6)
+- `src/Host/appsettings.json` — created `Kestrel:Endpoints` section: HTTP on 5000 (`Http1AndHttp2`) + gRPC h2c on 5001 (`Http2`) (Step 5)
 - `SprintRituals.slnx` — added `Blocks.Contracts` to `/BuildingBlocks/` folder (Step 8)
 - `CLAUDE.md` — added `Blocks.Contracts` to repo structure; updated MassTransit and gRPC tech-stack entries from "next increment, not yet wired" to accurate descriptions (Step 8)
 
@@ -74,7 +74,7 @@ None — this is infrastructure wiring (no new business rules, formulas, or doma
 
 | # | Check | Steps for user |
 |---|-------|----------------|
-| 2 | Host dual-port Kestrel startup (5000 HTTP + 5001 gRPC h2c both in "Now listening on" log) | Run: `cd this repo && dotnet run --project src/Host` — confirm both "Now listening on: http://localhost:5000" and "Now listening on: http://localhost:5001" in startup output |
+| 2 | Host dual-port Kestrel startup (5000 HTTP + 5001 gRPC h2c both in "Now listening on" log) | Run: `cd <repo> && dotnet run --project src/Host` — confirm both "Now listening on: http://localhost:5000" and "Now listening on: http://localhost:5001" in startup output |
 | 3 | MassTransit bus-started log line | In same startup — look for "Bus started: loopback://localhost/" in log output |
 | 4 | Live gRPC call to `GetAvailableSprintsAsync` | Run: `grpcurl -plaintext -d '{}' localhost:5001 Blocks.Contracts.Grpc.ISprintCatalogService/GetAvailableSprintsAsync` (needs grpcurl + seeded sprint data) |
 | 5 | `SprintSynced` publish on sync | Trigger a real Jira sync (needs Jira credentials + board config in user-secrets); confirm MassTransit debug log shows "Publish SprintSynced" — or add `Debug` log level for `MassTransit` in appsettings.json temporarily |

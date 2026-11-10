@@ -1,6 +1,6 @@
 # adhoc-Pass3c-B-DeliveryMetrics — Lessons
 
-> **Learner consolidation — 2026-06-08** (→ `<plugin-repo>`)
+> **Learner consolidation — 2026-06-08** (→ the plugin source repo)
 > - `[APPLIED]` "replace all X" with a non-call homonym (the `"neutral"` literal in a `*DeltaPolarity` field position) needs file:line + DO-NOT-TOUCH → **nexus** `create-implementation-plan`.
 > - `[APPLIED]` mode-wrapper `{Mode, Multi?, Single?}` `*Response` envelopes are wire-only; endpoint assembles → **nexus-dotnet** `domain-service` + `analytics-computation-service`.
 > - `[APPLIED]` grep every DI-registered service's type name across the whole API project to enumerate ALL injection sites → **nexus** `create-implementation-plan`.
