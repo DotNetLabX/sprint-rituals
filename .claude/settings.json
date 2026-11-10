@@ -11,5 +11,20 @@
   "enabledPlugins": {
     "nexus@claude-nexus": true,
     "nexus-dotnet@claude-nexus": true
+  },
+  "permissions": {
+    "deny": [
+      "Bash(rm -rf /:*)",
+      "Bash(rm -rf /*)",
+      "Bash(rm -rf ~:*)",
+      "Bash(rm -rf ~/*)",
+      "Bash(sudo:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(docker rm:*)",
+      "Read(./**/.env)",
+      "Read(./**/.env.*)",
+      "Read(./**/secrets/**)",
+      "Read(./.credentials/**)"
+    ]
   }
 }
