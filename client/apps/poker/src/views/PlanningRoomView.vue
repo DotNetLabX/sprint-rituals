@@ -38,6 +38,13 @@
             @select="onSelectItem"
           />
 
+          <!-- Sprint-bound: load / refresh the sprint's Jira tickets as items -->
+          <div v-if="sessionStore.isSprintBound && isScrumMaster" class="mt-4 border-t border-border pt-4">
+            <BaseButton size="sm" variant="secondary" class="w-full" :loading="syncingTickets" @click="onSyncTickets">
+              Refresh from Jira
+            </BaseButton>
+          </div>
+
           <!-- Free mode: add item form -->
           <div v-if="!sessionStore.isSprintBound && isScrumMaster" class="mt-4 flex flex-col gap-2 border-t border-border pt-4">
             <input
@@ -91,6 +98,8 @@
         <aside v-if="isScrumMaster" class="hidden lg:flex flex-col w-56 xl:w-64 shrink-0 border-l border-border px-4 py-6 overflow-y-auto bg-surface">
           <SmControls
             :item-status="sessionStore.activeItem?.status ?? null"
+            :item-id="sessionStore.activeItem?.id ?? null"
+            :votes="sessionStore.activeItem?.votes ?? []"
             :session-closed="sessionStore.isClosed"
             :write-back-error="sessionStore.writeBackError"
             @reveal="onReveal"
@@ -143,6 +152,7 @@ const summaryMode = ref(false)
 const summary = ref<SessionSummaryResponse | null>(null)
 const myVote = ref<string | null>(null)
 const newItemLabel = ref('')
+const syncingTickets = ref(false)
 
 const hub = usePlanningHub((payload) => {
   addToast(`Session closed — ${payload.itemsEstimated} items estimated, ${payload.totalStoryPoints} SP total`, 'info')
@@ -166,6 +176,8 @@ const canVote = computed(
 )
 
 onMounted(async () => {
+  // App.vue starts fetchMe without awaiting; the SM check below needs it settled.
+  if (!authStore.loaded) await authStore.fetchMe()
   guestStore.loadToken(sessionId)
   await sessionStore.fetchSession(sessionId)
   loading.value = false
@@ -182,8 +194,21 @@ onMounted(async () => {
   if (sessionStore.isClosed) {
     summaryMode.value = true
     await loadSummary()
+  } else if (isScrumMaster.value && sessionStore.isSprintBound) {
+    await onSyncTickets()
   }
 })
+
+async function onSyncTickets() {
+  syncingTickets.value = true
+  try {
+    await sessionStore.syncTicketItems(sessionId)
+  } catch {
+    addToast('Could not load the sprint tickets from Jira.', 'error')
+  } finally {
+    syncingTickets.value = false
+  }
+}
 
 onUnmounted(async () => {
   await hub.disconnect()

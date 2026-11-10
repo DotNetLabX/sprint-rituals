@@ -11,16 +11,18 @@ import type {
   PokerTicket,
 } from '../types'
 
-// Builds auth headers for requests that may be made by a guest
-function authHeaders(guestToken?: string | null): Record<string, string> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+// Builds auth headers for requests that may be made by a guest.
+// Bodyless GETs must not send Content-Type: application/json — FastEndpoints then tries to bind an
+// empty JSON body and answers 400.
+function authHeaders(guestToken?: string | null, json = true): Record<string, string> {
+  const headers: Record<string, string> = json ? { 'Content-Type': 'application/json' } : {}
   const token = guestToken ?? useGuestStore().token
   if (token) headers['X-Guest-Token'] = token
   return headers
 }
 
 export const sessionsApi = {
-  async create(payload: CreateSessionRequest): Promise<{ id: string; roomUrl: string }> {
+  async create(payload: CreateSessionRequest): Promise<{ sessionId: string; roomUrl: string }> {
     const res = await fetch('/api/poker/sessions', {
       method: 'POST',
       credentials: 'include',
@@ -28,14 +30,11 @@ export const sessionsApi = {
       body: JSON.stringify(payload),
     })
     if (!res.ok) throw Object.assign(new Error('Failed to create session'), { status: res.status })
-    return res.json() as Promise<{ id: string; roomUrl: string }>
+    return res.json() as Promise<{ sessionId: string; roomUrl: string }>
   },
 
   async get(sessionId: string): Promise<SessionResponse> {
-    const res = await fetch(`/api/poker/sessions/${sessionId}`, {
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-    })
+    const res = await fetch(`/api/poker/sessions/${sessionId}`, { credentials: 'include' })
     if (!res.ok) throw Object.assign(new Error('Session not found'), { status: res.status })
     return res.json() as Promise<SessionResponse>
   },
@@ -70,6 +69,18 @@ export const sessionsApi = {
     if (!res.ok) throw Object.assign(new Error('Failed to close session'), { status: res.status })
   },
 
+  // Loads/refreshes the sprint's Jira tickets as items (idempotent per ticket); returns the full session.
+  async syncTicketItems(sessionId: string): Promise<SessionResponse> {
+    const res = await fetch(`/api/poker/sessions/${sessionId}/tickets/sync`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: authHeaders(),
+      body: '{}',
+    })
+    if (!res.ok) throw Object.assign(new Error('Failed to load sprint tickets'), { status: res.status })
+    return res.json() as Promise<SessionResponse>
+  },
+
   async addItem(sessionId: string, payload: AddSessionItemRequest): Promise<EstimationItemResponse> {
     const res = await fetch(`/api/poker/sessions/${sessionId}/items`, {
       method: 'POST',
@@ -92,7 +103,7 @@ export const sprintsApi = {
   async getTickets(sessionId: string): Promise<PokerTicket[]> {
     const res = await fetch(`/api/poker/sessions/${sessionId}/tickets`, {
       credentials: 'include',
-      headers: authHeaders(),
+      headers: authHeaders(null, false),
     })
     if (!res.ok) throw Object.assign(new Error('Failed to load tickets'), { status: res.status })
     return res.json() as Promise<PokerTicket[]>

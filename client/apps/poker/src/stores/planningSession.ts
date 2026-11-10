@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { sessionsApi, sprintsApi } from '../api/sessions'
 import type {
   SessionResponse,
+  CreateSessionRequest,
   EstimationItemResponse,
   ParticipantResponse,
   PokerSprintInfo,
@@ -61,6 +62,15 @@ export const usePlanningSessionStore = defineStore('planningSession', () => {
     }
   }
 
+  async function createSession(payload: CreateSessionRequest): Promise<string> {
+    const { sessionId } = await sessionsApi.create(payload)
+    return sessionId
+  }
+
+  async function syncTicketItems(sessionId: string) {
+    session.value = await sessionsApi.syncTicketItems(sessionId)
+  }
+
   async function fetchTickets(sessionId: string) {
     try {
       tickets.value = await sprintsApi.getTickets(sessionId)
@@ -88,7 +98,9 @@ export const usePlanningSessionStore = defineStore('planningSession', () => {
     session.value.participants = session.value.participants.filter((p) => p.id !== participantId)
   }
 
-  function applyItemSelected(itemId: string) {
+  async function applyItemSelected(itemId: string) {
+    // Items added after this client loaded (ticket sync / free add) are not broadcast; reload to learn them.
+    if (session.value && !session.value.items.some((i) => i.id === itemId)) await fetchSession(session.value.id)
     activeItemId.value = itemId
   }
 
@@ -159,6 +171,8 @@ export const usePlanningSessionStore = defineStore('planningSession', () => {
     writeBackError,
     fetchSession,
     fetchSprints,
+    createSession,
+    syncTicketItems,
     fetchTickets,
     applyParticipantJoined,
     applyParticipantLeft,
