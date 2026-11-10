@@ -16,6 +16,9 @@
 ## Architect Lessons
 
 - Done check (light lane, cleanup feature): the coordinator's own `## Step 2 — Risky steps` line in `review.md` lists deleted file paths verbatim, so it re-introduced a removed private token into a delivery artifact. On a scrub feature, the risk recheck's `Unplanned:` list needs the same masking rule as every other delivery artifact. Otherwise only the close's `--untracked` sweep catches it. Worth filing as plugin feedback for `risk-recheck.js`: it has no redaction hook.
+- **Search patterns in a cleanup plan self-match in more ways than a plain name.** Three slipped through here: a name inside an alternation list, a dot that matches a dot, and a phrase quoted as its own pattern. After writing the plan, run every search over the plan file itself with untracked files included, before the review. **Evidence:** [F11-PublishCleanup]
+- **A worktree cleanup does not cover uncommitted work on the default branch.** The default branch held pending edits and untracked files with private names at the close. A publish-readiness plan lists the other checkout's pending work at plan time and owes a second sweep after the merge. **Evidence:** [F11-PublishCleanup]
+- **Ask what was done before, first.** The owner had run this cleanup twice in sibling repos; three questions were withdrawn once those records were read. For a request that sounds like a repeat, search the sibling repos' feature records before putting any question. **Evidence:** [F11-PublishCleanup]
 
 ## Reviewer Lessons
 
