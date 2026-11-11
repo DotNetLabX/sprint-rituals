@@ -1,0 +1,26 @@
+# adhoc-ReadmeShowcase — Lessons
+
+## Solo Lessons
+
+- **The pictures can run on the real API end to end, with nothing real behind it.** Run the built host against throwaway SQLite files by setting the four connection strings as environment variables: `ConnectionStrings__IdentityDatabase`, `ConnectionStrings__Database` (Fokus), `ConnectionStrings__ReflektDatabase`, `ConnectionStrings__PokerDatabase`. Use an environment name other than Development, so the owner's user secrets (real Google and Jira values) are never loaded; that also turns Scalar off, which no picture needs.
+- **Moving the ports means moving the gRPC client addresses too.** The host calls its own gRPC services over a second HTTP/2 port. Changing `Kestrel__Endpoints__Http__Url` and `Kestrel__Endpoints__Grpc__Url` is not enough: the five `Grpc__Services__{Invitation,Person,SprintAnalytics,SprintCatalog,PokerFokus}__Url` settings must point at the new gRPC port, or every cross-module call fails.
+- **Real Google sign-in without Google.** `AddGoogle` binds the whole `Google` section, so `Google__AuthorizationEndpoint`, `Google__TokenEndpoint` and `Google__UserInformationEndpoint` can point at a 30-line local stand-in that answers with an invented user (Alex Morgan, example.com). Drive `/auth/login` → stand-in → `/auth/callback` with a plain HTTP client, keep the `.AspNetCore.Cookies` value, and add it to the Playwright context. The first sign-in becomes Admin, and its Person id (1) is the Reflekt team's `OwnerId`.
+- **Poker's ticket list is a live Jira read, so a picture needs a Jira stand-in.** Point `Jira__InstanceUrl` at a local server that answers `GET /rest/api/3/search/jql` (the team-managed path, since `Jira:IsTeamManaged` is true), `GET /rest/api/3/issue/{key}/changelog` and `PUT /rest/api/3/issue/{key}`. With that, session creation, ticket sync, joins, votes, reveal and the story-point write-back all run through the real endpoints and the real SignalR hub (driven from Node with `@microsoft/signalr` from `client/node_modules`, long polling, cookie or `X-Guest-Token` header).
+- **Fokus figures come from status transitions, not from the stored status.** A ticket counts as completed only if a transition into the done stage falls inside the sprint's dates, and as started only from a transition at or after the cycle-time start stage. Seed `WorkflowStages`, `DoneStatuses` and both cycle-time stages in `AppSettings`, then the transitions. The seed takes a random-seed argument; seed 11 gave an ordinary sprint (health 88.9, amber disruption, two long-running tickets flagged). Put the active sprint around today's date, or every view's default sprint looks stale.
+- **Reflekt's room reads a guest token from `localStorage` key `reflekt:retro-session:{id}:token`;** reseeding gives new team and retro ids (autoincrement survives the deletes), so read them from the seed's output rather than hard-coding them. The phase is the `CurrentPhase` column, as in the Reflekt run.
+- **The poker room opens on the first item still in Voting, in the API's unsorted order.** To show a revealed round, click that item in the queue after the page loads.
+- **Git Bash rewrites arguments that start with `/`** (a URL path like `/dashboard/sprints` became a Windows path). Set `MSYS_NO_PATHCONV=1` before passing paths to Node.
+- **Fixed: the retro's sprint figures panel showed percentages 100 times too large** ("9120%" for 91.2%): Fokus sends all three rates as percentages, so `formatRate` in `client/apps/retro/src/components/retro/SprintContextSectionCard.vue` now only rounds them.
+- **Found, not fixed: a signed-in person can join only one poker session.** `SessionParticipant.JoinAuthenticated` stores an empty `GuestToken`, and the column has a unique index, so the second session a signed-in person joins answers 500 (`UNIQUE constraint failed: SessionParticipants.GuestToken`).
+- **Found, not fixed: smaller Poker issues.** The room's item queue is not sorted by `Order`. When Jira can't be reached, ticket sync answers 500 with "Nullable object must have a value" from `GetSprintTickets` instead of a clear error.
+- **Found, not fixed: stale facts in `CLAUDE.md`.** It gives the gRPC port as 5001 (`appsettings.json` uses 5150) and says "two databases" in the tech stack line while its own table lists four. The README states neither port.
+- **Found, not fixed: the retro report's title runs into its "Copy as markdown" button** at a 1440-pixel window when the sprint name is long.
+
+## Skill Gaps
+
+### readme-screenshots
+- **Kind:** missing
+- **Searched for:** a recipe for showcase screenshots of a web app: run it against throwaway data, stand in for external sign-in and APIs, capture with Playwright at a fixed size and theme, and check every picture for private data
+- **Why it would help:** both README runs rebuilt the same tooling from scratch (seed scripts, a token or cookie hand-off, a capture script, privacy checks); the `run` skill launches an app but covers none of the data, sign-in or picture rules. Instead: hand-written scripts per run.
+- **References:** `docs/specs/adhoc-ReadmeShowcase/delivery/lessons.md`; the Reflekt repo's `docs/specs/adhoc-ReadmeRewrite/delivery/lessons.md`
+- **Evidence:** [adhoc-ReadmeRewrite (Reflekt), adhoc-ReadmeShowcase]

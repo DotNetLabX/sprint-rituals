@@ -151,7 +151,7 @@ Graduates `docs/proposals/azure-deployment-handoff.md` (ratified 2026-10-05). Go
 | F8 | F8-AzureDeployment | technical (ADR-collapsed) | **Built** (2026-10-30) — operator cutover (plan Steps 6–8) owed | ADR-024 + `docs/specs/F8-AzureDeployment/delivery/plan.md` | — |
 | F9 | F9-ReflektDataCarryOver | technical (needs plan) | **Later** | ADR-024 (Data carry-over) | F8 live; read access to the personal-account `reflekt` app's `/home/data/reflekt.db` |
 | F10 | F10-NightlyDbSnapshot | technical (needs plan) | **Later** (owner, 2026-10-05) | ADR-024 (Storage — Backups) | F8 live. Free-plan safety net: the app writes a consistent copy of each SQLite database nightly to `/home/data/sprint-rituals/backups/`, keeping the last 7 |
-| F11 | F11-PublishCleanup | technical (plan only) | ✓ **Done** (2026-11-10) — history scrub and publish owed, on the owner's word | `docs/specs/F11-PublishCleanup/delivery/summary.md` | — |
+| F11 | F11-PublishCleanup | technical (plan only) | ✓ **Done** (2026-11-10) — history rewritten and pushed the same day; making the repository public is the owner's step | `docs/specs/F11-PublishCleanup/delivery/summary.md` | — |
 
 **Notes:**
 - F9 must land **before** Reflekt users are pointed at `/retro/`. Scope to settle at its planning: old Reflekt schema → new `ReflektDbContext` mapping, and old Reflekt users → Identity Persons (guests get no Person — ADR-022).
