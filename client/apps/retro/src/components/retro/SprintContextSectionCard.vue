@@ -137,6 +137,6 @@ function formatDate(dateStr: string | null | undefined): string {
 }
 
 function formatRate(rate: number): string {
-  return `${Math.round(rate * 100)}%`
+  return `${Math.round(rate)}%`
 }
 </script>
